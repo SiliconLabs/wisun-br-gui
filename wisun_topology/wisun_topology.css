@@ -1,0 +1,47 @@
+.infobox {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 400px;
+    white-space: nowrap
+}
+
+.infobox_text {
+  white-space: nowrap
+}
+
+.infobox_arrow_background {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 25px;
+  height: 25px;
+}
+
+  .infobox_arrow {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
+
+#network_chart {
+    background-color: rgb(238, 238, 238);
+}
+
+.autofit {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+
+.node_count {
+  position: absolute;
+  bottom: 30px;
+  right: 10px;
+}
+
+.wsbrd_connect_error {
+  position: absolute;
+  bottom: 50%;
+  right: 50%;
+}

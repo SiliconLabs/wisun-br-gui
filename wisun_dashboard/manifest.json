@@ -1,0 +1,9 @@
+{
+    "version": 0,
+    "tools": {
+        "Wi-SUN": {
+            "label": "Wi-SUN Dashboard",
+            "path": "wisun_dashboard.html"
+        }
+    }
+}

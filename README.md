@@ -37,7 +37,7 @@ These plugins share some common files thus their files are structured into three
 
 ```
 mkdir -p ~/.local/share/cockpit
-cd wisun-br-web-interface/
+cd wisun-br-gui/
 cp -R wisun_dashboard ~/.local/share/cockpit/
 cp -R wisun_topology ~/.local/share/cockpit/
 cp -R wisun_common ~/.local/share/cockpit/

@@ -1,0 +1,10 @@
+{
+    "requires": {
+        "cockpit": "137"
+    },
+    "tools": {
+        "index": {
+            "label": "Wi-SUN Border Router"
+        }
+    }
+}

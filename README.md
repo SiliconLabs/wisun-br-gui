@@ -11,6 +11,9 @@
   </tr>
 </table>
 
+> [!IMPORTANT]  
+> This project is not designed to work with **version 2.0** of [wisun-br-linux](https://github.com/SiliconLabs/wisun-br-linux). Please ensure you are not using the specified version of **wisun-br-linux** before proceeding with this project.
+
 The Wi-SUN border router GUI is a companion tool for Silicon Labs' Wi-SUN border router reference design, [wsbrd](https://github.com/SiliconLabs/wisun-br-linux).  
 The tool helps manage the network by enabling a remote border router configuration and provides a visual representation of the connected Wi-SUN devices.
 

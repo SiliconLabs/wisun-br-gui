@@ -12,7 +12,7 @@
 </table>
 
 > [!IMPORTANT]  
-> This project is not designed to work with **version 2.0** of [wisun-br-linux](https://github.com/SiliconLabs/wisun-br-linux). Please ensure you are not using the specified version of **wisun-br-linux** before proceeding with this project.
+> As of **wisun-br-gui v2.0.0**, the GUI will no longer support wisun-br-linux  versions earlier to **wisun-br-linux v2.0**.
 
 The Wi-SUN border router GUI is a companion tool for Silicon Labs' Wi-SUN border router reference design, [wsbrd](https://github.com/SiliconLabs/wisun-br-linux).  
 The tool helps manage the network by enabling a remote border router configuration and provides a visual representation of the connected Wi-SUN devices.
@@ -40,7 +40,7 @@ As this project is intended to be used as a Cockpit plugin, Cockpit must be inst
 
 Follow the instructions provided by Cockpit to install it: <https://cockpit-project.org/running.html>
 
-### Dependencies Instalation
+### Dependencies Installation
 
 On Debian/Ubuntu:
 
@@ -54,9 +54,11 @@ On Fedora:
 sudo dnf install make
 ```
 
-Node.js and npm will also be necessary to build the project. It is recommanded to install the LTS version of Node.js. The two tools with appropriate versions can be downloaded from [NodeSource - Node.js Binary Distributions](https://github.com/nodesource/distributions) .
+### Node.js Installation
 
-## Instalation
+Node.js and npm will also be necessary to build the project. It is recommended to install the LTS version of Node.js. The two tools with appropriate versions can be downloaded from [NodeSource - Node.js Binary Distributions](https://github.com/nodesource/distributions) .
+
+## Installation
 
 First, start by cloning the wisun-br-gui repository:
 
@@ -70,7 +72,7 @@ Then build the plugin with the following command:
 make
 ```
 
-And finaly, use the following command to install the plugin:
+And finally, use the following command to install the plugin:
 
 ```sh
 sudo make install
@@ -102,7 +104,7 @@ The Wi-SUN Dashboard tab provides direct access to `wsbrd.conf` configuration fi
 
 ### Wi-SUN Topology
 
-As its name indicates, the Wi-SUN Topology tab draws the Wi-SUN network topology. The canvas is dynamic and uses the autozoom to fits the network on the user screen. This functionality can be disabled by unchecking the `Auto Zoom` box. The interactive capability of the network gives you the ability to check the properties of every node of the network through the `Device Properties` Box.
+As its name indicates, the Wi-SUN Topology tab draws the Wi-SUN network topology. The canvas is dynamic and uses the Auto Zoom to fit the network on the user screen. This functionality can be disabled by unchecking the `Auto Zoom` box. The interactive capability of the network gives you the ability to check the properties of every node of the network through the `Device Properties` Box.
 
 ![topology](pics/topology.png)
 

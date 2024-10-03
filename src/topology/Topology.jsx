@@ -15,7 +15,7 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { useContext, useState } from "react";
+import { useEffect, useContext, useState } from "react";
 import cockpit from "cockpit";
 import { AppContext } from "../app";
 import Graph from "react-graph-vis";
@@ -29,8 +29,7 @@ import {
     DescriptionListTerm,
     Drawer,
     DrawerContent,
-    DrawerContentBody,
-    useInterval
+    DrawerContentBody
 } from "@patternfly/react-core";
 import { BarsIcon } from '@patternfly/react-icons';
 import CenteredContent from "../utils/CenteredContent";
@@ -48,7 +47,9 @@ export const NodeRoles = Object.freeze({
 
 const NodeRolesColors = ["#d91e2a", "#00b970", "#fad54c"];
 const EdgesColor = "#0f62fe";
-
+let RoutingGraphindexedByIpv6 = [];
+let borderrouterIpv6;
+let dbusClient;
 const Topology = () => {
     const [loading, setLoading] = useState(true);
     const [stateGraph, setStateGraph] = useState({
@@ -64,8 +65,18 @@ const Topology = () => {
     const { active } = useContext(AppContext);
 
     const options = {
-        physics: { stabilization: { enabled: false } },
-        layout: { improvedLayout: true },
+        physics: { stabilization : { enabled: false } },
+        layout: {
+            improvedLayout: true,
+            hierarchical: {
+                enabled: true, // Enable hierarchical layout
+                direction: 'UD', // Direction of the layout: 'UD' (Up-Down), 'LR' (Left-Right), etc.
+                sortMethod: 'hubsize', // Use hubsize to sort nodes based on connectivity
+                blockShifting: false, // Enable block shifting to optimize the layout
+                edgeMinimization: true, // Minimize edge crossings
+                parentCentralization: true, // Centralize parent nodes relative to their children
+            },
+        },
         edges: {
             color: EdgesColor,
             arrows: { to: false }
@@ -73,8 +84,25 @@ const Topology = () => {
         height: '100%',
         width: '100%'
     };
+    let node_level;
+    const checkLinkToBR = (id) => {
+        if (RoutingGraphindexedByIpv6[id][2].length === 0 && RoutingGraphindexedByIpv6[id][0] === borderrouterIpv6) {
+            return true;
+        } else if (RoutingGraphindexedByIpv6[id][2].length === 0 &&
+            RoutingGraphindexedByIpv6[id][0] !== borderrouterIpv6) {
+            return false;
+        } else if (RoutingGraphindexedByIpv6[id][2] !== 0 &&
+            RoutingGraphindexedByIpv6[RoutingGraphindexedByIpv6[id][2][0]] !== undefined) {
+            if (checkLinkToBR(RoutingGraphindexedByIpv6[id][2][0])) {
+                node_level = node_level + 1;
+                return true;
+            }
+        } else {
+            return false;
+        }
+    };
 
-    const getGraph = () => {
+    const initializeDbus = () => {
         // only make a dbus request if the service is active
         if (active !== true) {
             if (loading) {
@@ -82,98 +110,122 @@ const Topology = () => {
             }
             return;
         }
-
-        const dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
+        dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
 
         dbusClient.wait(() => {
             const proxy = dbusClient.proxy();
-
+            const proxy_signal = dbusClient.proxy("org.freedesktop.DBus.Properties", "/com/silabs/Wisun/BorderRouter");
             proxy.wait().then(() => {
                 if (proxy.valid === false) {
                     setHasError(true);
                     setLoading(false);
                 } else if (proxy.WisunMode !== undefined) {
-                    const nodes = [];
-                    const edges = [];
-                    let borderRouterEUI64;
-
-                    // get the border router's device eui for LFN
-                    for (let i = 0; i < proxy.Nodes.length; i++) {
-                        if (proxy.Nodes[i][1].ipv6.v.length === 2 &&
-                            proxy.Nodes[i][1].node_role?.v === NodeRoles.BorderRouter) {
-                            borderRouterEUI64 = base64ToHex(proxy.Nodes[i][0]);
-                            break;
+                    // the signal
+                    proxy_signal.addEventListener("signal", (event, name, args) => {
+                        if (args[2][0] === "RoutingGraph") {
+                            setTimeout(() => {
+                                processGraphData(proxy);
+                            }, 3000);
                         }
-                    }
-
-                    for (let i = 0; i < proxy.Nodes.length; i++) {
-                        if (proxy.Nodes[i][1].ipv6.v.length === 2) {
-                            if (proxy.Nodes[i][1].parent === undefined &&
-                                (proxy.Nodes[i][1].is_border_router === undefined &&
-                                    proxy.Nodes[i][1].node_role?.v !== NodeRoles.LFN)) {
-                                continue;
-                            }
-
-                            const eui64 = base64ToHex(proxy.Nodes[i][0]);
-                            const ipv6 = base64ToHex(proxy.Nodes[i][1].ipv6.v[1]);
-                            const nodeRole = proxy.Nodes[i][1].node_role?.v ?? NodeRoles.FFN;
-
-                            // for safety in case of unsupported node
-                            if (nodeRole > 2 || nodeRole < 0) {
-                                continue;
-                            }
-
-                            let parentEUI64;
-
-                            if (proxy.Nodes[i][1].parent !== undefined) {
-                                parentEUI64 = base64ToHex(proxy.Nodes[i][1].parent.v);
-                            } else if (nodeRole === NodeRoles.LFN) {
-                                parentEUI64 = borderRouterEUI64;
-                            }
-
-                            nodes.push({
-                                id: eui64,
-                                label: eui64.slice(eui64.length - 4),
-                                color: NodeRolesColors[nodeRole],
-                                ipv6: beautifyIpv6String(ipv6),
-                                parentEUI64,
-                                nodeRole,
-                                shape: nodeRole === NodeRoles.BorderRouter ? "box" : "ellipse",
-                                font: nodeRole === NodeRoles.BorderRouter ? "18px arial black" : "14px arial black"
-                            });
-                            edges.push({
-                                id: eui64,
-                                from: eui64,
-                                to: parentEUI64,
-                                dashes: nodeRole === NodeRoles.LFN,
-                                width: 2
-                            });
-                        }
-                    }
-
-                    setStateGraph({
-                        nodes,
-                        edges
                     });
 
-                    if (autoZoom && network !== undefined) {
-                        network.fit({
-                            animation: {
-                                duration: 1000,
-                                easingFunction: "linear",
-                            }
-                        });
-                    }
-
-                    setLoading(false);
+                    // Initial graph processing
+                    processGraphData(proxy);
                 }
-
-                dbusClient.close();
             });
         });
     };
 
-    useInterval(getGraph, 1000);
+    const processGraphData = (proxy) => {
+        const nodes = [];
+        const edges = [];
+        // Transform the array into an object indexed by 'id'
+        RoutingGraphindexedByIpv6 = proxy.RoutingGraph.reduce((acc, item) => {
+            acc[item[0]] = item;
+            return acc;
+        }, {});
+        for (let i = 0; i < proxy.RoutingGraph.length; i++) {
+            const ipv6 = base64ToHex(proxy.RoutingGraph[i][0]);
+            let nodeRole;
+            if (proxy.RoutingGraph[i][1] === false && proxy.RoutingGraph[i][2].length === 0) {
+                nodeRole = NodeRoles.BorderRouter;
+                borderrouterIpv6 = proxy.RoutingGraph[i][0];
+            } else if (proxy.RoutingGraph[i][1] === true) {
+                nodeRole = NodeRoles.LFN;
+            } else {
+                nodeRole = NodeRoles.FFN;
+            }
+
+            let parentIPv6;
+            node_level = 0;
+            if (checkLinkToBR(proxy.RoutingGraph[i][0])) {
+                if (proxy.RoutingGraph[i][2][0] !== undefined) {
+                    parentIPv6 = base64ToHex(proxy.RoutingGraph[i][2][0]);
+                    nodes.push({
+                        id: ipv6,
+                        label: ipv6.slice(ipv6.length - 4),
+                        color: NodeRolesColors[nodeRole],
+                        ipv6: beautifyIpv6String(ipv6),
+                        parentIPv6: beautifyIpv6String(parentIPv6),
+                        nodeRole,
+                        level: node_level,
+                        shape: nodeRole === NodeRoles.BorderRouter ? "box" : "ellipse",
+                        font: nodeRole === NodeRoles.BorderRouter ? "18px arial black" : "14px arial black"
+                    });
+                    edges.push({
+                        id: ipv6,
+                        from: ipv6,
+                        to: parentIPv6,
+                        dashes: nodeRole === NodeRoles.LFN,
+                        width: 2
+                    });
+                } else {
+                    nodes.push({
+                        id: ipv6,
+                        label: ipv6.slice(ipv6.length - 4),
+                        color: NodeRolesColors[nodeRole],
+                        ipv6: beautifyIpv6String(ipv6),
+                        nodeRole,
+                        level: node_level,
+                        shape: nodeRole === NodeRoles.BorderRouter ? "box" : "ellipse",
+                        font: nodeRole === NodeRoles.BorderRouter ? "18px arial black" : "14px arial black"
+                    });
+                    edges.push({
+                        id: ipv6,
+                        from: ipv6,
+                        to: parentIPv6,
+                        dashes: nodeRole === NodeRoles.LFN,
+                        width: 2
+                    });
+                }
+            }
+        }
+
+        setStateGraph({
+            nodes,
+            edges
+        });
+
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        initializeDbus();
+        return () => {
+            dbusClient.close();
+        };
+    });
+
+    useEffect(() => {
+        if (autoZoom && network !== undefined) {
+            network.fit({
+                animation: {
+                    duration: 1000,
+                    easingFunction: "linear",
+                }
+            });
+        }
+    }, [autoZoom, network]);
 
     const closeDrawer = () => {
         network.unselectAll();
@@ -259,8 +311,8 @@ const Topology = () => {
                         }} isHorizontal isFluid isCompact
                     >
                         <DescriptionListGroup>
-                            <DescriptionListTerm>Total:</DescriptionListTerm>
-                            <DescriptionListDescription>{stateGraph.nodes.length}</DescriptionListDescription>
+                            <DescriptionListTerm>Number of nodes:</DescriptionListTerm>
+                            <DescriptionListDescription>{stateGraph.nodes.length - 1}</DescriptionListDescription>
                         </DescriptionListGroup>
                         <Checkbox
                             id="auto-zoom-check"

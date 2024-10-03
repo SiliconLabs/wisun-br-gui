@@ -101,7 +101,7 @@ const App = () => {
                 </PageSection>
             }
         >
-            <PageSection isWidthLimited>
+            <PageSection>
                 {
                     (active === undefined || loading)
                         ? <Loading />

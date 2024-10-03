@@ -29,7 +29,6 @@ import {
     FlexItem,
     Flex
 } from "@patternfly/react-core";
-import { beautifyEUI64String } from "../utils/functions";
 import cockpit from "cockpit";
 import CenteredContent from "../utils/CenteredContent";
 
@@ -67,23 +66,17 @@ const TopologyDrawerContent = ({ closeDrawer, selectedNode, graph }) => {
                                             </DescriptionListDescription>
                                         </DescriptionListGroup>
                                         <DescriptionListGroup>
-                                            <DescriptionListTerm>Device EUI64</DescriptionListTerm>
-                                            <DescriptionListDescription>
-                                                {beautifyEUI64String(selectedNode.id)}
-                                            </DescriptionListDescription>
-                                        </DescriptionListGroup>
-                                        <DescriptionListGroup>
                                             <DescriptionListTerm>IPv6 address</DescriptionListTerm>
                                             <DescriptionListDescription>
                                                 {selectedNode.ipv6}
                                             </DescriptionListDescription>
                                         </DescriptionListGroup>
                                         {
-                                            selectedNode.parentEUI64 &&
+                                            selectedNode.parentIPv6 &&
                                             <DescriptionListGroup>
-                                                <DescriptionListTerm>Parent EUI64</DescriptionListTerm>
+                                                <DescriptionListTerm>Parent IPv6 address</DescriptionListTerm>
                                                 <DescriptionListDescription>
-                                                    {beautifyEUI64String(selectedNode.parentEUI64)}
+                                                    {selectedNode.parentIPv6}
                                                 </DescriptionListDescription>
                                             </DescriptionListGroup>
                                         }
@@ -92,9 +85,15 @@ const TopologyDrawerContent = ({ closeDrawer, selectedNode, graph }) => {
                                             <DescriptionListDescription>
                                                 {
                                                     graph.nodes
-                                                        .filter((n) => n.parentEUI64 !== undefined &&
-                                                            n.parentEUI64.localeCompare(selectedNode.id) === 0).length
+                                                        .filter((n) => n.parentIPv6 !== undefined &&
+                                                            n.parentIPv6.localeCompare(selectedNode.ipv6) === 0).length
                                                 }
+                                            </DescriptionListDescription>
+                                        </DescriptionListGroup>
+                                        <DescriptionListGroup>
+                                            <DescriptionListTerm>Hop Level</DescriptionListTerm>
+                                            <DescriptionListDescription>
+                                                {selectedNode.level}
                                             </DescriptionListDescription>
                                         </DescriptionListGroup>
                                     </DescriptionList>

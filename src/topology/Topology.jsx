@@ -15,7 +15,13 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { useEffect, useContext, useState } from "react";
+import {
+    useEffect,
+    useContext,
+    useState,
+    useCallback,
+    useRef
+} from "react";
 import cockpit from "cockpit";
 import { AppContext } from "../app";
 import Graph from "react-graph-vis";
@@ -49,8 +55,9 @@ const NodeRolesColors = ["#d91e2a", "#00b970", "#fad54c"];
 const EdgesColor = "#0f62fe";
 let RoutingGraphindexedByIpv6 = [];
 let borderrouterIpv6;
-let dbusClient;
+
 const Topology = () => {
+    const dbusClient = useRef(null); // Moved inside the component
     const [loading, setLoading] = useState(true);
     const [stateGraph, setStateGraph] = useState({
         nodes: [],
@@ -65,7 +72,7 @@ const Topology = () => {
     const { active } = useContext(AppContext);
 
     const options = {
-        physics: { stabilization : { enabled: false } },
+        physics: { stabilization: { enabled: false } },
         layout: {
             improvedLayout: true,
             hierarchical: {
@@ -84,59 +91,33 @@ const Topology = () => {
         height: '100%',
         width: '100%'
     };
-    let node_level;
-    const checkLinkToBR = (id) => {
-        if (RoutingGraphindexedByIpv6[id][2].length === 0 && RoutingGraphindexedByIpv6[id][0] === borderrouterIpv6) {
-            return true;
-        } else if (RoutingGraphindexedByIpv6[id][2].length === 0 &&
-            RoutingGraphindexedByIpv6[id][0] !== borderrouterIpv6) {
-            return false;
-        } else if (RoutingGraphindexedByIpv6[id][2] !== 0 &&
-            RoutingGraphindexedByIpv6[RoutingGraphindexedByIpv6[id][2][0]] !== undefined) {
-            if (checkLinkToBR(RoutingGraphindexedByIpv6[id][2][0])) {
-                node_level = node_level + 1;
+    const nodeLevelRef = useRef(0);
+
+    const processGraphData = useCallback((proxy) => {
+        const checkLinkToBR = (id, visited = new Set()) => {
+            if (visited.has(id)) {
+                // Cycle detected, stop recursion
+                return false;
+            }
+            visited.add(id);
+
+            if (RoutingGraphindexedByIpv6[id][2].length === 0 &&
+                RoutingGraphindexedByIpv6[id][0] === borderrouterIpv6) {
                 return true;
-            }
-        } else {
-            return false;
-        }
-    };
-
-    const initializeDbus = () => {
-        // only make a dbus request if the service is active
-        if (active !== true) {
-            if (loading) {
-                setLoading(false);
-            }
-            return;
-        }
-        dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
-
-        dbusClient.wait(() => {
-            const proxy = dbusClient.proxy();
-            const proxy_signal = dbusClient.proxy("org.freedesktop.DBus.Properties", "/com/silabs/Wisun/BorderRouter");
-            proxy.wait().then(() => {
-                if (proxy.valid === false) {
-                    setHasError(true);
-                    setLoading(false);
-                } else if (proxy.WisunMode !== undefined) {
-                    // the signal
-                    proxy_signal.addEventListener("signal", (event, name, args) => {
-                        if (args[2][0] === "RoutingGraph") {
-                            setTimeout(() => {
-                                processGraphData(proxy);
-                            }, 3000);
-                        }
-                    });
-
-                    // Initial graph processing
-                    processGraphData(proxy);
+            } else if (RoutingGraphindexedByIpv6[id][2].length === 0 &&
+                RoutingGraphindexedByIpv6[id][0] !== borderrouterIpv6) {
+                return false;
+            } else if (RoutingGraphindexedByIpv6[id][2] !== 0 &&
+                RoutingGraphindexedByIpv6[RoutingGraphindexedByIpv6[id][2][0]] !== undefined) {
+                if (checkLinkToBR(RoutingGraphindexedByIpv6[id][2][0], visited)) {
+                    nodeLevelRef.current = nodeLevelRef.current + 1;
+                    return true;
                 }
-            });
-        });
-    };
+            } else {
+                return false;
+            }
+        };
 
-    const processGraphData = (proxy) => {
         const nodes = [];
         const edges = [];
         // Transform the array into an object indexed by 'id'
@@ -147,7 +128,7 @@ const Topology = () => {
         for (let i = 0; i < proxy.RoutingGraph.length; i++) {
             const ipv6 = base64ToHex(proxy.RoutingGraph[i][0]);
             let nodeRole;
-            if (proxy.RoutingGraph[i][1] === false && proxy.RoutingGraph[i][2].length === 0) {
+            if (proxy.RoutingGraph[i][1] === false && proxy.RoutingGraph[i][2].length === 0 && i === 0) {
                 nodeRole = NodeRoles.BorderRouter;
                 borderrouterIpv6 = proxy.RoutingGraph[i][0];
             } else if (proxy.RoutingGraph[i][1] === true) {
@@ -157,7 +138,7 @@ const Topology = () => {
             }
 
             let parentIPv6;
-            node_level = 0;
+            nodeLevelRef.current = 0;
             if (checkLinkToBR(proxy.RoutingGraph[i][0])) {
                 if (proxy.RoutingGraph[i][2][0] !== undefined) {
                     parentIPv6 = base64ToHex(proxy.RoutingGraph[i][2][0]);
@@ -168,7 +149,7 @@ const Topology = () => {
                         ipv6: beautifyIpv6String(ipv6),
                         parentIPv6: beautifyIpv6String(parentIPv6),
                         nodeRole,
-                        level: node_level,
+                        level: nodeLevelRef.current,
                         shape: nodeRole === NodeRoles.BorderRouter ? "box" : "ellipse",
                         font: nodeRole === NodeRoles.BorderRouter ? "18px arial black" : "14px arial black"
                     });
@@ -186,7 +167,7 @@ const Topology = () => {
                         color: NodeRolesColors[nodeRole],
                         ipv6: beautifyIpv6String(ipv6),
                         nodeRole,
-                        level: node_level,
+                        level: nodeLevelRef.current,
                         shape: nodeRole === NodeRoles.BorderRouter ? "box" : "ellipse",
                         font: nodeRole === NodeRoles.BorderRouter ? "18px arial black" : "14px arial black"
                     });
@@ -207,14 +188,45 @@ const Topology = () => {
         });
 
         setLoading(false);
-    };
+    }, [setStateGraph, setLoading]);
+
+    const initializeDbus = useCallback(() => {
+        if (active !== true) {
+            if (loading) setLoading(false);
+            return;
+        }
+        dbusClient.current = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
+
+        dbusClient.current.wait(() => {
+            const proxy = dbusClient.current.proxy();
+            const proxy_signal = dbusClient.current.proxy("org.freedesktop.DBus.Properties",
+                "/com/silabs/Wisun/BorderRouter");
+            proxy.wait().then(() => {
+                if (proxy.valid === false) {
+                    setHasError(true);
+                    setLoading(false);
+                } else if (proxy.WisunMode !== undefined) {
+                    proxy_signal.addEventListener("signal", (event, name, args) => {
+                        if (args[2][0] === "RoutingGraph") {
+                            setTimeout(() => {
+                                processGraphData(proxy);
+                            }, 3000);
+                        }
+                    });
+                    processGraphData(proxy);
+                }
+            });
+        });
+    }, [active, loading, processGraphData]);
 
     useEffect(() => {
         initializeDbus();
         return () => {
-            dbusClient.close();
+            if (dbusClient.current) {
+                dbusClient.current.close();
+            }
         };
-    });
+    }, [initializeDbus]);
 
     useEffect(() => {
         if (autoZoom && network !== undefined) {
@@ -225,7 +237,7 @@ const Topology = () => {
                 }
             });
         }
-    }, [autoZoom, network]);
+    }, [autoZoom, network]); // Removed isMounted as it was unused
 
     const closeDrawer = () => {
         network.unselectAll();

@@ -3,10 +3,13 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern pthread_t clnt_thr;
 
 /**
  * \brief Initialize the Wi-SUN SoC Border Router Agent client module.

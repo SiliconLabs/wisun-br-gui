@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 #ifndef WS_BR_AGENT_LOG_ENABLE_COLORS
-#define WS_BR_AGENT_LOG_ENABLE_COLORS 0
+#define WS_BR_AGENT_LOG_ENABLE_COLORS 1
 #endif
 
 /// Color definitions for terminal output

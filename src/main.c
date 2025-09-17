@@ -1,12 +1,14 @@
-#include <stdio.h>
+#include <stdlib.h>
+#include "ws_br_agent_defs.h"
 #include "ws_br_agent_log.h"
 
 int main(int argc, char *argv[]) {
-    ws_br_agent_log_print(WS_BR_AGENT_LOG_COLOR_BLUE,"**********************************************************\n");
-    ws_br_agent_log_print(WS_BR_AGENT_LOG_COLOR_BLUE,"*          Wi-SUN SoC Border Router Agent Service        *\n");
-    ws_br_agent_log_print(WS_BR_AGENT_LOG_COLOR_BLUE,"*                        v0.1                            *\n");
-    ws_br_agent_log_print(WS_BR_AGENT_LOG_COLOR_BLUE,"*            Copyright (c) 2025 Silicon Labs, Inc.       *\n");
-    ws_br_agent_log_print(WS_BR_AGENT_LOG_COLOR_BLUE,"**********************************************************\n");
+    ws_br_agent_app_print("***********************************************************"                    "*\n");
+    ws_br_agent_app_print("*          " WS_BR_AGENT_APP_NAME "                        "                    "*\n");
+    ws_br_agent_app_print("*                        v" WS_BR_AGENT_VERSION "                              ""*\n");
+    ws_br_agent_app_print("*           " WS_BR_AGENT_APP_COPYRIGHT_STR "              "                    "*\n");
+    ws_br_agent_app_print("***********************************************************"                    "*\n");
 
-    return 0;
+    
+    return EXIT_SUCCESS;
 }

@@ -6,7 +6,7 @@ project(wisun_soc_br_agent C)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build)
 
 # Specify C standard
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Set toolchain to gcc (default on Linux)
@@ -22,3 +22,6 @@ file(GLOB SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
 
 # Add executable
 add_executable(wisun_soc_br_agent ${SOURCES})
+
+# Link pthread library
+target_link_libraries(wisun_soc_br_agent PRIVATE pthread)

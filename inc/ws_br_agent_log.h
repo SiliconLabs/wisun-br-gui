@@ -6,6 +6,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+/// Color definitions for terminal output
 #define WS_BR_AGENT_LOG_COLOR_RED     "\x1b[31m"
 #define WS_BR_AGENT_LOG_COLOR_GREEN   "\x1b[32m"
 #define WS_BR_AGENT_LOG_COLOR_YELLOW  "\x1b[33m"
@@ -15,12 +19,15 @@
 #define WS_BR_AGENT_LOG_COLOR_WHITE   "\x1b[37m"
 #define WS_BR_AGENT_LOG_COLOR_RESET   "\x1b[0m"
 
-#define ws_br_agent_log_print(color, fmt, ...)                               \
-  do {                                                                       \
-      fprintf(stdout, color fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
-      fflush(stdout);                                                        \
+/// Logging macros
+/// Print application banner
+#define ws_br_agent_app_print(fmt, ...)                                                           \
+  do {                                                                                            \
+      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_BLUE fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
+      fflush(stdout);                                                                             \
   } while (0)
 
+/// Info, Warning, Error, and Debug logs
 #define ws_br_agent_log_info(fmt, ...)                                                                            \
   do {                                                                                                            \
       fprintf(stdout, WS_BR_AGENT_LOG_COLOR_WHITE "[INFO] " fmt WS_BR_AGENT_LOG_COLOR_RESET "\n", ##__VA_ARGS__); \
@@ -44,5 +51,9 @@
       fprintf(stdout, WS_BR_AGENT_LOG_COLOR_CYAN "[DEBUG] " fmt WS_BR_AGENT_LOG_COLOR_RESET "\n", ##__VA_ARGS__); \
       fflush(stdout);                                                                                             \
   } while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // WS_BR_AGENT_LOG_H

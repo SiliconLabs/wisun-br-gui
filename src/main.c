@@ -23,7 +23,10 @@ int main(int argc, char *argv[]) {
   print_app_banner();
   
   assert(ws_br_agent_clnt_init() == WS_BR_AGENT_RET_OK);
-  
+
+  // TODO remove
+  (void) ws_br_agent_clnt_set_remote_addr("fe80::1");
+
   pthread_join(clnt_thr, NULL);
   
   return EXIT_SUCCESS;

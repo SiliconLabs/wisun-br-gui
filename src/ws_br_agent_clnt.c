@@ -8,6 +8,8 @@
 
 pthread_t clnt_thr;
 
+extern volatile sig_atomic_t thread_stop;
+
 static void clnt_thr_fnc(void *arg);
 
 int32_t ws_br_agent_clnt_init(void)
@@ -29,8 +31,8 @@ static void clnt_thr_fnc(void *arg)
 {
   (void) arg;
   ws_br_agent_log_warn("Client thread started.");
-  while (1) {
-    usleep(1000000);
+  while (!thread_stop) {
+    usleep(1000UL);
     ws_br_agent_log_info("Client thread is running...");
   }
 }

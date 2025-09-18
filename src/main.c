@@ -1,20 +1,32 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <signal.h>
+
 #include "ws_br_agent_defs.h"
 #include "ws_br_agent_log.h"
 #include "ws_br_agent_clnt.h"
 
+volatile sig_atomic_t thread_stop = 0;
+
+static void sigint_hnd(int signum);
+
 static void print_app_banner(void);
 
 int main(int argc, char *argv[]) {
-    
-    print_app_banner();
-
-    assert(ws_br_agent_clnt_init() == WS_BR_AGENT_RET_OK);
-
-    pthread_join(clnt_thr, NULL);
-
-    return EXIT_SUCCESS;
+  
+  struct sigaction sa;
+  sa.sa_handler = sigint_hnd;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sigaction(SIGINT, &sa, NULL);
+  
+  print_app_banner();
+  
+  assert(ws_br_agent_clnt_init() == WS_BR_AGENT_RET_OK);
+  
+  pthread_join(clnt_thr, NULL);
+  
+  return EXIT_SUCCESS;
 }
 
 static void print_app_banner(void)
@@ -25,7 +37,7 @@ static void print_app_banner(void)
   int len_copyright = sizeof(WS_BR_AGENT_APP_COPYRIGHT_STR) - 1;
   int padding_left = 0;
   int padding_right = 0;
-
+  
   for (int i = 0; i < banner_width; i++) ws_br_agent_app_print("*");
   ws_br_agent_app_print("\n");
   padding_left = (banner_width - 2 - len_app_name) / 2;
@@ -39,4 +51,11 @@ static void print_app_banner(void)
   ws_br_agent_app_print("*%*c" WS_BR_AGENT_APP_COPYRIGHT_STR "%*c*\n", padding_left, ' ', padding_right, ' ');
   for (int i = 0; i < banner_width; i++) ws_br_agent_app_print("*");
   ws_br_agent_app_print("\n");
+}
+
+static void sigint_hnd(int signum) 
+{
+  (void) signum;
+  thread_stop = 1;
+  ws_br_agent_log_warn("Stop application...");
 }

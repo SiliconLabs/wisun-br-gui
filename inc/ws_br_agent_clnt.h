@@ -10,9 +10,13 @@
 extern "C" {
 #endif
 
+extern const ws_br_agent_settings_t ws_br_agent_default_settings;
+
 typedef int32_t (*ws_br_agent_clnt_process_resp_cb_t)(const ws_br_agent_msg_t * const msg);
 
-int32_t ws_br_agent_clnt_send_req(const uint8_t req_code, ws_br_agent_clnt_process_resp_cb_t resp_cb);
+int32_t ws_br_agent_clnt_send_req(const ws_br_agent_msg_t * const req_msg, 
+                                  ws_br_agent_clnt_process_resp_cb_t resp_cb);
+
 int32_t ws_br_agent_clnt_set_remote_addr(const char *addr);
 
 

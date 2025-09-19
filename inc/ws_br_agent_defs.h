@@ -34,7 +34,7 @@ extern "C" {
 #define WS_BR_AGENT_NETWORK_NAME_SIZE 32
 
 /// Size of the request/response buffer
-#define WS_BE_AGENT_MAX_BUF_SIZE 2048U
+#define WS_BR_AGENT_MAX_BUF_SIZE 2048U
 
 #ifdef __cplusplus
 }

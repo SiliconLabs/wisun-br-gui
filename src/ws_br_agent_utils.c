@@ -1,7 +1,7 @@
 #include "ws_br_agent_defs.h"
 #include "ws_br_agent_log.h"
 #include "ws_br_agent_msg.h"
-
+#include "ws_br_agent_utils.h"
 
 void ws_br_agent_print_app_banner(void)
 {
@@ -66,4 +66,6 @@ int32_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const msg)
     ws_br_agent_log_info("%02x ", msg->payload[i]);
   }
   ws_br_agent_log_info("\n");
+  
+  return WS_BR_AGENT_RET_OK;
 }

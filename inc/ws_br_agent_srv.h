@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <pthread.h>
 
+#include "ws_br_agent_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,7 +16,7 @@ extern pthread_t srv_thr;
 /**
  * \brief Initialize the Wi-SUN SoC Border Router Agent client module.
  */
-int32_t ws_br_agent_srv_init(void);
+ws_br_agent_ret_t ws_br_agent_srv_init(void);
 
 
 #ifdef __cplusplus

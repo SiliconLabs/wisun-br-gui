@@ -23,13 +23,11 @@ extern "C" {
   (sizeof(ws_br_agent_msg_code_t) + sizeof(ws_br_agent_msg_len_t))
 
 #define WS_BR_AGENT_MSG_SET_PARAM_MSG_BUF_SIZE \
-  (WS_BR_AGENT_MSG_MIN_BUF_SIZE + sizeof(ws_br_agent_param_payload_t))
-
-
+  (WS_BR_AGENT_MSG_MIN_BUF_SIZE + sizeof(ws_br_agent_msg_settings_payload_t))
 
 typedef uint32_t ws_br_agent_msg_code_t;
 typedef uint32_t ws_br_agent_msg_len_t;
-typedef ws_br_agent_settings_t ws_br_agent_param_payload_t;
+typedef ws_br_agent_settings_t ws_br_agent_msg_settings_payload_t;
 
 /// Packet structure:
 /// [msg code 4 byte] [payload len 4 byte] [payload data n byte]

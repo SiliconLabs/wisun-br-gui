@@ -24,6 +24,8 @@ extern "C" {
 #define WS_BR_AGENT_RET_OK 0
 #define WS_BR_AGENT_RET_ERR -1
 
+typedef int32_t ws_br_agent_ret_t;
+
 /// Port number for the Wi-SUN SoC Border Router Agent service
 #define WS_BR_AGENT_SERVICE_PORT 5678U
 
@@ -35,6 +37,9 @@ extern "C" {
 
 /// Size of the request/response buffer
 #define WS_BR_AGENT_MAX_BUF_SIZE 2048U
+
+/// Maximum size of the IPv6 address string
+#define WS_BR_AGENT_IPV6_ADDR_STR_SIZE 40U
 
 #ifdef __cplusplus
 }

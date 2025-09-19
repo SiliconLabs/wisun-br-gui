@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 3.10)
-project(wisun_soc_br_agent C)
+project(wisun-soc-br-agent C)
 
 # Set output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build)
@@ -21,7 +21,7 @@ include_directories(${CMAKE_SOURCE_DIR}/inc)
 file(GLOB SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
 
 # Add executable
-add_executable(wisun_soc_br_agent ${SOURCES})
+add_executable(wisun-soc-br-agent ${SOURCES})
 
 # Link pthread library
-target_link_libraries(wisun_soc_br_agent PRIVATE pthread)
+target_link_libraries(wisun-soc-br-agent PRIVATE pthread)

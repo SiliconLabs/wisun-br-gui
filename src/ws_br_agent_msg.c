@@ -2,7 +2,7 @@
 #include <string.h>
 #include "ws_br_agent_log.h"
 #include "ws_br_agent_defs.h"
-#include "ws_br_agent_clnt.h"
+#include "ws_br_agent_soc_host.h"
 #include "ws_br_agent_msg.h"
 
 #define __add_msg_code_and_len_to_buf(ptr, msg)       \
@@ -17,6 +17,7 @@ uint8_t *ws_br_agent_msg_build_buf(const ws_br_agent_msg_t * const msg, size_t *
 {
   uint8_t *ptr = NULL;
   uint8_t *start_ptr = NULL;
+  ws_br_agent_msg_settings_payload_t settings_payload = { 0U };
 
   if (msg == NULL || buf_size ==NULL) {
     return NULL;
@@ -45,14 +46,17 @@ uint8_t *ws_br_agent_msg_build_buf(const ws_br_agent_msg_t * const msg, size_t *
       }
       ptr = start_ptr;
       __add_msg_code_and_len_to_buf(ptr, msg);
-      memcpy((uint8_t *)ptr, &ws_br_agent_default_settings, sizeof(ws_br_agent_param_payload_t));
-      ptr += sizeof(ws_br_agent_param_payload_t);
+      (void) ws_br_agent_soc_host_get_settings(&settings_payload);
+      memcpy((uint8_t *)ptr, &settings_payload, sizeof(ws_br_agent_msg_settings_payload_t));
+      ptr += sizeof(ws_br_agent_msg_settings_payload_t);
       break;
 
     default:
       ws_br_agent_log_error("Build message error: Unsupported request code (0x%2x)", msg->msg_code);
       return NULL;
   }
+  
+  *buf_size = (size_t)(ptr - start_ptr);
   return start_ptr;
 }
 

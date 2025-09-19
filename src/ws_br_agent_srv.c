@@ -18,7 +18,7 @@ volatile sig_atomic_t thread_stop;
 static void srv_thr_fnc(void *arg);
 static void sigint_hnd(int signum);
 
-int32_t ws_br_agent_srv_init(void)
+ws_br_agent_ret_t ws_br_agent_srv_init(void)
 {
   struct sigaction sa;
   sa.sa_handler = sigint_hnd;

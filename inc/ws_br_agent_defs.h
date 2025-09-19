@@ -30,31 +30,11 @@ extern "C" {
 /// Port number of the Wi-SUN SoC Border Router Agent SoC
 #define WS_BR_AGENT_SOC_PORT 4567U
 
-
-// Agent Service Request/Response codes
-#define WS_BR_AGENT_MSG_CODE_GET_TOPOLOGY       (0x01U)
-#define WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS  (0x02U)
-#define WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS  (0x03U)
-#define WS_BR_AGENT_MSG_CODE_START_BR           (0x04U)
-#define WS_BR_AGENT_MSG_CODE_STOP_BR            (0x05U)
-
-
 /// Maximum size of the Wi-SUN network name
-#define SL_WISUN_NETWORK_NAME_SIZE 32
+#define WS_BR_AGENT_NETWORK_NAME_SIZE 32
 
-
-typedef struct __attribute__((aligned(1))) ws_br_agent_param_payload {
-  char network_name[SL_WISUN_NETWORK_NAME_SIZE + 1];
-  uint8_t regulatory_domain;
-  uint8_t network_size;
-  uint8_t chan_plan_id;
-  uint8_t phy_mode_id;
-  int16_t tx_power_ddbm;
-  uint16_t pan_id;
-  uint8_t gaks[4][16];
-  uint8_t gtks[4][16];
-} ws_br_agent_param_payload_t;
-
+/// Size of the request/response buffer
+#define WS_BE_AGENT_MAX_BUF_SIZE 2048U
 
 #ifdef __cplusplus
 }

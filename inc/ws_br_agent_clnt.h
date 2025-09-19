@@ -4,20 +4,15 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include "ws_br_agent_msg.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef int32_t (*ws_br_agent_clnt_resp_cb_t)(const uint8_t *data, size_t data_len);
+typedef int32_t (*ws_br_agent_clnt_process_resp_cb_t)(const ws_br_agent_msg_t * const msg);
 
-extern pthread_t clnt_thr;
-
-/**
- * \brief Initialize the Wi-SUN SoC Border Router Agent client module.
- */
-int32_t ws_br_agent_clnt_init(void);
-int32_t ws_br_agent_clnt_send_req(const uint8_t req_code, ws_br_agent_clnt_resp_cb_t resp_cb);
+int32_t ws_br_agent_clnt_send_req(const uint8_t req_code, ws_br_agent_clnt_process_resp_cb_t resp_cb);
 int32_t ws_br_agent_clnt_set_remote_addr(const char *addr);
 
 

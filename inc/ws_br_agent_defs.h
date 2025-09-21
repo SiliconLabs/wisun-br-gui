@@ -21,8 +21,8 @@ extern "C" {
 #define WS_BR_AGENT_APP_COPYRIGHT_STR "Copyright (c) 2025 Silicon Labs, Inc."
 
 /// Return codes
-#define WS_BR_AGENT_RET_OK 0
-#define WS_BR_AGENT_RET_ERR -1
+#define WS_BR_AGENT_RET_OK 0L
+#define WS_BR_AGENT_RET_ERR -1L
 
 typedef int32_t ws_br_agent_ret_t;
 

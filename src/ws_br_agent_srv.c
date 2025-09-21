@@ -49,10 +49,10 @@ static void srv_thr_fnc(void *arg)
   ssize_t r = 0L;
   ws_br_agent_msg_t *msg = NULL;
 
-  ws_br_agent_log_warn("Server thread started");
+  ws_br_agent_log_warn("Server thread started\n");
   listen_fd = socket(AF_INET6, SOCK_STREAM, 0);
   if (listen_fd < 0) {
-    ws_br_agent_log_error("Server socket creation failed");
+    ws_br_agent_log_error("Server socket creation failed\n");
     return;
   }
 
@@ -61,18 +61,18 @@ static void srv_thr_fnc(void *arg)
   serv_addr.sin6_port = htons(WS_BR_AGENT_SERVICE_PORT);
 
   if (bind(listen_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-    ws_br_agent_log_error("Server bind failed");
+    ws_br_agent_log_error("Server bind failed\n");
     close(listen_fd);
     return;
   }
 
   if (listen(listen_fd, 5) < 0) {
-    ws_br_agent_log_error("Server listen failed");
+    ws_br_agent_log_error("Server listen failed\n");
     close(listen_fd);
     return;
   }
 
-  ws_br_agent_log_info("Server listening on port %d", WS_BR_AGENT_SERVICE_PORT);
+  ws_br_agent_log_info("Server listening on port %d\n", WS_BR_AGENT_SERVICE_PORT);
 
   while (!thread_stop) {
     conn_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &client_len);
@@ -80,27 +80,27 @@ static void srv_thr_fnc(void *arg)
       if (thread_stop){
         break;
       }
-      ws_br_agent_log_warn("Accept failed");
+      ws_br_agent_log_warn("Accept failed\n");
       usleep(DISPACH_DELAY_US);
       continue;
     }
     inet_ntop(AF_INET6, &client_addr.sin6_addr, client_ip, sizeof(client_ip));
-    ws_br_agent_log_info("Accepted connection from %s:%d", client_ip, ntohs(client_addr.sin6_port));
+    ws_br_agent_log_info("Accepted connection from %s:%d\n", client_ip, ntohs(client_addr.sin6_port));
 
     r = recv(conn_fd, buf, WS_BR_AGENT_MAX_BUF_SIZE, 0);
     if (r < 0) {
-      ws_br_agent_log_warn("Receive failed");
+      ws_br_agent_log_warn("Receive failed\n");
       close(conn_fd);
       continue;
     } else if (r == 0) {
-      ws_br_agent_log_warn("Connection closed by client");
+      ws_br_agent_log_warn("Connection closed by client\n");
       close(conn_fd);
       continue;
     }
 
     msg = ws_br_agent_msg_parse_buf(buf, (size_t)r);
     if (msg == NULL) {
-      ws_br_agent_log_warn("Failed to parse received message");
+      ws_br_agent_log_warn("Failed to parse received message\n");
       close(conn_fd);
       continue;
     }
@@ -112,7 +112,7 @@ static void srv_thr_fnc(void *arg)
     close(conn_fd);
   }
   close(listen_fd);
-  ws_br_agent_log_warn("Server thread stopped");
+  ws_br_agent_log_warn("Server thread stopped\n");
 }
 
 static void sigint_hnd(int signum) 
@@ -120,5 +120,5 @@ static void sigint_hnd(int signum)
   (void) signum;
   thread_stop = 1;
   close(listen_fd);
-  ws_br_agent_log_warn("Stop application...");
+  ws_br_agent_log_warn("Stop application...\n");
 }

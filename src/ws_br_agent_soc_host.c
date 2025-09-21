@@ -23,7 +23,12 @@ static const ws_br_agent_settings_t default_host_settings = {
   .tx_power_ddbm = 0,
   .pan_id = 0x1234,
   .gaks = { {0}, {0}, {0}, {0} },
-  .gtks = { {0}, {0}, {0}, {0} }
+  .gtks = {
+    {0xBB, 0x06, 0x08, 0x57, 0x2C, 0xE1, 0x4D, 0x7B, 0xA2, 0xD1, 0x55, 0x49, 0x9C, 0xC8, 0x51, 0x9B},  // GTK[0] from Conformance Test Plan.
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  }
 };
 
 static ws_br_agent_soc_host_t host = { 0U };
@@ -33,7 +38,7 @@ static pthread_mutex_t host_mutex = PTHREAD_MUTEX_INITIALIZER;
 ws_br_agent_ret_t ws_br_agent_soc_host_init(void) 
 {
   if (pthread_mutex_init(&host_mutex, NULL) != 0) {
-    ws_br_agent_log_error("Mutex init failed");
+    ws_br_agent_log_error("Mutex init failed\n");
     return WS_BR_AGENT_RET_ERR;
   }
   memset(&host, 0, sizeof(ws_br_agent_soc_host_t));
@@ -141,16 +146,15 @@ ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const 
 }
 
 ws_br_agent_ret_t ws_br_agent_soc_host_set(const char *addr,
-                                                  const ws_br_agent_settings_t *const settings)
+                                           const ws_br_agent_settings_t *const settings)
 {
-  pthread_mutex_lock(&host_mutex);
   if (addr == NULL) {
-    pthread_mutex_unlock(&host_mutex);
     return WS_BR_AGENT_RET_ERR;
   }
   
+  pthread_mutex_lock(&host_mutex);
   if (inet_pton(AF_INET6, addr, &host.remote_addr.sin6_addr) != 1) {
-    ws_br_agent_log_error("Invalid IPv6 address: %s", addr);
+    ws_br_agent_log_error("Invalid IPv6 address: %s\n", addr);
     pthread_mutex_unlock(&host_mutex);
     return WS_BR_AGENT_RET_ERR;
   }

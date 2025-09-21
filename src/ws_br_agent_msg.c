@@ -30,7 +30,7 @@ uint8_t *ws_br_agent_msg_build_buf(const ws_br_agent_msg_t * const msg, size_t *
     case WS_BR_AGENT_MSG_CODE_STOP_BR:
       start_ptr = malloc(WS_BR_AGENT_MSG_MIN_BUF_SIZE);
       if (start_ptr == NULL) {
-        ws_br_agent_log_error("Build message error: Memory allocation failed");
+        ws_br_agent_log_error("Build message error: Memory allocation failed\n");
         return NULL;
       }
       ptr = start_ptr;
@@ -41,7 +41,7 @@ uint8_t *ws_br_agent_msg_build_buf(const ws_br_agent_msg_t * const msg, size_t *
     case WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS:
       start_ptr = malloc(WS_BR_AGENT_MSG_SET_PARAM_MSG_BUF_SIZE);
       if (start_ptr == NULL) {
-        ws_br_agent_log_error("Build message error: Memory allocation failed");
+        ws_br_agent_log_error("Build message error: Memory allocation failed\n");
         return NULL;
       }
       ptr = start_ptr;
@@ -52,7 +52,7 @@ uint8_t *ws_br_agent_msg_build_buf(const ws_br_agent_msg_t * const msg, size_t *
       break;
 
     default:
-      ws_br_agent_log_error("Build message error: Unsupported request code (0x%2x)", msg->msg_code);
+      ws_br_agent_log_error("Build message error: Unsupported request code (0x%2x)\n", msg->msg_code);
       return NULL;
   }
   
@@ -77,7 +77,7 @@ ws_br_agent_msg_t *ws_br_agent_msg_parse_buf(const uint8_t * const buf, const si
     case WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS:
       msg = (ws_br_agent_msg_t *)malloc(sizeof(ws_br_agent_msg_t));
       if (msg == NULL) {
-        ws_br_agent_log_error("Parse message error: Memory allocation failed");
+        ws_br_agent_log_error("Parse message error: Memory allocation failed\n");
         return NULL;
       }
       msg->msg_code = ntohl(*ptr);
@@ -86,13 +86,13 @@ ws_br_agent_msg_t *ws_br_agent_msg_parse_buf(const uint8_t * const buf, const si
       ptr++;
       if (msg->payload_len > 0) {
         if (buf_size < (WS_BR_AGENT_MSG_MIN_BUF_SIZE + msg->payload_len)) {
-          ws_br_agent_log_error("Parse message error: Invalid payload length");
+          ws_br_agent_log_error("Parse message error: Invalid payload length\n");
           free(msg);
           return NULL;
         }
         msg->payload = (uint8_t *)malloc(msg->payload_len);
         if (msg->payload == NULL) {
-          ws_br_agent_log_error("Parse message error: Memory allocation failed");
+          ws_br_agent_log_error("Parse message error: Memory allocation failed\n");
           free(msg);
           return NULL;
         }
@@ -102,7 +102,7 @@ ws_br_agent_msg_t *ws_br_agent_msg_parse_buf(const uint8_t * const buf, const si
       }
       break;
     default:
-      ws_br_agent_log_error("Build message error: Unsupported request code (0x%2x)", ntohl(*ptr));
+      ws_br_agent_log_error("Build message error: Unsupported request code (0x%2x)\n", ntohl(*ptr));
       return NULL;
   }
 

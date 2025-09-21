@@ -46,25 +46,25 @@ extern "C" {
 /// Info, Warning, Error, and Debug logs
 #define ws_br_agent_log_info(fmt, ...)                                                                            \
   do {                                                                                                            \
-      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_WHITE "[INFO] " fmt WS_BR_AGENT_LOG_COLOR_RESET "\n", ##__VA_ARGS__); \
+      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_WHITE "[INFO] " fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
       fflush(stdout);                                                                                             \
   } while (0)
 
 #define ws_br_agent_log_warn(fmt, ...)                                                                             \
   do {                                                                                                             \
-      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_YELLOW "[WARN] " fmt WS_BR_AGENT_LOG_COLOR_RESET "\n", ##__VA_ARGS__); \
+      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_YELLOW "[WARN] " fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
       fflush(stdout);                                                                                              \
   } while (0)
 
 #define ws_br_agent_log_error(fmt, ...)                                                                          \
   do {                                                                                                           \
-      fprintf(stderr, WS_BR_AGENT_LOG_COLOR_RED "[ERROR] " fmt WS_BR_AGENT_LOG_COLOR_RESET "\n", ##__VA_ARGS__); \
+      fprintf(stderr, WS_BR_AGENT_LOG_COLOR_RED "[ERROR] " fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
       fflush(stderr);                                                                                            \
   } while (0)
 
 #define ws_br_agent_log_debug(fmt, ...)                                                                           \
   do {                                                                                                            \
-      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_CYAN "[DEBUG] " fmt WS_BR_AGENT_LOG_COLOR_RESET "\n", ##__VA_ARGS__); \
+      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_CYAN "[DEBUG] " fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
       fflush(stdout);                                                                                             \
   } while (0)
 

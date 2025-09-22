@@ -13,7 +13,10 @@
 
 #include <pthread.h>
 
-// TODO Replace with settings API
+
+static ws_br_agent_ret_t copy_topology(ws_br_agent_soc_host_topology_t * const dst_topology,
+                                       const ws_br_agent_soc_host_topology_t * const src_topology);
+
 static const ws_br_agent_settings_t default_host_settings = {
   .network_name = "Wi-SUN_Network",
   .regulatory_domain = 1,
@@ -34,6 +37,11 @@ static const ws_br_agent_settings_t default_host_settings = {
 static ws_br_agent_soc_host_t host = { 0U };
 
 static pthread_mutex_t host_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static ws_br_agent_soc_host_topology_t host_topology = { 
+  .entry_count = 0U, 
+  .entries = NULL 
+};
 
 ws_br_agent_ret_t ws_br_agent_soc_host_init(void) 
 {
@@ -199,6 +207,74 @@ ws_br_agent_ret_t ws_br_agent_soc_host_get_settings(ws_br_agent_settings_t * con
   pthread_mutex_lock(&host_mutex);
   memcpy(settings, &host.settings, sizeof(ws_br_agent_settings_t));
   pthread_mutex_unlock(&host_mutex);
+
+  return WS_BR_AGENT_RET_OK;
+}
+
+static ws_br_agent_ret_t copy_topology(ws_br_agent_soc_host_topology_t * const dst_topology,
+                                       const ws_br_agent_soc_host_topology_t * const src_topology)
+{
+  size_t storage_size = 0U;
+
+  if (src_topology == NULL
+     || dst_topology == NULL
+     || src_topology->entries == NULL 
+     || !src_topology->entry_count) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  if (dst_topology->entries != NULL) {
+    free(dst_topology->entries);
+  }
+
+  dst_topology->entry_count = src_topology->entry_count;
+
+  // Allocate dest topology
+  storage_size = src_topology->entry_count * sizeof(ws_br_agent_soc_host_topology_entry_t);
+  dst_topology->entries = (ws_br_agent_soc_host_topology_entry_t *) malloc(storage_size);
+  if (dst_topology->entries == NULL) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  memcpy(dst_topology->entries, src_topology->entries, storage_size);
+
+  return WS_BR_AGENT_RET_OK;
+}
+
+ws_br_agent_ret_t ws_br_agent_soc_host_set_topology(const ws_br_agent_soc_host_topology_t *topology)
+{
+  ws_br_agent_ret_t ret = WS_BR_AGENT_RET_ERR;
+
+  pthread_mutex_lock(&host_mutex);
+  ret = copy_topology(&host_topology, topology);
+  pthread_mutex_unlock(&host_mutex);
+
+  return ret;
+}
+
+ws_br_agent_ret_t ws_br_agent_soc_host_get_topology(ws_br_agent_soc_host_topology_t * const topology)
+{
+  ws_br_agent_ret_t ret = WS_BR_AGENT_RET_ERR;
+
+  pthread_mutex_lock(&host_mutex);
+  ret = copy_topology(topology, &host_topology);
+  pthread_mutex_unlock(&host_mutex);
+
+  return ret;
+}
+
+ws_br_agent_ret_t ws_br_agent_soc_host_free_topology(ws_br_agent_soc_host_topology_t *topology)
+{
+  if (topology == NULL) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  if (topology->entries != NULL) {
+    free(topology->entries);
+    topology->entries = NULL;
+  }
+
+  topology->entry_count = 0;
 
   return WS_BR_AGENT_RET_OK;
 }

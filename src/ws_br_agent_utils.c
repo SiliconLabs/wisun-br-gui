@@ -60,7 +60,7 @@ int32_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const msg)
     return WS_BR_AGENT_RET_ERR;
   }
 
-  ws_br_agent_log_info("Msg code: %s (%04x)\n", 
+  ws_br_agent_log_info("Msg code: %s (0x%04x)\n", 
                        ws_br_utils_get_req_code_str(msg->msg_code), 
                        msg->msg_code);
   ws_br_agent_log_info("Payload len: %u\n", msg->payload_len);

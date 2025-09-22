@@ -49,8 +49,9 @@ ws_br_agent_ret_t ws_br_agent_soc_host_init(void)
     ws_br_agent_log_error("Mutex init failed\n");
     return WS_BR_AGENT_RET_ERR;
   }
-  memset(&host, 0, sizeof(ws_br_agent_soc_host_t));
-  memcpy(&host.settings, &default_host_settings, sizeof(ws_br_agent_settings_t));
+  // Set local host with default settings for init
+  ws_br_agent_soc_host_set("::1", NULL);
+  
   return WS_BR_AGENT_RET_OK;
 }
 

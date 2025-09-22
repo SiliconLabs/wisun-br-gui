@@ -20,9 +20,6 @@ int main(int argc, char *argv[])
   assert(ws_br_agent_soc_host_init() == WS_BR_AGENT_RET_OK);
   assert(ws_br_agent_srv_init() == WS_BR_AGENT_RET_OK);
 
-  // TODO remove
-  (void) ws_br_agent_soc_host_set("fe80::1", NULL);
-
   pthread_join(srv_thr, NULL);
   
   return EXIT_SUCCESS;

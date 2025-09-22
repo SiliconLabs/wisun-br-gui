@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
   (void) argc;
   (void) argv;
 
-  ws_br_agent_print_app_banner();
+  ws_br_agent_utils_print_app_banner();
 
   assert(ws_br_agent_soc_host_init() == WS_BR_AGENT_RET_OK);
   assert(ws_br_agent_srv_init() == WS_BR_AGENT_RET_OK);

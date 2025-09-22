@@ -18,7 +18,6 @@ BOT_LISTEN_HOST = "::"
 BOT_LISTEN_PORT = 4567
 SEND_INTERVAL = 5
 
-# Build a 16-byte dummy payload for GET requests
 def make_random_topology():
   # 3 address in one entry
   addr_template = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]
@@ -78,7 +77,7 @@ def build_settings_payload():
     0xBB, 0x06, 0x08, 0x57, 0x2C, 0xE1, 0x4D, 0x7B, 0xA2, 0xD1, 0x55, 0x49, 0x9C, 0xC8, 0x51, 0x9B,
     *([0x00] * 16),
     *([0x00] * 16),
-    *([0x00] * 16), 0xff
+    *([0x00] * 16)
   ])
   return payload
 
@@ -91,11 +90,12 @@ def send_request(msg_code, payload=b""):
   try:
     with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as sock:
         sock.connect((APP_HOST, APP_PORT))
-        msg_get = build_message(msg_code, payload)
-        sock.sendall(msg_get)
-        print(f"Sent {CODE_STR_MAP.get(msg_code, 'UNKNOWN')}: code={hex(msg_code)}, len={len(payload)} payload={payload.hex()}")
+        msg = build_message(msg_code, payload)
+        sock.sendall(msg)
+        # print(f"Sent {CODE_STR_MAP.get(msg_code, 'UNKNOWN')}: code={hex(msg_code)}, len={len(payload)} payload={payload.hex()}")
+        print(print_msg_like_utils(msg))
         response = sock.recv(2048)
-        print(f"Received {len(response)} bytes from app (GET)")
+        print(f"Received response {len(response)} bytes from app")
   except Exception as e:
     print(f"Send error: {e}")
 
@@ -117,25 +117,27 @@ def tcp_server():
         data = conn.recv(4096)
         if data:
           print(f"Received {len(data)} bytes from app")
-          print_msg_like_utils(data)
+          print(print_msg_like_utils(data))
 
 def print_msg_like_utils(data):
   if len(data) < 8:
     print("Invalid message (too short)")
     return
+  res = ''
   msg_code = int.from_bytes(data[0:4], byteorder='big')
   payload_len = int.from_bytes(data[4:8], byteorder='big')
   payload = data[8:8+payload_len]
   code_str = CODE_STR_MAP.get(msg_code, "UNKNOWN")
-  print(f"Msg code: {msg_code:08x} ({code_str})")
-  print(f"Payload len: {payload_len}")
+  res += f"Msg code: {msg_code:08x} ({code_str})\n"
+  res += f"Payload len: {payload_len}\n"
   if payload_len:
-    print("Payload data:")
+    res += "Payload data:"
     for i in range(payload_len):
       if i % 16 == 0:
-        print(f'')
-      print(f" {payload[i]:02x} ", end='')
-    print()
+        res += f'\n'
+      res += f" 0x{payload[i]:02x}"
+    res += f'\n'
+  return res
 
 if __name__ == "__main__":
   t1 = threading.Thread(target=send_periodic_requests, daemon=True)

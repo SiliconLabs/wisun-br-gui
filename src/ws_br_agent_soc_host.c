@@ -58,7 +58,7 @@ ws_br_agent_ret_t ws_br_agent_soc_host_init(void)
 ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const req_msg, 
                                                 ws_br_agent_soc_host_process_resp_cb_t resp_cb)
 {
-  int sockfd;
+  int sockfd = -1;
   ssize_t r = 0;
   size_t buf_size = 0;
   uint8_t *rxtx_buf = NULL;
@@ -66,7 +66,7 @@ ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const 
 
   pthread_mutex_lock(&host_mutex);
   ws_br_agent_log_info("Send '%s' request (0x%08x)...\n", 
-                       ws_br_utils_get_req_code_str(req_msg->msg_code), req_msg->msg_code);
+                       ws_br_agent_utils_get_req_code_str(req_msg->msg_code), req_msg->msg_code);
 
   sockfd = socket(AF_INET6, SOCK_STREAM, 0);
 
@@ -201,6 +201,7 @@ ws_br_agent_ret_t ws_br_agent_soc_host_set_remote_addr(const struct sockaddr_in6
 
   pthread_mutex_lock(&host_mutex);
   memcpy(&host.remote_addr, addr, sizeof(struct sockaddr_in6));
+  host.remote_addr.sin6_port = htons(WS_BR_AGENT_SOC_PORT);
   inet_ntop(AF_INET6, &addr->sin6_addr, host.remote_addr_str, sizeof(host.remote_addr_str));
   pthread_mutex_unlock(&host_mutex);
 

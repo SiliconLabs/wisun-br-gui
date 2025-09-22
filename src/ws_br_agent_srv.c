@@ -24,7 +24,7 @@ static void sigint_hnd(int signum);
 static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t *const req_msg);
 static ws_br_agent_ret_t handle_set_config_params_req(const ws_br_agent_msg_t *const req_msg,
                                                       const struct sockaddr_in6 * const clnt_addr);
-static ws_br_agent_ret_t handle_get_config_params_req(void);
+static ws_br_agent_ret_t handle_get_config_params_req(int conn_fd);
 
 ws_br_agent_ret_t ws_br_agent_srv_init(void)
 {
@@ -145,13 +145,13 @@ static void srv_thr_fnc(void *arg)
 
     // Not handled requests
     case WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS:
-      (void) handle_get_config_params_req();
+      (void) handle_get_config_params_req(conn_fd);
       break;
     
     case WS_BR_AGENT_MSG_CODE_START_BR:
     case WS_BR_AGENT_MSG_CODE_STOP_BR:
       ws_br_agent_log_warn("Not handled request: '%s' (0x%08x)\n",
-                           ws_br_utils_get_req_code_str(msg->msg_code), msg->msg_code);
+                           ws_br_agent_utils_get_req_code_str(msg->msg_code), msg->msg_code);
       break;
     default:
       ws_br_agent_log_warn("Unknown request: (0x%08x)\n", msg->msg_code);
@@ -194,32 +194,38 @@ static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t *const req_
 static ws_br_agent_ret_t handle_set_config_params_req(const ws_br_agent_msg_t *const req_msg,
                                                       const struct sockaddr_in6 * const clnt_addr)
 {
+  ws_br_agent_settings_t settings = { 0U };
+
   if (clnt_addr == NULL || req_msg == NULL || req_msg->payload == NULL 
-      || req_msg->payload_len != sizeof(ws_br_agent_settings_t))
-  {
+      || req_msg->payload_len != sizeof(ws_br_agent_settings_t)) {
     ws_br_agent_log_error("Bad SET_CONFIG_PARAMS request\n");
     return WS_BR_AGENT_RET_ERR;
   }
 
-  ws_br_agent_log_info("Set config params request from %s\n", clnt_addr->sin6_addr.s6_addr);
-
-  if (ws_br_agent_soc_host_set_remote_addr(clnt_addr) != WS_BR_AGENT_RET_OK)
-  {
+  
+  if (ws_br_agent_soc_host_set_remote_addr(clnt_addr) != WS_BR_AGENT_RET_OK) {
     ws_br_agent_log_error("Failed to set remote address\n");
     return WS_BR_AGENT_RET_ERR;
   }
-
-  if (ws_br_agent_soc_host_set_settings((ws_br_agent_settings_t *)req_msg->payload) != WS_BR_AGENT_RET_OK)
-  {
+  
+  if (ws_br_agent_soc_host_set_settings((ws_br_agent_settings_t *)req_msg->payload) 
+      != WS_BR_AGENT_RET_OK) {
     ws_br_agent_log_error("Failed to set host settings\n");
     return WS_BR_AGENT_RET_ERR;
   }
-  ws_br_agent_log_info("Config params updated\n");
+  if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
+    ws_br_agent_log_error("Failed to check host settings\n");
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  ws_br_agent_log_info("Config params updated:\n");
+
+  ws_br_agent_utils_print_host_settings(&settings);
 
   return WS_BR_AGENT_RET_OK;
 }
 
-static ws_br_agent_ret_t handle_get_config_params_req(void)
+static ws_br_agent_ret_t handle_get_config_params_req(int conn_fd)
 {
   uint8_t *buf = NULL;
   size_t buf_size = 0U;
@@ -231,14 +237,13 @@ static ws_br_agent_ret_t handle_get_config_params_req(void)
 
   buf = ws_br_agent_msg_build_buf(&msg, &buf_size);
 
-  if (buf == NULL || buf_size != WS_BR_AGENT_MSG_SET_PARAM_MSG_BUF_SIZE)
-  {
+  if (buf == NULL || buf_size != WS_BR_AGENT_MSG_SET_PARAM_MSG_BUF_SIZE) {
     ws_br_agent_log_error("Failed to build SET_CONFIG_PARAMS as response\n");
     return WS_BR_AGENT_RET_ERR;
   }
 
-  if (ws_br_agent_soc_host_send_req(&msg, NULL) != WS_BR_AGENT_RET_OK)
-  {
+  // if (ws_br_agent_soc_host_send_req(&msg, NULL) != WS_BR_AGENT_RET_OK) {
+  if (send(conn_fd, buf, buf_size, 0) < 0) {
     ws_br_agent_log_error("Failed to send SET_CONFIG_PARAMS as response\n");
     free(buf);
     return WS_BR_AGENT_RET_ERR;

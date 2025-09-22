@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-typedef struct __attribute__((aligned(1))) ws_br_agent_settings {
+typedef struct __attribute__((packed, aligned(1))) ws_br_agent_settings {
   char network_name[WS_BR_AGENT_NETWORK_NAME_SIZE + 1];
   uint8_t regulatory_domain;
   uint8_t network_size;

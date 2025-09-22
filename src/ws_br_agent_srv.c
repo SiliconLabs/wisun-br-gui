@@ -11,6 +11,7 @@
 #include "ws_br_agent_log.h"
 #include "ws_br_agent_utils.h"
 #include "ws_br_agent_msg.h"
+#include "ws_br_agent_soc_host.h"
 #include "ws_br_agent_srv.h"
 
 #define DISPACH_DELAY_US 1000UL
@@ -20,6 +21,7 @@ volatile sig_atomic_t thread_stop;
 static int listen_fd = -1L;
 static void srv_thr_fnc(void *arg);
 static void sigint_hnd(int signum);
+static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t * const req_msg);
 
 ws_br_agent_ret_t ws_br_agent_srv_init(void)
 {
@@ -37,7 +39,6 @@ ws_br_agent_ret_t ws_br_agent_srv_init(void)
 
 static void srv_thr_fnc(void *arg)
 {
-  (void) arg;
   
   
   int conn_fd = -1L;
@@ -48,7 +49,9 @@ static void srv_thr_fnc(void *arg)
   static uint8_t buf[WS_BR_AGENT_MAX_BUF_SIZE] = { 0U };
   ssize_t r = 0L;
   ws_br_agent_msg_t *msg = NULL;
+  ws_br_agent_soc_host_topology_t topology = { 0U, NULL };
 
+  (void) arg;
   ws_br_agent_log_warn("Server thread started\n");
   listen_fd = socket(AF_INET6, SOCK_STREAM, 0);
   if (listen_fd < 0) {
@@ -105,6 +108,26 @@ static void srv_thr_fnc(void *arg)
       continue;
     }
 
+    // Handle requests
+    switch(msg->msg_code) {
+      // Handle topology request
+      case WS_BR_AGENT_MSG_CODE_TOPOLOGY:
+        (void) handle_topology_req(msg);
+        break;
+      
+      // Not handled requests
+      case WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS:
+      case WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS:    
+      case WS_BR_AGENT_MSG_CODE_START_BR:
+      case WS_BR_AGENT_MSG_CODE_STOP_BR:
+        ws_br_agent_log_warn("Not handled request: '%s' (0x%04x)\n", 
+                             ws_br_utils_get_req_code_str(msg->msg_code), msg->msg_code);
+        break;
+      default:
+        ws_br_agent_log_warn("Received request: UNKNOWN (0x%04x)\n", msg->msg_code);
+        break;
+    }
+
     ws_br_agent_utils_print_msg(msg);
     
     ws_br_agent_msg_free(msg);
@@ -121,4 +144,19 @@ static void sigint_hnd(int signum)
   thread_stop = 1;
   close(listen_fd);
   ws_br_agent_log_warn("Stop application...\n");
+}
+
+static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t * const req_msg)
+{
+  ws_br_agent_soc_host_topology_t topology = { 0U, NULL };
+
+  if (req_msg == NULL || req_msg->payload_len % sizeof(ws_br_agent_soc_host_topology_entry_t)) {
+    ws_br_agent_log_error("Failed to handle TOPOLOGY request\n");
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  topology.entry_count = req_msg->payload_len / sizeof(ws_br_agent_soc_host_topology_entry_t);
+  topology.entries = (ws_br_agent_soc_host_topology_entry_t *)req_msg->payload;
+  ws_br_agent_log_info("Topology updated, total %u entries\n", topology.entry_count);
+  return ws_br_agent_soc_host_set_topology(&topology);
 }

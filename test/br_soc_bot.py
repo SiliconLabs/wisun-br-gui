@@ -2,11 +2,19 @@ import socket
 import struct
 import threading
 import time
-
+import random
 
 # Build a 16-byte dummy payload for GET requests
-def make_16byte_dummy_payload():
-  return bytes([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF])
+def make_random_topology():
+  # 3 address in one entry
+  addr_template = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]
+  addr_template += [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]
+  addr_template += [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]
+  res = bytearray()
+  for i in range(random.randint(0, 15)):
+    entry = [addr_template[j] + i * 0x10 for j in range(len(addr_template))]
+    res.extend(entry)
+  return bytes(res)
 
 # Build settings payload for SET_CONFIG_PARAMS, matching C struct
 def build_settings_payload():
@@ -57,11 +65,11 @@ def send_periodic_requests():
     try:
       with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as sock:
         sock.connect((APP_HOST, APP_PORT))
-        # Example: send GET_TOPOLOGY (code 0x01) with 16-byte dummy payload
-        get_payload = make_16byte_dummy_payload()
-        msg_get = build_message(0x01, get_payload)
+        # Example: send TOPOLOGY (code 0x01) with 16-byte dummy payload
+        topolgoy_payload = make_random_topology()
+        msg_get = build_message(0x01, topolgoy_payload)
         sock.sendall(msg_get)
-        print(f"Sent GET_TOPOLOGY: code=0x01, len={len(get_payload)} payload={get_payload.hex()}")
+        print(f"Sent TOPOLOGY: code=0x01, len={len(topolgoy_payload)} payload={topolgoy_payload.hex()}")
         response = sock.recv(2048)
         print(f"Received {len(response)} bytes from app (GET)")
     except Exception as e:
@@ -91,7 +99,7 @@ def print_msg_like_utils(data):
   payload_len = int.from_bytes(data[4:8], byteorder='big')
   payload = data[8:8+payload_len]
   code_str = {
-    0x01: "GET_TOPOLOGY",
+    0x01: "TOPOLOGY",
     0x02: "GET_CONFIG_PARAMS",
     0x03: "SET_CONFIG_PARAMS",
     0x04: "START_BR",

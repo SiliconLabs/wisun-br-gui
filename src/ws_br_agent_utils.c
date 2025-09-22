@@ -34,11 +34,11 @@ void ws_br_agent_print_app_banner(void)
   ws_br_agent_app_print("\n");
 }
 
-const char *ws_br_utils_get_req_code_str(const uint32_t req_code)
+const char *ws_br_utils_get_req_code_str(const ws_br_agent_msg_code_t req_code)
 {
   switch(req_code) {
-    case WS_BR_AGENT_MSG_CODE_GET_TOPOLOGY:
-      return "GET_TOPOLOGY";
+    case WS_BR_AGENT_MSG_CODE_TOPOLOGY:
+      return "TOPOLOGY";
     case WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS:
       return "GET_CONFIG_PARAMS";
     case WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS:
@@ -60,10 +60,10 @@ int32_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const msg)
     return WS_BR_AGENT_RET_ERR;
   }
 
-  ws_br_agent_log_info("Msg code: %s (0x%04x)\n", 
+  ws_br_agent_log_debug("Msg code: %s (0x%08x)\n", 
                        ws_br_utils_get_req_code_str(msg->msg_code), 
                        msg->msg_code);
-  ws_br_agent_log_info("Payload len: %u\n", msg->payload_len);
+  ws_br_agent_log_debug("Payload len: %u\n", msg->payload_len);
 
   if (!msg->payload_len) {
     return WS_BR_AGENT_RET_OK;
@@ -71,17 +71,16 @@ int32_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const msg)
 
   line_buf = (char *)malloc(MAX_LINE_BUF_SIZE);
 
-  ws_br_agent_log_info("Payload data:\n");
+  ws_br_agent_log_debug("Payload data:\n");
   for (size_t i = 0, cnt = 0; i < msg->payload_len; i++) {
     snprintf(&line_buf[cnt], MAX_LINE_BUF_SIZE - cnt, " 0x%02x", msg->payload[i]);
     cnt += 5;
 
     if (((i + 1) % 16 == 0) || (i + 1 == msg->payload_len)) {
-      ws_br_agent_log_info("%s\n", line_buf);
+      ws_br_agent_log_debug("%s\n", line_buf);
       cnt = 0;
     }
   }
-  ws_br_agent_log_info("\n");
 
   free(line_buf);
   return WS_BR_AGENT_RET_OK;

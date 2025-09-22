@@ -52,7 +52,7 @@ ws_br_agent_ret_t ws_br_agent_soc_host_set_topology(const ws_br_agent_soc_host_t
 
 ws_br_agent_ret_t ws_br_agent_soc_host_get_topology(ws_br_agent_soc_host_topology_t * const topology);
 
-ws_br_agent_ret_t ws_br_agent_soc_host_free_topology(ws_br_agent_soc_host_topology_t *topology);
+ws_br_agent_ret_t ws_br_agent_soc_host_free_topology(ws_br_agent_soc_host_topology_t * const topology);
 
 #ifdef __cplusplus
 }

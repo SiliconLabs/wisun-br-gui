@@ -18,7 +18,7 @@ static ws_br_agent_ret_t copy_topology(ws_br_agent_soc_host_topology_t * const d
                                        const ws_br_agent_soc_host_topology_t * const src_topology);
 
 static const ws_br_agent_settings_t default_host_settings = {
-  .network_name = "Wi-SUN_Network",
+  .network_name = "Wi-SUN Network",
   .regulatory_domain = 1,
   .network_size = 0,
   .chan_plan_id = 0,
@@ -51,7 +51,7 @@ ws_br_agent_ret_t ws_br_agent_soc_host_init(void)
   }
   // Set local host with default settings for init
   ws_br_agent_soc_host_set("::1", NULL);
-  
+
   return WS_BR_AGENT_RET_OK;
 }
 
@@ -65,7 +65,7 @@ ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const 
   ws_br_agent_msg_t *msg = NULL;
 
   pthread_mutex_lock(&host_mutex);
-  ws_br_agent_log_info("Send '%s' request (0x%2x)...\n", 
+  ws_br_agent_log_info("Send '%s' request (0x%08x)...\n", 
                        ws_br_utils_get_req_code_str(req_msg->msg_code), req_msg->msg_code);
 
   sockfd = socket(AF_INET6, SOCK_STREAM, 0);
@@ -193,10 +193,49 @@ ws_br_agent_ret_t ws_br_agent_soc_host_get(ws_br_agent_soc_host_t * const dst_ho
   return WS_BR_AGENT_RET_OK;
 }
 
+ws_br_agent_ret_t ws_br_agent_soc_host_set_remote_addr(const struct sockaddr_in6 * const addr)
+{
+  if (addr == NULL) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  pthread_mutex_lock(&host_mutex);
+  memcpy(&host.remote_addr, addr, sizeof(struct sockaddr_in6));
+  inet_ntop(AF_INET6, &addr->sin6_addr, host.remote_addr_str, sizeof(host.remote_addr_str));
+  pthread_mutex_unlock(&host_mutex);
+
+  return WS_BR_AGENT_RET_OK;
+}
+ws_br_agent_ret_t ws_br_agent_soc_host_get_remote_addr(struct sockaddr_in6 * const addr)
+{
+  if (addr == NULL) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  pthread_mutex_lock(&host_mutex);
+  memcpy(addr, &host.remote_addr, sizeof(struct sockaddr_in6));
+  pthread_mutex_unlock(&host_mutex);
+
+  return WS_BR_AGENT_RET_OK;
+}
+
 const ws_br_agent_settings_t *ws_br_agent_soc_host_get_default_settings(void)
 {
   const ws_br_agent_settings_t *ret = &default_host_settings;
   return ret;
+}
+
+ws_br_agent_ret_t ws_br_agent_soc_host_set_settings(const ws_br_agent_settings_t * const settings)
+{
+  if (settings == NULL) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  pthread_mutex_lock(&host_mutex);
+  memcpy(&host.settings, settings, sizeof(ws_br_agent_settings_t));
+  pthread_mutex_unlock(&host_mutex);
+
+  return WS_BR_AGENT_RET_OK;
 }
 
 ws_br_agent_ret_t ws_br_agent_soc_host_get_settings(ws_br_agent_settings_t * const settings)

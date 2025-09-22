@@ -44,7 +44,13 @@ ws_br_agent_ret_t ws_br_agent_soc_host_set(const char *addr,
 
 ws_br_agent_ret_t ws_br_agent_soc_host_get(ws_br_agent_soc_host_t * const dst_host);
 
+ws_br_agent_ret_t ws_br_agent_soc_host_set_remote_addr(const struct sockaddr_in6 * const addr);
+
+ws_br_agent_ret_t ws_br_agent_soc_host_get_remote_addr(struct sockaddr_in6 * const addr);
+
 const ws_br_agent_settings_t *ws_br_agent_soc_host_get_default_settings(void);
+
+ws_br_agent_ret_t ws_br_agent_soc_host_set_settings(const ws_br_agent_settings_t * const settings);
 
 ws_br_agent_ret_t ws_br_agent_soc_host_get_settings(ws_br_agent_settings_t * const settings);
 

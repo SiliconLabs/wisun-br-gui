@@ -25,3 +25,6 @@ add_executable(wisun-soc-br-agent ${SOURCES})
 
 # Link pthread library
 target_link_libraries(wisun-soc-br-agent PRIVATE pthread)
+
+# Link systemd sd-bus library
+target_link_libraries(wisun-soc-br-agent PRIVATE systemd)

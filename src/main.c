@@ -6,9 +6,8 @@
 #include "ws_br_agent_soc_host.h"
 #include "ws_br_agent_srv.h"
 #include "ws_br_agent_utils.h"
+#include "ws_br_agent_dbus.h"
 
-
-extern pthread_t srv_thr;
 
 int main(int argc, char *argv[]) 
 {
@@ -19,8 +18,10 @@ int main(int argc, char *argv[])
 
   assert(ws_br_agent_soc_host_init() == WS_BR_AGENT_RET_OK);
   assert(ws_br_agent_srv_init() == WS_BR_AGENT_RET_OK);
+  assert(ws_br_agent_dbus_init() == WS_BR_AGENT_RET_OK);
 
   pthread_join(srv_thr, NULL);
+  pthread_join(dbus_thr, NULL);
   
   return EXIT_SUCCESS;
 }

@@ -5,10 +5,16 @@
 #include "ws_br_agent_log.h"
 #include "ws_br_agent_soc_host.h"
 
+
+#define WS_BR_AGENT_DBUS_PATH "/com/silabs/Wisun/BorderRouter"
+#define WS_BR_AGENT_DBUS_INTERFACE "com.silabs.Wisun.BorderRouter"
+#define WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH "RoutingGraph"
+
 static void dbus_thr_fnc(void *arg);
 static int dbus_get_routing_graph(sd_bus *bus, const char *path, const char *interface,
                                   const char *property, sd_bus_message *reply, 
                                   void *userdata, sd_bus_error *ret_error);
+static ws_br_agent_ret_t dbus_init(sd_bus **bus, sd_bus_slot **slot);
 
 static pthread_t dbus_thr;
 static sd_bus *bus = NULL;
@@ -18,7 +24,7 @@ static volatile sig_atomic_t dbus_thread_stop = 0;
 // Vtable for the D-Bus interface
 static const sd_bus_vtable dbus_vtable[] = {
   SD_BUS_VTABLE_START(0),
-  SD_BUS_PROPERTY("RoutingGraph", "a(aybaay)", 
+  SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH, "a(aybaay)", 
                   dbus_get_routing_graph, 0, SD_BUS_VTABLE_PROPERTY_EMITS_INVALIDATION),
   SD_BUS_VTABLE_END
 };
@@ -40,7 +46,24 @@ void ws_br_agent_dbus_deinit(void)
   pthread_join(dbus_thr, NULL);
 }
 
-ws_br_agent_ret_t dbus_init(sd_bus **bus, sd_bus_slot **slot)
+ws_br_agent_ret_t ws_br_agent_dbus_notify_topology_changed(void)
+{
+  if (bus == NULL) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+  // Notify D-Bus clients that the RoutingGraph property has changed
+  // const char *props[] = { WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH, NULL };
+  if (sd_bus_emit_properties_changed(bus, WS_BR_AGENT_DBUS_PATH, 
+                                     WS_BR_AGENT_DBUS_INTERFACE, 
+                                     WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH, NULL) < 0) {
+    ws_br_agent_log_error("Failed to emit properties changed signal\n");
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  return WS_BR_AGENT_RET_OK;
+}
+
+static ws_br_agent_ret_t dbus_init(sd_bus **bus, sd_bus_slot **slot)
 {
   int r;
   r = sd_bus_open_system(bus);
@@ -105,6 +128,9 @@ static int dbus_get_routing_graph(sd_bus *bus, const char *path, const char *int
   }
 
   r = sd_bus_message_close_container(reply); // close 'a'
+
+  ws_br_agent_soc_host_free_topology(&topology);
+
   return r;
 }
 

@@ -12,6 +12,7 @@
 #include "ws_br_agent_utils.h"
 #include "ws_br_agent_msg.h"
 #include "ws_br_agent_soc_host.h"
+#include "ws_br_agent_dbus.h"
 #include "ws_br_agent_srv.h"
 
 #define DISPACH_DELAY_US 1000UL
@@ -127,7 +128,9 @@ static void srv_thr_fnc(void *arg)
     switch (msg->msg_code) {
     // Handle topology request
     case WS_BR_AGENT_MSG_CODE_TOPOLOGY:
-      (void) handle_topology_req(msg);
+      if (handle_topology_req(msg) == WS_BR_AGENT_RET_OK) {
+        ws_br_agent_dbus_notify_topology_changed();
+      }
       break;
 
     // Handle set config request: Used for subscription

@@ -11,11 +11,18 @@
 extern "C" {
 #endif
 
+
 /**
- * \brief Initialize the Wi-SUN SoC Border Router Agent client module.
+ * @brief Initialize the Wi-SUN SoC Border Router Agent server module.
+ * @details Prepares resources and starts the server for handling incoming requests.
+ * @return WS_BR_AGENT_RET_OK on success, error code otherwise.
  */
 ws_br_agent_ret_t ws_br_agent_srv_init(void);
 
+/**
+ * @brief Deinitialize the Wi-SUN SoC Border Router Agent server module.
+ * @details Cleans up resources and stops the server.
+ */
 void ws_br_agent_srv_deinit(void);
 
 

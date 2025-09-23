@@ -10,6 +10,7 @@
 extern "C" {
 #endif
 
+/// Enable/Disable colored log output
 #ifndef WS_BR_AGENT_LOG_ENABLE_COLORS
 #define WS_BR_AGENT_LOG_ENABLE_COLORS 1
 #endif

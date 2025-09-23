@@ -8,7 +8,17 @@
 extern "C" {
 #endif
 
+/**
+ * @brief Initialize the Wi-SUN SoC Border Router Agent D-Bus module.
+ * @details This function starts a thread to handle D-Bus communication.
+ * @return WS_BR_AGENT_RET_OK on success, error code otherwise.
+ */
+
 ws_br_agent_ret_t ws_br_agent_dbus_init(void);
+/**
+ * @brief Deinitialize the Wi-SUN SoC Border Router Agent D-Bus module.
+ * @details This function stops the D-Bus thread and cleans up resources.
+ */
 void ws_br_agent_dbus_deinit(void);
 
 #if defined(__cplusplus)

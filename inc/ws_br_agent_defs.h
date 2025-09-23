@@ -22,8 +22,11 @@ extern "C" {
 
 /// Return codes
 #define WS_BR_AGENT_RET_OK 0L
+
+/// Generic error code
 #define WS_BR_AGENT_RET_ERR -1L
 
+/// @brief Type for return codes
 typedef int32_t ws_br_agent_ret_t;
 
 /// Port number for the Wi-SUN SoC Border Router Agent service

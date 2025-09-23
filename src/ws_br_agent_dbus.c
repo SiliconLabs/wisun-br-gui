@@ -5,15 +5,15 @@
 #include "ws_br_agent_log.h"
 #include "ws_br_agent_soc_host.h"
 
-pthread_t dbus_thr;
-static sd_bus *bus = NULL;
-static sd_bus_slot *slot = NULL;
-
 static void dbus_thr_fnc(void *arg);
 static int dbus_get_routing_graph(sd_bus *bus, const char *path, const char *interface,
                                   const char *property, sd_bus_message *reply, 
                                   void *userdata, sd_bus_error *ret_error);
 
+static pthread_t dbus_thr;
+static sd_bus *bus = NULL;
+static sd_bus_slot *slot = NULL;
+static volatile sig_atomic_t dbus_thread_stop = 0;
 
 // Vtable for the D-Bus interface
 static const sd_bus_vtable dbus_vtable[] = {
@@ -33,6 +33,13 @@ ws_br_agent_ret_t ws_br_agent_dbus_init(void)
 
   return WS_BR_AGENT_RET_OK;
 }
+
+void ws_br_agent_dbus_deinit(void)
+{
+  dbus_thread_stop = 1;
+  pthread_join(dbus_thr, NULL);
+}
+
 ws_br_agent_ret_t dbus_init(sd_bus **bus, sd_bus_slot **slot)
 {
   int r;
@@ -67,7 +74,7 @@ static int dbus_get_routing_graph(sd_bus *bus, const char *path, const char *int
 {
   ws_br_agent_soc_host_topology_t topology = {0U, NULL};
   int r = -1;
-  
+
   ws_br_agent_soc_host_get_topology(&topology);
 
   if (topology.entry_count == 0 || topology.entries == NULL) {
@@ -108,11 +115,12 @@ static void dbus_thr_fnc(void *arg)
   assert(dbus_init(&bus, &slot) == WS_BR_AGENT_RET_OK);
   ws_br_agent_log_warn("D-Bus service started\n");
 
-  while (1) {
+  while (!dbus_thread_stop) {
     sd_bus_process(bus, NULL);
-    sd_bus_wait(bus, 1000000); // 1 second
+    sd_bus_wait(bus, 1000000UL); // 1 second
   }
 
   sd_bus_slot_unref(slot);
   sd_bus_unref(bus);
+  ws_br_agent_log_warn("D-Bus service stopped\n");
 }

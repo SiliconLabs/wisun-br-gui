@@ -11,12 +11,12 @@
 extern "C" {
 #endif
 
-extern pthread_t srv_thr;
-
 /**
  * \brief Initialize the Wi-SUN SoC Border Router Agent client module.
  */
 ws_br_agent_ret_t ws_br_agent_srv_init(void);
+
+void ws_br_agent_srv_deinit(void);
 
 
 #ifdef __cplusplus

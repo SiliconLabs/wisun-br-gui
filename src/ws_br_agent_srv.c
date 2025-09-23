@@ -16,11 +16,10 @@
 
 #define DISPACH_DELAY_US 1000UL
 
-pthread_t srv_thr;
-volatile sig_atomic_t thread_stop;
+static pthread_t srv_thr;
+static volatile sig_atomic_t srv_thread_stop = 0;
 static int listen_fd = -1L;
 static void srv_thr_fnc(void *arg);
-static void sigint_hnd(int signum);
 static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t *const req_msg);
 static ws_br_agent_ret_t handle_set_config_params_req(const ws_br_agent_msg_t *const req_msg,
                                                       const struct sockaddr_in6 * const clnt_addr);
@@ -28,17 +27,17 @@ static ws_br_agent_ret_t handle_get_config_params_req(int conn_fd);
 
 ws_br_agent_ret_t ws_br_agent_srv_init(void)
 {
-  struct sigaction sa;
-  sa.sa_handler = sigint_hnd;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  sigaction(SIGINT, &sa, NULL);
-
-  if (pthread_create(&srv_thr, NULL, (void *)srv_thr_fnc, NULL) != 0)
-  {
+  if (pthread_create(&srv_thr, NULL, (void *)srv_thr_fnc, NULL) != 0) {
     return WS_BR_AGENT_RET_ERR;
   }
   return WS_BR_AGENT_RET_OK;
+}
+
+void ws_br_agent_srv_deinit(void)
+{
+  srv_thread_stop = 1;
+  close(listen_fd);
+  pthread_join(srv_thr, NULL);
 }
 
 static void srv_thr_fnc(void *arg)
@@ -89,13 +88,10 @@ static void srv_thr_fnc(void *arg)
 
   ws_br_agent_log_info("Server listening on port %d\n", WS_BR_AGENT_SERVICE_PORT);
 
-  while (!thread_stop)
-  {
+  while (!srv_thread_stop) {
     conn_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &client_len);
-    if (conn_fd < 0)
-    {
-      if (thread_stop)
-      {
+    if (conn_fd < 0) {
+      if (srv_thread_stop) {
         break;
       }
       ws_br_agent_log_warn("Accept failed\n");
@@ -106,22 +102,19 @@ static void srv_thr_fnc(void *arg)
     ws_br_agent_log_info("Accepted connection from %s:%d\n", client_ip, ntohs(client_addr.sin6_port));
 
     r = recv(conn_fd, buf, WS_BR_AGENT_MAX_BUF_SIZE, 0);
-    if (r < 0)
-    {
+    if (r < 0) {
       ws_br_agent_log_warn("Receive failed\n");
       close(conn_fd);
       continue;
     }
-    else if (r == 0)
-    {
+    else if (r == 0) {
       ws_br_agent_log_warn("Connection closed by client\n");
       close(conn_fd);
       continue;
     }
 
     msg = ws_br_agent_msg_parse_buf(buf, (size_t)r);
-    if (msg == NULL)
-    {
+    if (msg == NULL) {
       ws_br_agent_log_warn("Failed to parse received message\n");
       close(conn_fd);
       continue;
@@ -131,8 +124,7 @@ static void srv_thr_fnc(void *arg)
     ws_br_agent_utils_print_msg(msg);
 
     // Handle requests
-    switch (msg->msg_code)
-    {
+    switch (msg->msg_code) {
     // Handle topology request
     case WS_BR_AGENT_MSG_CODE_TOPOLOGY:
       (void) handle_topology_req(msg);
@@ -165,14 +157,6 @@ static void srv_thr_fnc(void *arg)
   }
   close(listen_fd);
   ws_br_agent_log_warn("Server thread stopped\n");
-}
-
-static void sigint_hnd(int signum)
-{
-  (void)signum;
-  thread_stop = 1;
-  close(listen_fd);
-  ws_br_agent_log_warn("Stop application...\n");
 }
 
 static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t *const req_msg)

@@ -8,8 +8,8 @@
 extern "C" {
 #endif
 
-extern pthread_t dbus_thr;
 ws_br_agent_ret_t ws_br_agent_dbus_init(void);
+void ws_br_agent_dbus_deinit(void);
 
 #if defined(__cplusplus)
 }

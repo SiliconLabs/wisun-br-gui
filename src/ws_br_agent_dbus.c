@@ -98,7 +98,10 @@ static int dbus_get_routing_graph(sd_bus *bus, const char *path, const char *int
   ws_br_agent_soc_host_topology_t topology = {0U, NULL};
   int r = -1;
 
-  ws_br_agent_soc_host_get_topology(&topology);
+  if (ws_br_agent_soc_host_get_topology(&topology) != WS_BR_AGENT_RET_OK) {
+    ws_br_agent_log_error("Failed to get topology for D-Bus property\n");
+    return -1;
+  }
 
   if (topology.entry_count == 0 || topology.entries == NULL) {
     return sd_bus_message_append(reply, "a(aybaay)", 0);
@@ -129,7 +132,7 @@ static int dbus_get_routing_graph(sd_bus *bus, const char *path, const char *int
 
   r = sd_bus_message_close_container(reply); // close 'a'
 
-  ws_br_agent_soc_host_free_topology(&topology);
+  (void) ws_br_agent_soc_host_free_topology(&topology);
 
   return r;
 }

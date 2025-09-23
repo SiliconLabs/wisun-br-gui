@@ -22,7 +22,7 @@ typedef struct ws_br_agent_soc_host {
 } ws_br_agent_soc_host_t;
 
 /// @brief Topology entry
-typedef struct __attribute__((aligned(1))) 
+typedef struct __attribute__((packed, aligned(1))) 
 ws_br_agent_soc_host_topology_entry {
   /// @brief GUA/ULA of the routed node
   uint8_t target[16];

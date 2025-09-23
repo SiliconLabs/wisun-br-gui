@@ -166,8 +166,8 @@ static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t *const req_
 {
   ws_br_agent_soc_host_topology_t topology = {0U, NULL};
 
-  if (req_msg == NULL || req_msg->payload_len % sizeof(ws_br_agent_soc_host_topology_entry_t))
-  {
+  if (req_msg == NULL || 
+      req_msg->payload_len % sizeof(ws_br_agent_soc_host_topology_entry_t)) {
     ws_br_agent_log_error("Failed to handle TOPOLOGY request\n");
     return WS_BR_AGENT_RET_ERR;
   }

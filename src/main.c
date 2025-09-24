@@ -55,7 +55,6 @@ int main(int argc, char *argv[])
   sa.sa_flags = 0;
   sigaction(SIGINT, &sa, NULL);
 
-
   ws_br_agent_utils_print_app_banner();
 
   assert(ws_br_agent_soc_host_init() == WS_BR_AGENT_RET_OK);

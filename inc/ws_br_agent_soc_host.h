@@ -31,9 +31,6 @@
 #ifndef WS_BR_AGENT_CLNT_H
 #define WS_BR_AGENT_CLNT_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include <netinet/in.h>
 
 #include "ws_br_agent_msg.h"

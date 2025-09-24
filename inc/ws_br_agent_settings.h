@@ -31,9 +31,6 @@
 #ifndef WS_BR_AGENT_SETTINGS_H
 #define WS_BR_AGENT_SETTINGS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include "ws_br_agent_defs.h"
 
 #ifdef __cplusplus

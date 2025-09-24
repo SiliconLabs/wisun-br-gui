@@ -35,7 +35,6 @@
 #include "ws_br_agent_log.h"
 #include "ws_br_agent_soc_host.h"
 
-
 #define WS_BR_AGENT_DBUS_PATH "/com/silabs/Wisun/BorderRouter"
 #define WS_BR_AGENT_DBUS_INTERFACE "com.silabs.Wisun.BorderRouter"
 #define WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH "RoutingGraph"
@@ -82,7 +81,6 @@ ws_br_agent_ret_t ws_br_agent_dbus_notify_topology_changed(void)
     return WS_BR_AGENT_RET_ERR;
   }
   // Notify D-Bus clients that the RoutingGraph property has changed
-  // const char *props[] = { WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH, NULL };
   if (sd_bus_emit_properties_changed(bus, WS_BR_AGENT_DBUS_PATH, 
                                      WS_BR_AGENT_DBUS_INTERFACE, 
                                      WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH, NULL) < 0) {
@@ -103,9 +101,9 @@ static ws_br_agent_ret_t dbus_init(sd_bus **bus, sd_bus_slot **slot)
   }
 
   r = sd_bus_add_object_vtable(*bus, slot,
-                                "/com/silabs/Wisun/BorderRouter",
-                                "com.silabs.Wisun.BorderRouter",
-                                dbus_vtable, NULL);
+                               WS_BR_AGENT_DBUS_PATH,
+                               WS_BR_AGENT_DBUS_INTERFACE,
+                               dbus_vtable, NULL);
   if (r < 0) {
     ws_br_agent_log_error("Failed to add vtable: %s\n", strerror(-r));
     return WS_BR_AGENT_RET_ERR;

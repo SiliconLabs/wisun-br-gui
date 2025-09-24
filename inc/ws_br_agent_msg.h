@@ -31,9 +31,6 @@
 #ifndef WS_BR_AGENT_MSG_H
 #define WS_BR_AGENT_MSG_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include "ws_br_agent_defs.h"
 #include "ws_br_agent_settings.h"
 

@@ -31,11 +31,6 @@
 #ifndef WS_BR_AGENT_UTILS_H
 #define WS_BR_AGENT_UTILS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <pthread.h>
-
 #include "ws_br_agent_defs.h"
 #include "ws_br_agent_msg.h"
 #include "ws_br_agent_settings.h"
@@ -43,7 +38,6 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
 
 /**
  * @brief Print the application banner to standard output.

@@ -1,4 +1,3 @@
-
 /***************************************************************************//**
  * @file ws_br_agent_log.h
  * @brief Logging macros for Wi-SUN SoC Border Router Agent
@@ -29,13 +28,11 @@
  *
  ******************************************************************************/
 
- #ifndef WS_BR_AGENT_LOG_H
+#ifndef WS_BR_AGENT_LOG_H
 #define WS_BR_AGENT_LOG_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdarg.h>
 #include <stdio.h>
+#include "ws_br_agent_defs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,28 +73,28 @@ extern "C" {
   } while (0)
 
 /// Info, Warning, Error, and Debug logs
-#define ws_br_agent_log_info(fmt, ...)                                                                            \
-  do {                                                                                                            \
+#define ws_br_agent_log_info(fmt, ...)                                                                       \
+  do {                                                                                                       \
       fprintf(stdout, WS_BR_AGENT_LOG_COLOR_WHITE "[INFO] " fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
-      fflush(stdout);                                                                                             \
+      fflush(stdout);                                                                                        \
   } while (0)
 
-#define ws_br_agent_log_warn(fmt, ...)                                                                             \
-  do {                                                                                                             \
+#define ws_br_agent_log_warn(fmt, ...)                                                                        \
+  do {                                                                                                        \
       fprintf(stdout, WS_BR_AGENT_LOG_COLOR_YELLOW "[WARN] " fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
-      fflush(stdout);                                                                                              \
+      fflush(stdout);                                                                                         \
   } while (0)
 
-#define ws_br_agent_log_error(fmt, ...)                                                                          \
-  do {                                                                                                           \
+#define ws_br_agent_log_error(fmt, ...)                                                                     \
+  do {                                                                                                      \
       fprintf(stderr, WS_BR_AGENT_LOG_COLOR_RED "[ERROR] " fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
-      fflush(stderr);                                                                                            \
+      fflush(stderr);                                                                                       \
   } while (0)
 
-#define ws_br_agent_log_debug(fmt, ...)                                                                           \
-  do {                                                                                                            \
+#define ws_br_agent_log_debug(fmt, ...)                                                                      \
+  do {                                                                                                       \
       fprintf(stdout, WS_BR_AGENT_LOG_COLOR_CYAN "[DEBUG] " fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
-      fflush(stdout);                                                                                             \
+      fflush(stdout);                                                                                        \
   } while (0)
 
 #ifdef __cplusplus

@@ -1,4 +1,3 @@
-
 /***************************************************************************//**
  * @file ws_br_agent_defs.h
  * @brief Common definitions for Wi-SUN SoC Border Router Agent

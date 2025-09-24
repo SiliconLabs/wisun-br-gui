@@ -1,6 +1,6 @@
 /***************************************************************************//**
- * @file main.c
- * @brief Wi-SUN SoC Border Router Agent application
+ * @file ws_br_agent_log.c
+ * @brief Logging implementation for Wi-SUN SoC Border Router Agent
  *******************************************************************************
  * # License
  * <b>Copyright 2025 Silicon Laboratories Inc. www.silabs.com</b>
@@ -28,60 +28,53 @@
  *
  ******************************************************************************/
 
-#include <assert.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <unistd.h>
-#include <string.h>
-
-#include "ws_br_agent_defs.h"
 #include "ws_br_agent_log.h"
-#include "ws_br_agent_soc_host.h"
-#include "ws_br_agent_srv.h"
-#include "ws_br_agent_utils.h"
-#include "ws_br_agent_dbus.h"
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <time.h>
 
-static void sigint_hnd(int signum);
-static volatile sig_atomic_t main_thread_stop = 0;
+const char *ws_br_agent_log_file_path = WS_BR_AGENT_LOG_DEFAULT_FILE_PATH;
+FILE *_log_file = NULL;
+pthread_mutex_t _log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-int main(int argc, char *argv[])
+ws_br_agent_ret_t ws_br_agent_log_init(void) 
 {
-  struct sigaction sa;
-  int opt;
+#if WS_BR_AGENT_LOG_ENABLE_FILE_LOG
 
-  // Parse arguments for --log or -l
-  for (int i = 1; i < argc; ++i) {
-    if (!strcmp(argv[i], "--log")
-        || !strcmp(argv[i], "-l") && (i + 1 < argc)) {
-      ws_br_agent_log_file_path = argv[i + 1];
-      ++i;
-    }
+  _log_file = fopen(ws_br_agent_log_file_path, "a");
+  if (_log_file == NULL) {
+    return WS_BR_AGENT_RET_ERR;
   }
-
-  sa.sa_handler = sigint_hnd;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  sigaction(SIGINT, &sa, NULL);
-
-  ws_br_agent_utils_print_app_banner();
-  assert(ws_br_agent_log_init() == WS_BR_AGENT_RET_OK);
-  assert(ws_br_agent_soc_host_init() == WS_BR_AGENT_RET_OK);
-  assert(ws_br_agent_srv_init() == WS_BR_AGENT_RET_OK);
-  assert(ws_br_agent_dbus_init() == WS_BR_AGENT_RET_OK);
-
-  while (!main_thread_stop) {
-    usleep(1000000UL);
+  if (pthread_mutex_init(&_log_mutex, NULL) != 0) {
+    return WS_BR_AGENT_RET_ERR;
   }
-
-  return EXIT_SUCCESS;
+  ws_br_agent_log_info("Log file: %s\n", ws_br_agent_log_file_path);
+#else
+  (void) _log_file;
+#endif
+  return WS_BR_AGENT_RET_OK;
 }
 
-static void sigint_hnd(int signum)
+void ws_br_agent_log_deinit(void) 
 {
-  (void) signum;
-  ws_br_agent_srv_deinit();
-  ws_br_agent_dbus_deinit();
-  ws_br_agent_log_warn("Stop application...\n");
-  ws_br_agent_log_deinit();
-  main_thread_stop = 1;
+#if WS_BR_AGENT_LOG_ENABLE_FILE_LOG
+  pthread_mutex_lock(&_log_mutex);
+  fclose(_log_file);
+  _log_file = NULL;
+  pthread_mutex_unlock(&_log_mutex);
+#else
+  (void) _log_file;
+#endif
+}
+
+const char *_log_get_timestr(void) {
+  static char buf[24];
+  time_t now = time(NULL);
+  struct tm tm_now;
+  
+  localtime_r(&now, &tm_now);
+  strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm_now);
+  
+  return buf;
 }

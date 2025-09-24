@@ -32,6 +32,8 @@
 #define WS_BR_AGENT_LOG_H
 
 #include <stdio.h>
+#include <pthread.h>
+
 #include "ws_br_agent_defs.h"
 
 #ifdef __cplusplus
@@ -40,11 +42,19 @@ extern "C" {
 
 /// Enable/Disable colored log output
 #ifndef WS_BR_AGENT_LOG_ENABLE_COLORS
-#define WS_BR_AGENT_LOG_ENABLE_COLORS 1
+#define WS_BR_AGENT_LOG_ENABLE_COLORS       1U
 #endif
 
 #ifndef WS_BR_AGENT_LOG_ENABLE_DEBUG
-#define WS_BR_AGENT_LOG_ENABLE_DEBUG  1
+#define WS_BR_AGENT_LOG_ENABLE_DEBUG        1U
+#endif
+
+#ifndef WS_BR_AGENT_LOG_ENABLE_CONSOLE_LOG
+#define WS_BR_AGENT_LOG_ENABLE_CONSOLE_LOG  1U
+#endif
+
+#ifndef WS_BR_AGENT_LOG_ENABLE_FILE_LOG
+#define WS_BR_AGENT_LOG_ENABLE_FILE_LOG     1U
 #endif
 
 /// Color definitions for terminal output
@@ -68,44 +78,115 @@ extern "C" {
 #define WS_BR_AGENT_LOG_COLOR_RESET   ""
 #endif
 
+#define WS_BR_AGENT_LOG_DEFAULT_FILE_PATH "/var/log/wisun-soc-br-agent.log"
+
+/// Log file path (default: /var/log/wisun-soc-br-agent.log)
+extern const char *ws_br_agent_log_file_path;
+extern FILE *_log_file;
+extern pthread_mutex_t _log_mutex;
+
+/**
+ * @brief Init logging
+ * @brief Open the log file for appending (default: /var/log/wisun-soc-br-agent.log) 
+ *        and init logging mutex
+ * @return WS_BR_AGENT_RET_OK on success, error code otherwise.
+ */
+ws_br_agent_ret_t ws_br_agent_log_init(void);
+
+/**
+ * @brief Deinit logging
+ * @brief Close the log file
+ */
+void ws_br_agent_log_deinit(void);
+
+/**
+ * @brief Get current time string (Internal use only)
+ * @return Pointer to a static string containing the current time in "YYYY-MM-DD HH:MM:SS" format.
+ */
+const char *_log_get_timestr(void);
+
 /// Logging macros
-/// Print application banner
+/// @brief Print application banner
 #define ws_br_agent_app_print(fmt, ...)                        \
   do {                                                         \
-      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_BLUE fmt           \
-              WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__);     \
-      fflush(stdout);                                          \
+    fprintf(stdout, WS_BR_AGENT_LOG_COLOR_BLUE fmt             \
+            WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__);       \
+    fflush(stdout);                                            \
   } while (0)
 
-/// Info, Warning, Error, and Debug logs
+/// @brief Log printer to file (internal use only)
+#if WS_BR_AGENT_LOG_ENABLE_FILE_LOG
+#define __log_print_to_file(level, fmt, ...)                   \
+  do {                                                         \
+    if (_log_file) {                                           \
+      fprintf(_log_file, "%s ", _log_get_timestr());           \
+      fprintf(_log_file, "[" level "] " fmt, ##__VA_ARGS__);   \
+      fflush(_log_file);                                       \
+    }                                                          \
+  } while (0)
+#else
+#define __log_print_to_file(level, fmt, ...)                   \
+  do {                                                         \
+    (void)level; (void)fmt; (void)#__VA_ARGS__;                \
+  } while (0)
+#endif
+
+/// @brief Log printer to console (internal use only)
+#if WS_BR_AGENT_LOG_ENABLE_CONSOLE_LOG
+#define __log_print_to_console(color, level, fmt, ...)         \
+  do {                                                         \
+    fprintf(stdout, color "[" level "] " fmt                   \
+            WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__);       \
+    fflush(stdout);                                            \
+  } while (0)
+#else 
+#define __log_print_to_console(color, level, fmt, ...)         \
+  do {                                                         \
+    (void)color; (void)level; (void)fmt; (void)#__VA_ARGS__;   \
+  } while (0)
+
+#endif
+
+/// @brief Info log printer
 #define ws_br_agent_log_info(fmt, ...)                         \
-  do {                                                         \
-      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_WHITE "[INFO] "    \
-              fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
-      fflush(stdout);                                          \
-  } while (0)
+do {                                                           \
+  pthread_mutex_lock(&_log_mutex);                             \
+  __log_print_to_console(WS_BR_AGENT_LOG_COLOR_WHITE, "INFO",  \
+                         fmt, ##__VA_ARGS__);                  \
+  __log_print_to_file("INFO", fmt, ##__VA_ARGS__);             \
+  pthread_mutex_unlock(&_log_mutex);                           \
+} while (0)
 
+/// @brief Warning log printer
 #define ws_br_agent_log_warn(fmt, ...)                         \
-  do {                                                         \
-      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_YELLOW "[WARN] "   \
-              fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
-      fflush(stdout);                                          \
-  } while (0)
+do {                                                           \
+  pthread_mutex_lock(&_log_mutex);                             \
+  __log_print_to_console(WS_BR_AGENT_LOG_COLOR_YELLOW, "WARN", \
+                         fmt, ##__VA_ARGS__);                  \
+  __log_print_to_file("WARN", fmt, ##__VA_ARGS__);             \
+  pthread_mutex_unlock(&_log_mutex);                           \
+} while (0)
 
+/// @brief Error log printer
 #define ws_br_agent_log_error(fmt, ...)                        \
-  do {                                                         \
-      fprintf(stderr, WS_BR_AGENT_LOG_COLOR_RED "[ERROR] "     \
-              fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
-      fflush(stderr);                                          \
-  } while (0)
+do {                                                           \
+  pthread_mutex_lock(&_log_mutex);                             \
+  __log_print_to_console(WS_BR_AGENT_LOG_COLOR_RED, "ERROR",   \
+                         fmt, ##__VA_ARGS__);                  \
+  __log_print_to_file("ERROR", fmt, ##__VA_ARGS__);            \
+  pthread_mutex_unlock(&_log_mutex);                           \
+} while (0)
 
+/// @brief Debug log printer
 #if WS_BR_AGENT_LOG_ENABLE_DEBUG
 #define ws_br_agent_log_debug(fmt, ...)                        \
-  do {                                                         \
-      fprintf(stdout, WS_BR_AGENT_LOG_COLOR_CYAN "[DEBUG] "    \
-              fmt WS_BR_AGENT_LOG_COLOR_RESET, ##__VA_ARGS__); \
-      fflush(stdout);                                          \
-  } while (0)
+do {                                                           \
+  pthread_mutex_lock(&_log_mutex);                             \
+  __log_print_to_console(WS_BR_AGENT_LOG_COLOR_CYAN, "DEBUG",  \
+                         fmt, ##__VA_ARGS__);                  \
+  __log_print_to_file("DEBUG", fmt, ##__VA_ARGS__);            \
+  pthread_mutex_unlock(&_log_mutex);                           \
+} while (0)
 #else
 #define ws_br_agent_log_debug(fmt, ...)                        \
   do {                                                         \
@@ -113,6 +194,7 @@ extern "C" {
     (void)#__VA_ARGS__;                                        \
   } while (0)
 #endif
+
 #ifdef __cplusplus
 }
 #endif

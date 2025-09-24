@@ -11,6 +11,7 @@ Wi-SUN SoC Border Router Agent is a Linux-based service for managing and monitor
 - Enable network configuration, topology monitoring, and integration with UI tools (e.g., wisun-br-gui).
 - Support automated and scriptable testing via Python and Linux utilities.
 
+
 ## Features
 
 - TCP server for remote management and configuration
@@ -19,6 +20,33 @@ Wi-SUN SoC Border Router Agent is a Linux-based service for managing and monitor
 - Structured message protocol for configuration and topology
 - Integration with Silicon Labs Wi-SUN SoC platforms
 - Designed for use with graphical UI (wisun-br-gui) and automated scripts
+- **File logging**: All logs can be written to a file (default: `/var/log/wisun-soc-br-agent.log`).
+- **Configurable logging**: Enable/disable colors, debug, and console/file logging via build defines.
+
+## Logging
+
+- By default, logs are written to the console and to `/var/log/wisun-soc-br-agent.log`.
+- You can specify a custom log file path at runtime:
+	```bash
+	./wisun-soc-br-agent --log /tmp/mylog.txt
+	# or
+	./wisun-soc-br-agent -l /tmp/mylog.txt
+	```
+- Log output includes timestamps and log levels (INFO, WARN, ERROR, DEBUG).
+
+### Build Defines
+
+You can control logging features at build time by setting the following defines (e.g., via `-D` in CMake or compiler flags):
+
+- `WS_BR_AGENT_LOG_ENABLE_COLORS` (default: 1) — Enable colored log output in console.
+- `WS_BR_AGENT_LOG_ENABLE_DEBUG` (default: 1) — Enable debug log output.
+- `WS_BR_AGENT_LOG_ENABLE_CONSOLE_LOG` (default: 1) — Enable logging to console.
+- `WS_BR_AGENT_LOG_ENABLE_FILE_LOG` (default: 1) — Enable logging to file.
+
+Example (CMake):
+```bash
+cmake -DWS_BR_AGENT_LOG_ENABLE_COLORS=0 -DWS_BR_AGENT_LOG_ENABLE_DEBUG=0 ..
+```
 
 ## Build Steps
 

@@ -3,6 +3,7 @@ import struct
 import threading
 import time
 import random
+import copy
 
 CODE_STR_MAP = {
     0x01: "TOPOLOGY",
@@ -20,13 +21,27 @@ SEND_INTERVAL = 5
 
 def make_random_topology():
   # 3 address in one entry
-  addr_template = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]
-  addr_template += [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]
-  addr_template += [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]
+  addr_template = [0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01]
   res = bytearray()
-  for i in range(random.randint(0, 15)):
-    entry = [addr_template[j] + i * 0x10 for j in range(len(addr_template))]
-    res.extend(entry)
+  
+  num_topology_entry = random.randint(1, 32)
+  # BR always ..0x01
+  res.extend(addr_template)
+  res.extend([0x00] * 16)
+  res.extend([0x00] * 16)
+  
+  parent =copy.deepcopy(addr_template)
+  for i in range(1, num_topology_entry):
+    addr_template[15] = i
+    res.extend(addr_template)
+    
+    res.extend(parent)
+    res.extend([0x00] * 16)
+    
+    # random parent update
+    if  bool(random.getrandbits(1)):
+      parent = copy.deepcopy(addr_template)
+    
   return bytes(res)
 
 # Build settings payload for SET_CONFIG_PARAMS, matching C struct

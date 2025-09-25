@@ -60,8 +60,10 @@ void ws_br_agent_log_deinit(void)
 {
 #if WS_BR_AGENT_LOG_ENABLE_FILE_LOG
   pthread_mutex_lock(&_log_mutex);
-  fclose(_log_file);
-  _log_file = NULL;
+  if (_log_file != NULL) {
+    fclose(_log_file);
+    _log_file = NULL;
+  }
   pthread_mutex_unlock(&_log_mutex);
 #else
   (void) _log_file;

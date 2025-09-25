@@ -171,9 +171,11 @@ static void dbus_thr_fnc(void *arg)
 
   assert(dbus_init(&bus, &slot) == WS_BR_AGENT_RET_OK);
   ws_br_agent_log_warn("D-Bus service started\n");
-
   while (!dbus_thread_stop) {
     sd_bus_process(bus, NULL);
+    if (dbus_thread_stop) {
+      break;
+    }
     sd_bus_wait(bus, 1000000UL); // 1 second
   }
 

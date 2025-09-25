@@ -67,6 +67,16 @@ ws_br_agent_ret_t ws_br_agent_srv_init(void)
 void ws_br_agent_srv_deinit(void)
 {
   srv_thread_stop = 1;
+  // Connect to the listening socket to unblock accept()
+  struct sockaddr_in6 addr = {0};
+  int sock = socket(AF_INET6, SOCK_STREAM, 0);
+  if (sock >= 0) {
+    addr.sin6_family = AF_INET6;
+    addr.sin6_addr = in6addr_loopback;
+    addr.sin6_port = htons(WS_BR_AGENT_SERVICE_PORT);
+    connect(sock, (struct sockaddr *)&addr, sizeof(addr));
+    close(sock);
+  }
   close(listen_fd);
   pthread_join(srv_thr, NULL);
 }

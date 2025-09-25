@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
   assert(ws_br_agent_dbus_init() == WS_BR_AGENT_RET_OK);
 
   while (!main_thread_stop) {
-    usleep(1000000UL);
+    usleep(100000UL);
   }
 
   return EXIT_SUCCESS;

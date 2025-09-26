@@ -65,6 +65,20 @@ ws_br_agent_ret_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const ms
  */
 void ws_br_agent_utils_print_host_settings(const ws_br_agent_settings_t * const settings);
 
+/**
+ * @brief Get network size as a string.
+ * @param[in] nw_size The network size to convert.
+ * @return Pointer to a string representation of the network size.
+ */
+const char *ws_br_agent_utils_get_net_size_str(const uint32_t nw_size);
+
+/**
+ * @brief Get regulatory domain as a string.
+ * @param[in] domain The regulatory domain to convert.
+ * @return Pointer to a string representation of the regulatory domain.
+ */
+const char *ws_br_agent_utils_get_reg_domain_str(const uint8_t domain);
+
 #if defined(__cplusplus)
 }
 #endif

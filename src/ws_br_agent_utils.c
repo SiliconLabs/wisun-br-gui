@@ -70,7 +70,7 @@ void ws_br_agent_utils_print_app_banner(void)
 
 const char *ws_br_agent_utils_get_req_code_str(const ws_br_agent_msg_code_t req_code)
 {
-  switch(req_code) {
+  switch (req_code) {
     case WS_BR_AGENT_MSG_CODE_TOPOLOGY:
       return "TOPOLOGY";
     case WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS:
@@ -83,6 +83,44 @@ const char *ws_br_agent_utils_get_req_code_str(const ws_br_agent_msg_code_t req_
       return "STOP_BR";
     default:
       return "UNKNOWN";
+  }
+}
+const char *ws_br_agent_utils_get_net_size_str(const uint32_t nw_size)
+{
+  switch (nw_size) {
+    case 0U:
+      return "Small";
+    case 1U:
+      return "Medium";
+    case 2U:
+      return "Large";
+    case 3U:
+      return "Extra Large";
+    default:
+      return "Unknown";
+  }
+}
+
+const char *ws_br_agent_utils_get_reg_domain_str(const uint8_t domain)
+{
+  switch (domain) {
+    case 0: return "WW"; // World wide
+    case 1: return "NA"; // North America
+    case 2: return "JP"; // Japan
+    case 3: return "EU"; // European Union
+    case 4: return "CN"; // China
+    case 5: return "IN"; // India
+    case 6: return "MX"; // Mexico
+    case 7: return "BZ"; // Brazil
+    case 8: return "AZ/NZ"; // Australia/New Zealand
+    case 9: return "KR"; // Korea
+    case 10: return "PH"; // Philippines
+    case 11: return "MY"; // Malaysia
+    case 12: return "HK"; // Hong Kong
+    case 13: return "SG"; // Singapore
+    case 14: return "TH"; // Thailand
+    case 15: return "VN"; // Vietnam
+    default: return "Unknown";
   }
 }
 

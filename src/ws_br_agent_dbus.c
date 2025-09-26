@@ -33,16 +33,42 @@
 
 #include "ws_br_agent_dbus.h"
 #include "ws_br_agent_log.h"
+#include "ws_br_agent_utils.h"
 #include "ws_br_agent_soc_host.h"
 
 #define WS_BR_AGENT_DBUS_PATH "/com/silabs/Wisun/BorderRouter"
 #define WS_BR_AGENT_DBUS_INTERFACE "com.silabs.Wisun.BorderRouter"
 #define WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH "RoutingGraph"
+#define WS_BR_AGENT_DBUS_PROPERTY_NETWORK_NAME "WisunNetworkName"
+#define WS_BR_AGENT_DBUS_PROPERTY_NETWORK_SIZE "WisunSize"
+#define WS_BR_AGENT_DBUS_PROPERTY_REG_DOMAIN "WisunDomain"
+#define WS_BR_AGENT_DBUS_PROPERTY_PHY_MODE_ID "WisunPhyModeId"
+#define WS_BR_AGENT_DBUS_PROPERTY_CHAN_PLAN_ID "WisunChanPlanId"
+#define WS_BR_AGENT_DBUS_PROPERTY_FAN_VERSION "WisunFanVersion"
 
 static void dbus_thr_fnc(void *arg);
 static int dbus_get_routing_graph(sd_bus *bus, const char *path, const char *interface,
                                   const char *property, sd_bus_message *reply, 
                                   void *userdata, sd_bus_error *ret_error);
+static int dbus_get_network_name(sd_bus *bus, const char *path, const char *interface,
+                                 const char *property, sd_bus_message *reply, 
+                                 void *userdata, sd_bus_error *ret_error);
+static int dbus_get_network_size(sd_bus *bus, const char *path, const char *interface,
+                                 const char *property, sd_bus_message *reply, 
+                                 void *userdata, sd_bus_error *ret_error);
+static int dbus_get_reg_domain(sd_bus *bus, const char *path, const char *interface,
+                               const char *property, sd_bus_message *reply, 
+                               void *userdata, sd_bus_error *ret_error);
+static int dbus_get_phy_mode_id(sd_bus *bus, const char *path, const char *interface,
+                                const char *property, sd_bus_message *reply, 
+                                void *userdata, sd_bus_error *ret_error);
+static int dbus_get_chan_plan_id(sd_bus *bus, const char *path, const char *interface,
+                                 const char *property, sd_bus_message *reply, 
+                                 void *userdata, sd_bus_error *ret_error);
+static int dbus_get_fan_version(sd_bus *bus, const char *path, const char *interface,
+                                const char *property, sd_bus_message *reply, 
+                                void *userdata, sd_bus_error *ret_error);
+
 static ws_br_agent_ret_t dbus_init(sd_bus **bus, sd_bus_slot **slot);
 
 static pthread_t dbus_thr;
@@ -50,11 +76,22 @@ static sd_bus *bus = NULL;
 static sd_bus_slot *slot = NULL;
 static volatile sig_atomic_t dbus_thread_stop = 0;
 
-// Vtable for the D-Bus interface
 static const sd_bus_vtable dbus_vtable[] = {
   SD_BUS_VTABLE_START(0),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH, "a(aybaay)", 
                   dbus_get_routing_graph, 0, SD_BUS_VTABLE_PROPERTY_EMITS_INVALIDATION),
+  SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_NETWORK_NAME, "s", 
+                  dbus_get_network_name, 0, SD_BUS_VTABLE_PROPERTY_CONST),
+  SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_NETWORK_SIZE, "s", 
+                  dbus_get_network_size, 0, SD_BUS_VTABLE_PROPERTY_CONST),
+  SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_REG_DOMAIN, "s", 
+                  dbus_get_reg_domain, 0, SD_BUS_VTABLE_PROPERTY_CONST),
+  SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_PHY_MODE_ID, "u", 
+                  dbus_get_phy_mode_id, 0, SD_BUS_VTABLE_PROPERTY_CONST),
+  SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_CHAN_PLAN_ID, "u", 
+                  dbus_get_chan_plan_id, 0, SD_BUS_VTABLE_PROPERTY_CONST),
+  SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_FAN_VERSION, "y", 
+                  dbus_get_fan_version, 0, SD_BUS_VTABLE_PROPERTY_CONST),          
   SD_BUS_VTABLE_END
 };
 
@@ -161,6 +198,139 @@ static int dbus_get_routing_graph(sd_bus *bus, const char *path, const char *int
   r = sd_bus_message_close_container(reply); // close 'a'
 
   (void) ws_br_agent_soc_host_free_topology(&topology);
+
+  return r;
+}
+
+
+static int dbus_get_network_name(sd_bus *bus, const char *path, const char *interface,
+                                 const char *property, sd_bus_message *reply, 
+                                 void *userdata, sd_bus_error *ret_error)
+{
+  ws_br_agent_settings_t settings = { 0U };
+  int r = -1;
+
+  if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
+    return -1;
+  }
+  
+  r = sd_bus_message_append(reply, "s", settings.network_name);
+  
+  return r;
+}
+
+static int dbus_get_network_size(sd_bus *bus, const char *path, const char *interface,
+                                 const char *property, sd_bus_message *reply, 
+                                 void *userdata, sd_bus_error *ret_error)
+{
+  ws_br_agent_settings_t settings = { 0U };
+  int r = -1;
+
+  if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
+    return -1;
+  }
+  
+  r = sd_bus_message_append(reply, "s",
+                            ws_br_agent_utils_get_net_size_str(settings.network_size));
+  
+  return r;
+}
+
+static int dbus_get_reg_domain(sd_bus *bus, const char *path, const char *interface,
+                               const char *property, sd_bus_message *reply, 
+                               void *userdata, sd_bus_error *ret_error)
+{
+  ws_br_agent_settings_t settings = { 0U };
+  int r = -1;
+  uint8_t value = 0;
+
+  if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
+    return -1;
+  }
+  switch (settings.phy.type) {
+    case WS_BR_AGENT_PHY_CONFIG_FAN11:
+      value = settings.phy.config.fan11.reg_domain;
+      break;
+    
+    case WS_BR_AGENT_PHY_CONFIG_FAN10:
+      value = settings.phy.config.fan10.reg_domain;
+      break;
+
+    default: 
+      value = 0U;
+      break;
+  }
+
+  r = sd_bus_message_append(reply, "s",
+                            ws_br_agent_utils_get_reg_domain_str(value));
+
+  return r;
+}
+
+static int dbus_get_phy_mode_id(sd_bus *bus, const char *path, const char *interface,
+                               const char *property, sd_bus_message *reply, 
+                               void *userdata, sd_bus_error *ret_error)
+{
+  ws_br_agent_settings_t settings = { 0U };
+  int r = -1;
+  uint32_t value = 0U;
+
+  if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
+    return -1;
+  }
+  value = settings.phy.type != WS_BR_AGENT_PHY_CONFIG_FAN11 ? 0U :
+           settings.phy.config.fan11.phy_mode_id;
+  r = sd_bus_message_append(reply, "u", value);
+
+  return r;
+}
+
+static int dbus_get_chan_plan_id(sd_bus *bus, const char *path, const char *interface,
+                                 const char *property, sd_bus_message *reply, 
+                                 void *userdata, sd_bus_error *ret_error)
+{
+  ws_br_agent_settings_t settings = { 0U };
+  int r = -1;
+  uint32_t value = 0U;
+
+  if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
+    return -1;
+  }
+  value = settings.phy.type != WS_BR_AGENT_PHY_CONFIG_FAN11 ? 0U :
+           settings.phy.config.fan11.chan_plan_id;
+
+  r = sd_bus_message_append(reply, "u", value);
+
+  return r;
+}
+
+static int dbus_get_fan_version(sd_bus *bus, const char *path, const char *interface,
+                               const char *property, sd_bus_message *reply, 
+                               void *userdata, sd_bus_error *ret_error)
+{
+  ws_br_agent_settings_t settings = { 0U };
+  int r = -1;
+  uint8_t value = 0U;
+
+  if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
+    return -1;
+  }
+
+  switch (settings.phy.type) {
+    case WS_BR_AGENT_PHY_CONFIG_FAN11:
+      value = 2U;
+      break;
+    
+    case WS_BR_AGENT_PHY_CONFIG_FAN10:
+      value = 1U;
+      break;
+
+    default: 
+      value = 0U;
+      break;
+  }
+
+  r = sd_bus_message_append(reply, "y", value);
 
   return r;
 }

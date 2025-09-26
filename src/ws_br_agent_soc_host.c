@@ -34,6 +34,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <pthread.h>
 
 #include "ws_br_agent_log.h"
 #include "ws_br_agent_defs.h"
@@ -41,27 +42,27 @@
 #include "ws_br_agent_soc_host.h"
 #include "ws_br_agent_utils.h"
 
-#include <pthread.h>
-
-
 static ws_br_agent_ret_t copy_topology(ws_br_agent_soc_host_topology_t * const dst_topology,
                                        const ws_br_agent_soc_host_topology_t * const src_topology);
 
 static const ws_br_agent_settings_t default_host_settings = {
   .network_name = "Wi-SUN Network",
-  .regulatory_domain = 1,
   .network_size = 0,
-  .chan_plan_id = 0,
-  .phy_mode_id = 0,
   .tx_power_ddbm = 0,
-  .pan_id = 0x1234,
-  .gaks = { {0}, {0}, {0}, {0} },
-  .gtks = {
-    {0xBB, 0x06, 0x08, 0x57, 0x2C, 0xE1, 0x4D, 0x7B, 0xA2, 0xD1, 0x55, 0x49, 0x9C, 0xC8, 0x51, 0x9B},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-  }
+  .uc_dwell_interval_ms = 255,
+  .bc_dwell_interval_ms = 255,
+  .max_neighbor_count = 32,
+  .allowed_channels = { 0U },
+  .ipv6_prefix = "fd12:3456::/64",
+  .max_child_count = 22,
+  .max_security_neighbor_count = 300,
+  .keychain = 0,
+  .keychain_index = 0,
+  .socket_rx_buffer_size = 2048,
+  .phy.type = WS_BR_AGENT_PHY_CONFIG_FAN11,
+  .phy.config.fan11.reg_domain = 0x03,
+  .phy.config.fan11.chan_plan_id = 32,
+  .phy.config.fan11.phy_mode_id = 1,
 };
 
 static ws_br_agent_soc_host_t host = { 0U };
@@ -81,7 +82,6 @@ ws_br_agent_ret_t ws_br_agent_soc_host_init(void)
   }
   // Set local host with default settings for init
   ws_br_agent_soc_host_set("::1", NULL);
-
   return WS_BR_AGENT_RET_OK;
 }
 

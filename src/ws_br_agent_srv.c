@@ -269,7 +269,6 @@ static ws_br_agent_ret_t handle_get_config_params_req(int conn_fd)
     return WS_BR_AGENT_RET_ERR;
   }
 
-  // if (ws_br_agent_soc_host_send_req(&msg, NULL) != WS_BR_AGENT_RET_OK) {
   if (send(conn_fd, buf, buf_size, 0) < 0) {
     ws_br_agent_log_error("Failed to send SET_CONFIG_PARAMS as response\n");
     free(buf);

@@ -37,10 +37,12 @@
 #include "ws_br_agent_msg.h"
 #include "ws_br_agent_utils.h"
 
-
 #define MAX_LINE_BUF_SIZE (16U * 5U + 2U)
 
+#if WS_BR_AGENT_SETTINGS_HAVE_KEYS
 static void print_4x16_keys(const uint8_t keys[4][16]);
+#endif
+static const char *phy_type2str(const uint32_t type);
 
 void ws_br_agent_utils_print_app_banner(void)
 {
@@ -119,20 +121,32 @@ int32_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const msg)
   return WS_BR_AGENT_RET_OK;
 }
 
+
 void ws_br_agent_utils_print_host_settings(const ws_br_agent_settings_t * const settings)
 {
   
   ws_br_agent_log_info("Network name: %s\n", settings->network_name);
-  ws_br_agent_log_info("Regulatory domain: 0x%02x\n", settings->regulatory_domain);
   ws_br_agent_log_info("Network size: 0x%02x\n", settings->network_size);
   ws_br_agent_log_info("TX power: %d ddBm\n", settings->tx_power_ddbm);
-  ws_br_agent_log_info("PAN ID: 0x%04x\n", settings->pan_id);
+
+  // Only prints FAN 1.1 (almost always we use that)
+  ws_br_agent_log_info("PHY: %s\n", phy_type2str(settings->phy.type));
+  if (settings->phy.type == WS_BR_AGENT_PHY_CONFIG_FAN11) {
+    ws_br_agent_log_info(" (Regulatory domain: 0x%02x, Channel plan ID: 0x%02x, PHY mode ID: 0x%02x)\n",
+                         settings->phy.config.fan11.reg_domain,
+                         settings->phy.config.fan11.chan_plan_id,
+                         settings->phy.config.fan11.phy_mode_id);
+
+  }
+#if WS_BR_AGENT_SETTINGS_HAVE_KEYS
   ws_br_agent_log_info("GAKs:\n");
   print_4x16_keys(settings->gaks);
   ws_br_agent_log_info("GTKs:\n");
   print_4x16_keys(settings->gtks);
+#endif
 }
 
+#if WS_BR_AGENT_SETTINGS_HAVE_KEYS
 static void print_4x16_keys(const uint8_t keys[4][16])
 {
   char *line_buf = NULL;
@@ -155,4 +169,35 @@ static void print_4x16_keys(const uint8_t keys[4][16])
   }
 
   free(line_buf);
+}
+#endif
+
+
+static const char *phy_type2str(const uint32_t type)
+{
+  switch(type) {
+    /// FAN1.0 PHY configuration
+    case WS_BR_AGENT_PHY_CONFIG_FAN10:
+      return "FAN1.0";  
+    /// FAN1.1 PHY configuration
+    case WS_BR_AGENT_PHY_CONFIG_FAN11:
+      return "FAN1.1";
+    /// Explicit PHY configuration
+    case WS_BR_AGENT_PHY_CONFIG_EXPLICIT:
+      return "EXPLICIT";
+    /// Explicit RAIL configuration
+    case WS_BR_AGENT_PHY_CONFIG_IDS:
+      return "IDS";
+    /// Custom FSK PHY configuration
+    case WS_BR_AGENT_PHY_CONFIG_CUSTOM_FSK:
+      return "CUSTOM_FSK";
+    /// Custom OFDM PHY configuration
+    case WS_BR_AGENT_PHY_CONFIG_CUSTOM_OFDM:
+      return "CUSTOM_OFDM";
+    /// Custom OQPSK PHY configuration
+    case WS_BR_AGENT_PHY_CONFIG_CUSTOM_OQPSK:
+      return "CUSTOM_OQPSK";
+    default:
+      return "UNKNOWN";
+  }
 }

@@ -74,6 +74,15 @@ typedef int32_t ws_br_agent_ret_t;
 /// Maximum size of the IPv6 address string
 #define WS_BR_AGENT_IPV6_ADDR_STR_SIZE 40U
 
+/// Maximum size of settings strings
+#define WS_BR_AGENT_SETTINGS_STR_DATA_MAX_LENGTH 64U
+
+/// IPv6 prefix string size
+#define WS_BR_AGENT_IPV6_PREFIX_SIZE  43U
+
+/// Max PHY mode ID count
+#define WS_BR_AGENT_MAX_PHY_MODE_ID_COUNT 15U
+
 #ifdef __cplusplus
 }
 #endif

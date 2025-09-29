@@ -5,6 +5,8 @@
 
 Wi-SUN SoC Border Router Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN Border Router. It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration. This service is specifically designed for EFR32 Border Router SoC implementations and requires a SiWx917 Wi-Fi module along with a properly configured IPv6 network infrastructure.
 
+The agent service communicates with the [Wi-SUN Border Router GUI](https://github.com/SiliconLabs/wisun-br-gui) application over D-Bus, providing a comprehensive graphical interface for network management, topology visualization, and real-time monitoring.
+
 ![Wi-SUN SoC Border Router Agent](assets/wisun-soc-br-agent.png)
 
 ## Architecture & Communication
@@ -21,17 +23,17 @@ The Wi-SUN SoC Border Router Agent acts as an intermediary between the EFR32 SoC
 │ • Status        │     │  └─────────────────┘ │     │ • Integration   │
 │                 │     │                      │     │                 │
 └─────────────────┘     │  ┌─────────────────┐ │     └─────────────────┘
-                        │  │  D-Bus Service  │ │              ▲
-┌─────────────────┐     │  │ (SystemD Bus)   │ │              │
-│ Wi-SUN Border   │────▶│  └─────────────────┘ │              │
-│ Router GUI      │     │                      │              │
-│                 │     └──────────────────────┘              │
-│ • Network Mgmt  │                                           │
-│ • Topology View │                                           │
-│ • Real-time Mon │                                           │
-│ • Configuration │                                           │
-└─────────────────┘                                           │
-                                                              │
+                        │  │  D-Bus Service  │ │
+┌─────────────────┐     │  │ (SystemD Bus)   │ │
+│ Wi-SUN Border   │────▶│  └─────────────────┘ │
+│ Router GUI      │     │                      │
+│                 │     └──────────────────────┘
+│ • Network Mgmt  │
+│ • Topology View │
+│ • Real-time Mon │
+│ • Configuration │
+└─────────────────┘
+
 ```
 
 ### Communication Flow

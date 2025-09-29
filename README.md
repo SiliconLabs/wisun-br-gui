@@ -7,12 +7,66 @@ Wi-SUN SoC Border Router Agent is a Linux-based service for managing and monitor
 
 ![Wi-SUN SoC Border Router Agent](assets/wisun-soc-br-agent.png)
 
+## Architecture & Communication
+
+The Wi-SUN SoC Border Router Agent acts as an intermediary between the EFR32 SoC host and external clients, providing both TCP and D-Bus interfaces for comprehensive network management.
+
+```
+┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
+│   EFR32 SoC     │────▶│  Wi-SUN BR Agent     │────▶│   D-Bus Clients │
+│   (Host)        │     │                      │     │  (System Apps)  │
+│  Port 4567      │     │  ┌─────────────────┐ │     │                 │
+│ • Network Cfg   │◀────┤  │   TCP Server    │ │     │ • Properties    │
+│ • Topology      │     │  │   (Port 5678)   │ │◀────┤ • Monitoring    │
+│ • Status        │     │  └─────────────────┘ │     │ • Integration   │
+│                 │     │                      │     │                 │
+└─────────────────┘     │  ┌─────────────────┐ │     └─────────────────┘
+                        │  │  D-Bus Service  │ │              ▲
+┌─────────────────┐     │  │ (SystemD Bus)   │ │              │
+│ Wi-SUN Border   │────▶│  └─────────────────┘ │              │
+│ Router GUI      │     │                      │              │
+│                 │     └──────────────────────┘              │
+│ • Network Mgmt  │                                           │
+│ • Topology View │                                           │
+│ • Real-time Mon │                                           │
+│ • Configuration │                                           │
+└─────────────────┘                                           │
+                                                              │
+```
+
+### Communication Flow
+1. **SoC Host ↔ BR Agent**: TCP communication (port 4567) for network configuration and topology status
+2. **GUI ↔ BR Agent**: D-Bus interface for remote management and real-time monitoring
+3. **BR Agent → D-Bus**: Property exposure and change notifications for system integration
+
 ### Purpose
 
 - Provide a remote management interface for Wi-SUN Border Routers.
 - Enable network configuration, topology monitoring, and integration with UI tools (e.g., wisun-br-gui).
 - Support automated and scriptable testing via Python and Linux utilities.
 
+## D-Bus Interface
+
+The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.BorderRouter` for system integration and monitoring.
+
+### Available Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `RoutingGraph` | `a(aybaay)` | Network topology with target, preferred, and backup routes |
+| `WisunNetworkName` | `s` | Wi-SUN network name/identifier |
+| `WisunSize` | `s` | Network size configuration (Small/Medium/Large) |
+| `WisunDomain` | `s` | Regulatory domain setting |
+| `WisunPhyModeId` | `u` | PHY mode identifier for FAN 1.1 |
+| `WisunChanPlanId` | `u` | Channel plan identifier for FAN 1.1 |
+| `WisunFanVersion` | `y` | FAN version (1 for FAN 1.0, 2 for FAN 1.1) |
+
+### D-Bus Features
+
+- **Property Monitoring**: All properties support `PropertiesChanged` signals
+- **System Integration**: Native systemd D-Bus integration for service management
+- **Scripting Support**: Query properties via `dbus-send` or `busctl` commands
+- **Real-time Updates**: Automatic topology change notifications via D-Bus signals
 
 ## Features
 
@@ -62,30 +116,58 @@ cmake -DWS_BR_AGENT_LOG_ENABLE_COLORS=0 -DWS_BR_AGENT_LOG_ENABLE_DEBUG=0 ..
 	 ```
 3. The binary will be located in `build/wisun-soc-br-agent`.
 
-## Testing
+## Testing & Scripts
 
-### 1. Python Bot Test
+### 1. Python Bot Test Session (`br_soc_bot.py`)
 
-- Use `test/br_soc_bot.py` to simulate TCP client requests and topology updates.
-- Example:
-	```bash
-	python3 test/br_soc_bot.py
-	```
+The Python bot provides comprehensive TCP client simulation with multi-threaded operations:
 
-### 2. Query RoutingGraph via D-Bus
+```bash
+python3 test/br_soc_bot.py
+```
 
-- Use the provided shell script to query the RoutingGraph property:
-	```bash
-	bash test/dbus-get-topology.sh
-	```
+**Features:**
+- Multi-threaded TCP client simulation
+- Random topology generation and updates
+- Configuration requests and responses
+- Structured message protocol testing
+- Concurrent client session testing
 
-### 3. Monitor D-Bus Property Signaling
+### 2. D-Bus Property Scripts
 
-- Use the provided script to monitor D-Bus for RoutingGraph property changes:
-	```bash
-	bash test/dbus-monitor-routinggraph.sh
-	```
-- This will show `PropertiesChanged` signals when the topology is updated.
+#### Query All Settings (`dbus-get-settings.sh`)
+```bash
+bash test/dbus-get-settings.sh
+```
+Retrieves and displays all Wi-SUN configuration properties:
+- Network name, size, and regulatory domain
+- PHY mode and channel plan identifiers
+- FAN version information
+
+#### Query Network Topology (`dbus-get-topology.sh`)
+```bash
+bash test/dbus-get-topology.sh
+```
+Fetches the current network routing graph with target and route information.
+
+#### Monitor Property Changes (`dbus-monitor-routinggraph.sh`)
+```bash
+bash test/dbus-monitor-routinggraph.sh
+```
+Real-time monitoring of `PropertiesChanged` signals for topology updates.
+
+### 3. Manual D-Bus Testing
+
+Query individual properties using `dbus-send`:
+```bash
+# Get network name
+dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
+  /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get \
+  string:com.silabs.Wisun.BorderRouter string:WisunNetworkName
+
+# Monitor all property changes
+dbus-monitor --system "interface='org.freedesktop.DBus.Properties',member='PropertiesChanged'"
+```
 
 ## License
 

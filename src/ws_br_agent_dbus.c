@@ -81,17 +81,17 @@ static const sd_bus_vtable dbus_vtable[] = {
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH, "a(aybaay)", 
                   dbus_get_routing_graph, 0, SD_BUS_VTABLE_PROPERTY_EMITS_INVALIDATION),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_NETWORK_NAME, "s", 
-                  dbus_get_network_name, 0, SD_BUS_VTABLE_PROPERTY_CONST),
+                  dbus_get_network_name, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_NETWORK_SIZE, "s", 
-                  dbus_get_network_size, 0, SD_BUS_VTABLE_PROPERTY_CONST),
+                  dbus_get_network_size, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_REG_DOMAIN, "s", 
-                  dbus_get_reg_domain, 0, SD_BUS_VTABLE_PROPERTY_CONST),
+                  dbus_get_reg_domain, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_PHY_MODE_ID, "u", 
-                  dbus_get_phy_mode_id, 0, SD_BUS_VTABLE_PROPERTY_CONST),
+                  dbus_get_phy_mode_id, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_CHAN_PLAN_ID, "u", 
-                  dbus_get_chan_plan_id, 0, SD_BUS_VTABLE_PROPERTY_CONST),
+                  dbus_get_chan_plan_id, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_FAN_VERSION, "y", 
-                  dbus_get_fan_version, 0, SD_BUS_VTABLE_PROPERTY_CONST),          
+                  dbus_get_fan_version, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),          
   SD_BUS_VTABLE_END
 };
 
@@ -117,14 +117,34 @@ ws_br_agent_ret_t ws_br_agent_dbus_notify_topology_changed(void)
   if (bus == NULL) {
     return WS_BR_AGENT_RET_ERR;
   }
-  // Notify D-Bus clients that the RoutingGraph property has changed
+
   if (sd_bus_emit_properties_changed(bus, WS_BR_AGENT_DBUS_PATH, 
                                      WS_BR_AGENT_DBUS_INTERFACE, 
                                      WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH, NULL) < 0) {
-    ws_br_agent_log_error("Failed to emit properties changed signal\n");
     return WS_BR_AGENT_RET_ERR;
   }
 
+  return WS_BR_AGENT_RET_OK;
+}
+
+ws_br_agent_ret_t ws_br_agent_dbus_notify_settings_changed(void)
+{
+  if (bus == NULL) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+  // Notify D-Bus clients that the any of settings property has changed
+  if (sd_bus_emit_properties_changed(bus, WS_BR_AGENT_DBUS_PATH, 
+                                     WS_BR_AGENT_DBUS_INTERFACE, 
+                                     WS_BR_AGENT_DBUS_PROPERTY_NETWORK_NAME, 
+                                     WS_BR_AGENT_DBUS_PROPERTY_NETWORK_SIZE,
+                                     WS_BR_AGENT_DBUS_PROPERTY_REG_DOMAIN,
+                                     WS_BR_AGENT_DBUS_PROPERTY_PHY_MODE_ID,
+                                     WS_BR_AGENT_DBUS_PROPERTY_CHAN_PLAN_ID,
+                                     WS_BR_AGENT_DBUS_PROPERTY_FAN_VERSION,
+                                     NULL) < 0) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+  
   return WS_BR_AGENT_RET_OK;
 }
 

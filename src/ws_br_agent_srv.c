@@ -168,14 +168,22 @@ static void srv_thr_fnc(void *arg)
     switch (msg->msg_code) {
     // Handle topology request
     case WS_BR_AGENT_MSG_CODE_TOPOLOGY:
-      if (handle_topology_req(msg) == WS_BR_AGENT_RET_OK) {
-        ws_br_agent_dbus_notify_topology_changed();
+      if (handle_topology_req(msg) != WS_BR_AGENT_RET_OK) {
+        break;
+      }
+      if (ws_br_agent_dbus_notify_topology_changed() != WS_BR_AGENT_RET_OK) {
+        ws_br_agent_log_error("Failed to notify topology changed via D-Bus\n");
       }
       break;
 
     // Handle set config request: Used for subscription
     case WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS:
-      (void) handle_set_config_params_req(msg, &client_addr);
+      if (handle_set_config_params_req(msg, &client_addr) != WS_BR_AGENT_RET_OK) {
+        break;
+      }
+      if (ws_br_agent_dbus_notify_settings_changed() != WS_BR_AGENT_RET_OK) {
+        ws_br_agent_log_error("Failed to notify settings changed via D-Bus\n");
+      }
       break;
 
     // Not handled requests

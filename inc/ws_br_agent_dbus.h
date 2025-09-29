@@ -58,6 +58,13 @@ void ws_br_agent_dbus_deinit(void);
  */
 ws_br_agent_ret_t ws_br_agent_dbus_notify_topology_changed(void);
 
+/**
+ * @brief Notify D-Bus clients that the settings have changed.
+ * @details This function emits signals for each of settings property that has changed.
+ * @return WS_BR_AGENT_RET_OK on success, error code otherwise.
+ */
+ws_br_agent_ret_t ws_br_agent_dbus_notify_settings_changed(void);
+
 #if defined(__cplusplus)
 }
 #endif

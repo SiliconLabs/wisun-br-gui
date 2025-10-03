@@ -35,6 +35,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <errno.h>
 
 #include "ws_br_agent_log.h"
 #include "ws_br_agent_defs.h"
@@ -96,7 +98,10 @@ ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const 
 
   pthread_mutex_lock(&host_mutex);
   ws_br_agent_log_info("Send '%s' request (0x%08x)...\n", 
-                       ws_br_agent_utils_get_req_code_str(req_msg->msg_code), req_msg->msg_code);
+                       ws_br_agent_utils_val_to_str(req_msg->msg_code, 
+                                                    ws_br_agent_msg_code_strs, 
+                                                    "Unknown"), 
+                       req_msg->msg_code);
 
   sockfd = socket(AF_INET6, SOCK_STREAM, 0);
 

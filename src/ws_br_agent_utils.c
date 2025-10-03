@@ -36,13 +36,74 @@
 #include "ws_br_agent_log.h"
 #include "ws_br_agent_msg.h"
 #include "ws_br_agent_utils.h"
+#include "ws_br_agent_settings.h"
 
 #define MAX_LINE_BUF_SIZE (16U * 5U + 2U)
 
 #if WS_BR_AGENT_SETTINGS_HAVE_KEYS
 static void print_4x16_keys(const uint8_t keys[4][16]);
 #endif
-static const char *phy_type2str(const uint32_t type);
+
+const ws_br_agent_name_value_t ws_br_agent_nw_size_strs[] = {
+    { "CERT",   WS_BR_AGENT_NETWORK_SIZE_CERTIFICATION },
+    { "SMALL",  WS_BR_AGENT_NETWORK_SIZE_SMALL },
+    { "S",      WS_BR_AGENT_NETWORK_SIZE_SMALL },
+    { "MEDIUM", WS_BR_AGENT_NETWORK_SIZE_MEDIUM },
+    { "M",      WS_BR_AGENT_NETWORK_SIZE_MEDIUM },
+    { "LARGE",  WS_BR_AGENT_NETWORK_SIZE_LARGE },
+    { "L",      WS_BR_AGENT_NETWORK_SIZE_LARGE },
+    { "XLARGE", WS_BR_AGENT_NETWORK_SIZE_XLARGE },
+    { "XL",     WS_BR_AGENT_NETWORK_SIZE_XLARGE },
+    { NULL, 0L }
+};
+
+const ws_br_agent_name_value_t ws_br_agent_domains_strs[] = {
+    { "WW", WS_BR_AGENT_REG_DOMAIN_WW }, // World wide
+    { "NA", WS_BR_AGENT_REG_DOMAIN_NA }, // North America
+    { "JP", WS_BR_AGENT_REG_DOMAIN_JP }, // Japan
+    { "EU", WS_BR_AGENT_REG_DOMAIN_EU }, // European Union
+    { "CN", WS_BR_AGENT_REG_DOMAIN_CN }, // China
+    { "IN", WS_BR_AGENT_REG_DOMAIN_IN }, // India
+    { "MX", WS_BR_AGENT_REG_DOMAIN_MX }, // Mexico
+    { "BZ", WS_BR_AGENT_REG_DOMAIN_BZ }, // Brazil
+    { "AZ", WS_BR_AGENT_REG_DOMAIN_AZ }, // Australia
+    { "NZ", WS_BR_AGENT_REG_DOMAIN_NZ }, // New Zealand (share its ID with Australia)
+    { "KR", WS_BR_AGENT_REG_DOMAIN_KR }, // Korea
+    { "PH", WS_BR_AGENT_REG_DOMAIN_PH }, // Philippines
+    { "MY", WS_BR_AGENT_REG_DOMAIN_MY }, // Malaysia
+    { "HK", WS_BR_AGENT_REG_DOMAIN_HK }, // Hong Kong
+    { "SG", WS_BR_AGENT_REG_DOMAIN_SG }, // Singapore
+    { "TH", WS_BR_AGENT_REG_DOMAIN_TH }, // Thailand
+    { "VN", WS_BR_AGENT_REG_DOMAIN_VN }, // Vietnam
+    { NULL, 0L }
+};
+
+const ws_br_agent_name_value_t ws_br_agent_keychain_strs[]  = {
+  { "AUTO",    WS_BR_AGENT_KEYCHAIN_AUTOMATIC },
+  { "BUILTIN", WS_BR_AGENT_KEYCHAIN_BUILTIN },
+  { "NVM",     WS_BR_AGENT_KEYCHAIN_NVM },
+  { NULL, 0L }
+};
+
+const ws_br_agent_name_value_t ws_br_agent_msg_code_strs[] = {
+  { "TOPOLOGY",            WS_BR_AGENT_MSG_CODE_TOPOLOGY },
+  { "GET_CONFIG_PARAMS",   WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS },
+  { "SET_CONFIG_PARAMS",   WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS },
+  { "START_BR",            WS_BR_AGENT_MSG_CODE_START_BR },
+  { "STOP_BR",             WS_BR_AGENT_MSG_CODE_STOP_BR },
+  { NULL, 0L }
+};
+
+const ws_br_agent_name_value_t ws_br_agent_phy_type_strs[] = {
+  { "FAN1.1",        WS_BR_AGENT_PHY_CONFIG_FAN11 },
+  { "FAN1.0",        WS_BR_AGENT_PHY_CONFIG_FAN10 },
+  { "Explicit",      WS_BR_AGENT_PHY_CONFIG_EXPLICIT },
+  { "Explicit RAIL", WS_BR_AGENT_PHY_CONFIG_IDS },
+  { "Custom FSK",    WS_BR_AGENT_PHY_CONFIG_CUSTOM_FSK },
+  { "Custom OFDM",   WS_BR_AGENT_PHY_CONFIG_CUSTOM_OFDM },
+  { "Custom OQPSK",  WS_BR_AGENT_PHY_CONFIG_CUSTOM_OQPSK },
+  { NULL, 0L }
+};
 
 void ws_br_agent_utils_print_app_banner(void)
 {
@@ -68,62 +129,6 @@ void ws_br_agent_utils_print_app_banner(void)
   ws_br_agent_app_print("\n");
 }
 
-const char *ws_br_agent_utils_get_req_code_str(const ws_br_agent_msg_code_t req_code)
-{
-  switch (req_code) {
-    case WS_BR_AGENT_MSG_CODE_TOPOLOGY:
-      return "TOPOLOGY";
-    case WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS:
-      return "GET_CONFIG_PARAMS";
-    case WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS:
-      return "SET_CONFIG_PARAMS";
-    case WS_BR_AGENT_MSG_CODE_START_BR:
-      return "START_BR";
-    case WS_BR_AGENT_MSG_CODE_STOP_BR:
-      return "STOP_BR";
-    default:
-      return "UNKNOWN";
-  }
-}
-const char *ws_br_agent_utils_get_net_size_str(const uint32_t nw_size)
-{
-  switch (nw_size) {
-    case 0U:
-      return "Small";
-    case 1U:
-      return "Medium";
-    case 2U:
-      return "Large";
-    case 3U:
-      return "Extra Large";
-    default:
-      return "Unknown";
-  }
-}
-
-const char *ws_br_agent_utils_get_reg_domain_str(const uint8_t domain)
-{
-  switch (domain) {
-    case 0: return "WW"; // World wide
-    case 1: return "NA"; // North America
-    case 2: return "JP"; // Japan
-    case 3: return "EU"; // European Union
-    case 4: return "CN"; // China
-    case 5: return "IN"; // India
-    case 6: return "MX"; // Mexico
-    case 7: return "BZ"; // Brazil
-    case 8: return "AZ/NZ"; // Australia/New Zealand
-    case 9: return "KR"; // Korea
-    case 10: return "PH"; // Philippines
-    case 11: return "MY"; // Malaysia
-    case 12: return "HK"; // Hong Kong
-    case 13: return "SG"; // Singapore
-    case 14: return "TH"; // Thailand
-    case 15: return "VN"; // Vietnam
-    default: return "Unknown";
-  }
-}
-
 int32_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const msg)
 {
   char *line_buf = NULL;
@@ -133,7 +138,9 @@ int32_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const msg)
   }
 
   ws_br_agent_log_debug("Msg code: %s (0x%08x)\n", 
-                       ws_br_agent_utils_get_req_code_str(msg->msg_code), 
+                       ws_br_agent_utils_val_to_str(msg->msg_code, 
+                                                    ws_br_agent_msg_code_strs, 
+                                                    "Unknown"), 
                        msg->msg_code);
   ws_br_agent_log_debug("Payload len: %u\n", msg->payload_len);
 
@@ -168,7 +175,9 @@ void ws_br_agent_utils_print_host_settings(const ws_br_agent_settings_t * const 
   ws_br_agent_log_info("TX power: %d ddBm\n", settings->tx_power_ddbm);
 
   // Only prints FAN 1.1 (almost always we use that)
-  ws_br_agent_log_info("PHY: %s\n", phy_type2str(settings->phy.type));
+  ws_br_agent_log_info("PHY: %s\n", ws_br_agent_utils_val_to_str(settings->phy.type, 
+                                                                 ws_br_agent_phy_type_strs, 
+                                                                 "Unknown"));
   if (settings->phy.type == WS_BR_AGENT_PHY_CONFIG_FAN11) {
     ws_br_agent_log_info(" (Regulatory domain: 0x%02x, Channel plan ID: 0x%02x, PHY mode ID: 0x%02x)\n",
                          settings->phy.config.fan11.reg_domain,
@@ -211,31 +220,43 @@ static void print_4x16_keys(const uint8_t keys[4][16])
 #endif
 
 
-static const char *phy_type2str(const uint32_t type)
+const char *ws_br_agent_utils_val_to_str(int val, 
+                                         const ws_br_agent_name_value_t table[], 
+                                         const char *def)
 {
-  switch(type) {
-    /// FAN1.0 PHY configuration
-    case WS_BR_AGENT_PHY_CONFIG_FAN10:
-      return "FAN1.0";  
-    /// FAN1.1 PHY configuration
-    case WS_BR_AGENT_PHY_CONFIG_FAN11:
-      return "FAN1.1";
-    /// Explicit PHY configuration
-    case WS_BR_AGENT_PHY_CONFIG_EXPLICIT:
-      return "EXPLICIT";
-    /// Explicit RAIL configuration
-    case WS_BR_AGENT_PHY_CONFIG_IDS:
-      return "IDS";
-    /// Custom FSK PHY configuration
-    case WS_BR_AGENT_PHY_CONFIG_CUSTOM_FSK:
-      return "CUSTOM_FSK";
-    /// Custom OFDM PHY configuration
-    case WS_BR_AGENT_PHY_CONFIG_CUSTOM_OFDM:
-      return "CUSTOM_OFDM";
-    /// Custom OQPSK PHY configuration
-    case WS_BR_AGENT_PHY_CONFIG_CUSTOM_OQPSK:
-      return "CUSTOM_OQPSK";
-    default:
-      return "UNKNOWN";
+  for (int i = 0; 
+       i < (sizeof(table) / sizeof(ws_br_agent_name_value_t)); 
+       i++) {
+    if (table[i].name == NULL) {
+      break;
+    }
+    if (val == table[i].val) {
+      return table[i].name;
+    }
   }
+
+  return def;
+}
+
+ws_br_agent_ret_t ws_br_agent_utils_str_to_val(const char *str, 
+                                               const ws_br_agent_name_value_t table[], 
+                                               int *res)
+{
+  if (str == NULL || res == NULL) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  for (int i = 0; 
+       i < (sizeof(table) / sizeof(ws_br_agent_name_value_t)); 
+       i++) {
+    if (table[i].name == NULL) {
+      break;
+    }
+    if (!strcmp(str, table[i].name)) {
+      *res = table[i].val;
+      return WS_BR_AGENT_RET_OK;
+    }
+  }
+
+  return WS_BR_AGENT_RET_ERR;
 }

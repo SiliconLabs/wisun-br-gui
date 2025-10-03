@@ -39,18 +39,34 @@
 extern "C" {
 #endif
 
+/// Name-value pair structure for Wi-SUN SoC Border Router Agent.
+typedef struct ws_br_agent_name_value {
+  /// Name
+  char *name;
+  ///  Value
+  int val;
+} ws_br_agent_name_value_t;
+
+/// Wi-SUN Network size string table
+const ws_br_agent_name_value_t ws_br_agent_nw_size_strs[];
+
+/// Wi-SUN Domain string table
+const ws_br_agent_name_value_t ws_br_agent_domains_strs[];
+
+/// Wi-SUN Keychain string table
+const ws_br_agent_name_value_t ws_br_agent_keychain_strs[];
+
+/// BR Agent message code string table
+const ws_br_agent_name_value_t ws_br_agent_msg_code_strs[];
+
+/// Wi-SUN PHY types string table
+const ws_br_agent_name_value_t ws_br_agent_phy_type_strs[];
+
 /**
  * @brief Print the application banner to standard output.
  * @details Displays version and copyright information.
  */
 void ws_br_agent_utils_print_app_banner(void);
-
-/**
- * @brief Get a string representation of a request code.
- * @param[in] req_code The request code to convert to string.
- * @return Pointer to a string describing the request code.
- */
-const char *ws_br_agent_utils_get_req_code_str(const ws_br_agent_msg_code_t req_code);
 
 /**
  * @brief Print the contents of a message structure.
@@ -66,18 +82,26 @@ ws_br_agent_ret_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const ms
 void ws_br_agent_utils_print_host_settings(const ws_br_agent_settings_t * const settings);
 
 /**
- * @brief Get network size as a string.
- * @param[in] nw_size The network size to convert.
- * @return Pointer to a string representation of the network size.
+ * @brief Convert a value to its corresponding string using a name-value table.
+ * @param[in] val The value to convert.
+ * @param[in] table The name-value table to use for conversion.
+ * @param[in] def The default string to return if the value is not found in the table.
+ * @return Pointer to the corresponding string, or the default string if not found.
  */
-const char *ws_br_agent_utils_get_net_size_str(const uint32_t nw_size);
+const char *ws_br_agent_utils_val_to_str(int val, 
+                                         const ws_br_agent_name_value_t table[], 
+                                         const char *def);
 
 /**
- * @brief Get regulatory domain as a string.
- * @param[in] domain The regulatory domain to convert.
- * @return Pointer to a string representation of the regulatory domain.
+ * @brief Convert a string to its corresponding value using a name-value table.
+ * @param[in] str The string to convert.
+ * @param[in] table The name-value table to use for conversion.
+ * @param[out] res Pointer to an integer to store the resulting value.
+ * @return The corresponding value, or -1 if the string is not found in the table.
  */
-const char *ws_br_agent_utils_get_reg_domain_str(const uint8_t domain);
+ws_br_agent_ret_t ws_br_agent_utils_str_to_val(const char *str, 
+                                               const ws_br_agent_name_value_t table[], 
+                                               int *res);
 
 #if defined(__cplusplus)
 }

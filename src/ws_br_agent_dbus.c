@@ -251,7 +251,9 @@ static int dbus_get_network_size(sd_bus *bus, const char *path, const char *inte
   }
   
   r = sd_bus_message_append(reply, "s",
-                            ws_br_agent_utils_get_net_size_str(settings.network_size));
+                            ws_br_agent_utils_val_to_str(settings.network_size, 
+                                                         ws_br_agent_nw_size_strs, 
+                                                         "Unknown"));
   
   return r;
 }
@@ -282,7 +284,9 @@ static int dbus_get_reg_domain(sd_bus *bus, const char *path, const char *interf
   }
 
   r = sd_bus_message_append(reply, "s",
-                            ws_br_agent_utils_get_reg_domain_str(value));
+                            ws_br_agent_utils_val_to_str(value, 
+                                                         ws_br_agent_domains_strs, 
+                                                         "Unknown"));
 
   return r;
 }

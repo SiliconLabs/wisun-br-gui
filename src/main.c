@@ -49,12 +49,26 @@ int main(int argc, char *argv[])
   struct sigaction sa;
   int opt;
 
-  // Parse arguments for --log or -l
+  // Parse arguments
   for (int i = 1; i < argc; ++i) {
     if (!strcmp(argv[i], "--log")
         || !strcmp(argv[i], "-l") && (i + 1 < argc)) {
       ws_br_agent_log_file_path = argv[i + 1];
       ++i;
+    }
+    else if (!strcmp(argv[i], "--settings")
+             || !strcmp(argv[i], "-s") && (i + 1 < argc)) {
+      // parse settings
+      ++i;
+    }
+    else if (!strcmp(argv[i], "--help")
+             || !strcmp(argv[i], "-h")) {
+      printf("Usage: %s [--log <log file path>] [--help]\n", argv[0]);
+      exit(EXIT_SUCCESS);
+    } else {
+      printf("Unknown argument: %s\n", argv[i]);
+      printf("Usage: %s [--log <log file path>] [--help]\n", argv[0]);
+      exit(EXIT_FAILURE);
     }
   }
 

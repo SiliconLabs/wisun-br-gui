@@ -165,26 +165,75 @@ typedef struct __attribute__((packed, aligned(1))){
   } config;
 } ws_br_agent_phy_config_t;
 
-typedef enum {
+/// Enumeration for PHY configuration type
+typedef enum ws_br_agent_phy_config_type {
   /// FAN1.0 PHY configuration
-  WS_BR_AGENT_PHY_CONFIG_FAN10        = 0,
+  WS_BR_AGENT_PHY_CONFIG_FAN10 = 0,
   /// FAN1.1 PHY configuration
-  WS_BR_AGENT_PHY_CONFIG_FAN11        = 1,
+  WS_BR_AGENT_PHY_CONFIG_FAN11,
   /// Explicit PHY configuration
-  WS_BR_AGENT_PHY_CONFIG_EXPLICIT     = 2,
+  WS_BR_AGENT_PHY_CONFIG_EXPLICIT,
   /// Explicit RAIL configuration
-  WS_BR_AGENT_PHY_CONFIG_IDS          = 3,
+  WS_BR_AGENT_PHY_CONFIG_IDS,
   /// Custom FSK PHY configuration
-  WS_BR_AGENT_PHY_CONFIG_CUSTOM_FSK   = 4,
+  WS_BR_AGENT_PHY_CONFIG_CUSTOM_FSK,
   /// Custom OFDM PHY configuration
-  WS_BR_AGENT_PHY_CONFIG_CUSTOM_OFDM  = 5,
+  WS_BR_AGENT_PHY_CONFIG_CUSTOM_OFDM,
   /// Custom OQPSK PHY configuration
-  WS_BR_AGENT_PHY_CONFIG_CUSTOM_OQPSK = 6,
+  WS_BR_AGENT_PHY_CONFIG_CUSTOM_OQPSK,
 } ws_br_agent_phy_config_type_t;
 
-/// @brief Structure for Wi-SUN Border Router settings
+
+typedef enum ws_br_agent_reg_domain{
+    // Value of domains is specified by the Wi-SUN specification
+    WS_BR_AGENT_REG_DOMAIN_WW =   0x00, // World Wide
+    WS_BR_AGENT_REG_DOMAIN_NA =   0x01, // North America
+    WS_BR_AGENT_REG_DOMAIN_JP =   0x02, // Japan
+    WS_BR_AGENT_REG_DOMAIN_EU =   0x03, // European Union
+    WS_BR_AGENT_REG_DOMAIN_CN =   0x04, // China
+    WS_BR_AGENT_REG_DOMAIN_IN =   0x05, // India
+    WS_BR_AGENT_REG_DOMAIN_MX =   0x06, // Mexico
+    WS_BR_AGENT_REG_DOMAIN_BZ =   0x07, // Brazil
+    WS_BR_AGENT_REG_DOMAIN_AZ =   0x08, // Australia
+    WS_BR_AGENT_REG_DOMAIN_NZ =   0x08, // New zealand
+    WS_BR_AGENT_REG_DOMAIN_KR =   0x09, // Korea
+    WS_BR_AGENT_REG_DOMAIN_PH =   0x0A, // Philippines
+    WS_BR_AGENT_REG_DOMAIN_MY =   0x0B, // Malaysia
+    WS_BR_AGENT_REG_DOMAIN_HK =   0x0C, // Hong Kong
+    WS_BR_AGENT_REG_DOMAIN_SG =   0x0D, // Singapore
+    WS_BR_AGENT_REG_DOMAIN_TH =   0x0E, // Thailand
+    WS_BR_AGENT_REG_DOMAIN_VN =   0x0F, // Vietnam
+    WS_BR_AGENT_REG_DOMAIN_UNDEF,
+} ws_br_agent_reg_domain_t;
+
+/// Network size enum
+typedef enum ws_br_agent_network_size {
+  /// Small network size
+  WS_BR_AGENT_NETWORK_SIZE_SMALL,
+  /// Medium network size
+  WS_BR_AGENT_NETWORK_SIZE_MEDIUM,
+  /// Large network size
+  WS_BR_AGENT_NETWORK_SIZE_LARGE,
+  /// Extra large network size
+  WS_BR_AGENT_NETWORK_SIZE_XLARGE,
+  /// Certification network size
+  WS_BR_AGENT_NETWORK_SIZE_CERTIFICATION,
+} ws_br_agent_network_size_t;
+
+/// Enumeration for keychain
+typedef enum ws_br_agent_keychain {
+  /// Automatic keychain selection. If SL_WISUN_KEYCHAIN_NVM does not have
+  /// any credentials, SL_WISUN_KEYCHAIN_BUILTIN is used instead.
+  WS_BR_AGENT_KEYCHAIN_AUTOMATIC,
+  /// Built-in keychain
+  WS_BR_AGENT_KEYCHAIN_BUILTIN,
+  /// NVM keychain
+  WS_BR_AGENT_KEYCHAIN_NVM
+} ws_br_agent_keychain_t;
+
+/// Structure for Wi-SUN Border Router settings
 typedef struct __attribute__((packed, aligned(1))) ws_br_agent_settings {
-  /// @brief Network name (null-terminated string)
+  /// Network name (null-terminated string)
   char network_name[WS_BR_AGENT_NETWORK_NAME_SIZE + 1];
   /// Network size
   uint8_t network_size;
@@ -229,6 +278,16 @@ typedef struct __attribute__((packed, aligned(1))) ws_br_agent_settings {
   /// Default PHY
   bool is_default_phy;
 } ws_br_agent_settings_t;
+
+/**
+ * @brief Load configuration from a file.
+ * @param[in] conf_file Path to the configuration file.
+ * @param[out] settings Pointer to settings structure to be filled.
+ * @return WS_BR_AGENT_RET_OK on success, error code otherwise.
+ */
+ws_br_agent_ret_t ws_br_agent_settings_load_config(const char * conf_file, 
+                                                   ws_br_agent_settings_t *settings)
+
 
 #ifdef __cplusplus
 }

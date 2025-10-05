@@ -224,18 +224,12 @@ const char *ws_br_agent_utils_val_to_str(int val,
                                          const ws_br_agent_name_value_t table[], 
                                          const char *def)
 {
-  for (int i = 0; 
-       i < (sizeof(table) / sizeof(ws_br_agent_name_value_t)); 
-       i++) {
-    if (table[i].name == NULL) {
-      break;
-    }
+  for (int i = 0; table[i].name != NULL; i++) {
     if (val == table[i].val) {
       return table[i].name;
     }
   }
-
-  return def;
+  return def == NULL ? "NULL" : def;
 }
 
 ws_br_agent_ret_t ws_br_agent_utils_str_to_val(const char *str, 
@@ -246,12 +240,7 @@ ws_br_agent_ret_t ws_br_agent_utils_str_to_val(const char *str,
     return WS_BR_AGENT_RET_ERR;
   }
 
-  for (int i = 0; 
-       i < (sizeof(table) / sizeof(ws_br_agent_name_value_t)); 
-       i++) {
-    if (table[i].name == NULL) {
-      break;
-    }
+  for (int i = 0; table[i].name != NULL; ++i) {
     if (!strcmp(str, table[i].name)) {
       *res = table[i].val;
       return WS_BR_AGENT_RET_OK;

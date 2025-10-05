@@ -354,3 +354,27 @@ ws_br_agent_ret_t ws_br_agent_soc_host_free_topology(ws_br_agent_soc_host_topolo
 
   return WS_BR_AGENT_RET_OK;
 }
+
+ws_br_agent_ret_t ws_br_agent_soc_host_update_settings(const char *config_file)
+{
+  ws_br_agent_settings_t new_settings = { 0U };
+
+  if (config_file == NULL) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+  // Init settings with default values
+  pthread_mutex_lock(&host_mutex);
+  memcpy(&new_settings, &default_host_settings, sizeof(ws_br_agent_settings_t));
+
+  if (ws_br_agent_settings_load_config(config_file, &new_settings) != WS_BR_AGENT_RET_OK) {
+    ws_br_agent_log_error("Failed: Loading config file\n");
+    pthread_mutex_unlock(&host_mutex);
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  // Update host settings
+  memcpy(&host.settings, &new_settings, sizeof(ws_br_agent_settings_t));
+  pthread_mutex_unlock(&host_mutex);
+
+  return WS_BR_AGENT_RET_OK;
+}

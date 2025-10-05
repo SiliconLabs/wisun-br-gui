@@ -53,16 +53,18 @@ extern "C" {
 
 /// Minimum buffer size for a message (header only, no payload)
 #define WS_BR_AGENT_MSG_MIN_BUF_SIZE \
-  (sizeof(ws_br_agent_msg_code_t) + sizeof(ws_br_agent_msg_len_t))
+  (sizeof(ws_br_agent_msg_raw_code_t) + sizeof(ws_br_agent_msg_len_t))
 
 /// Buffer size for SET_CONFIG_PARAMS message
 #define WS_BR_AGENT_MSG_SET_PARAM_MSG_BUF_SIZE \
   (WS_BR_AGENT_MSG_MIN_BUF_SIZE + sizeof(ws_br_agent_msg_settings_payload_t))
 
-/// @brief Type for message codes
-typedef uint32_t ws_br_agent_msg_code_t;
 /// @brief Type for message payload length
 typedef uint32_t ws_br_agent_msg_len_t;
+
+/// @brief Type for message codes
+typedef uint32_t ws_br_agent_msg_raw_code_t;
+
 /// @brief Type for SET_CONFIG_PARAMS message payload
 typedef ws_br_agent_settings_t ws_br_agent_msg_settings_payload_t;
 
@@ -70,7 +72,7 @@ typedef ws_br_agent_settings_t ws_br_agent_msg_settings_payload_t;
 /// [msg code 4 byte] [payload len 4 byte] [payload data n byte]
 typedef struct ws_br_agent_msg {
   /// @brief Message code
-  ws_br_agent_msg_code_t msg_code;
+  ws_br_agent_msg_raw_code_t msg_code;
   /// @brief Length of the payload in bytes
   ws_br_agent_msg_len_t payload_len;
   /// @brief Pointer to the payload data (NULL if no payload)

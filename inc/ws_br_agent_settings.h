@@ -286,8 +286,7 @@ typedef struct __attribute__((packed, aligned(1))) ws_br_agent_settings {
  * @return WS_BR_AGENT_RET_OK on success, error code otherwise.
  */
 ws_br_agent_ret_t ws_br_agent_settings_load_config(const char * conf_file, 
-                                                   ws_br_agent_settings_t *settings)
-
+                                                   ws_br_agent_settings_t *settings);
 
 #ifdef __cplusplus
 }

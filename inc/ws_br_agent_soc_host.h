@@ -162,6 +162,13 @@ ws_br_agent_ret_t ws_br_agent_soc_host_get_topology(ws_br_agent_soc_host_topolog
  */
 ws_br_agent_ret_t ws_br_agent_soc_host_free_topology(ws_br_agent_soc_host_topology_t * const topology);
 
+/**
+ * @brief Update host settings from config file
+ * @param[in] config file path
+ * @return WS_BR_AGENT_RET_OK on success, error code otherwise.
+ */
+ws_br_agent_ret_t ws_br_agent_soc_host_update_settings(const char *config_file);
+
 #ifdef __cplusplus
 }
 #endif

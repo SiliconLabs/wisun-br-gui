@@ -43,6 +43,7 @@
 
 static void sigint_hnd(int signum);
 static volatile sig_atomic_t main_thread_stop = 0;
+const char *ws_br_agent_conf_file_path = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -56,32 +57,36 @@ int main(int argc, char *argv[])
       ws_br_agent_log_file_path = argv[i + 1];
       ++i;
     }
-    else if (!strcmp(argv[i], "--settings")
-             || !strcmp(argv[i], "-s") && (i + 1 < argc)) {
+    else if (!strcmp(argv[i], "--config")
+             || !strcmp(argv[i], "-c") && (i + 1 < argc)) {
       // parse settings
+      ws_br_agent_conf_file_path = argv[i + 1];
       ++i;
     }
     else if (!strcmp(argv[i], "--help")
              || !strcmp(argv[i], "-h")) {
-      printf("Usage: %s [--log <log file path>] [--help]\n", argv[0]);
+      printf("Usage: %s [--log <log file path>] [--settings <config file path>] [--help]\n", argv[0]);
       exit(EXIT_SUCCESS);
     } else {
       printf("Unknown argument: %s\n", argv[i]);
-      printf("Usage: %s [--log <log file path>] [--help]\n", argv[0]);
       exit(EXIT_FAILURE);
     }
   }
-
-  sa.sa_handler = sigint_hnd;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  sigaction(SIGINT, &sa, NULL);
 
   ws_br_agent_utils_print_app_banner();
   assert(ws_br_agent_log_init() == WS_BR_AGENT_RET_OK);
   assert(ws_br_agent_soc_host_init() == WS_BR_AGENT_RET_OK);
   assert(ws_br_agent_srv_init() == WS_BR_AGENT_RET_OK);
   assert(ws_br_agent_dbus_init() == WS_BR_AGENT_RET_OK);
+  
+  sa.sa_handler = sigint_hnd;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sigaction(SIGINT, &sa, NULL);
+  
+  if (ws_br_agent_conf_file_path != NULL) {
+    ws_br_agent_soc_host_update_settings(ws_br_agent_conf_file_path);
+  }
 
   while (!main_thread_stop) {
     usleep(100000UL);

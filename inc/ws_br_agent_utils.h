@@ -48,19 +48,19 @@ typedef struct ws_br_agent_name_value {
 } ws_br_agent_name_value_t;
 
 /// Wi-SUN Network size string table
-const ws_br_agent_name_value_t ws_br_agent_nw_size_strs[];
+extern const ws_br_agent_name_value_t ws_br_agent_nw_size_strs[];
 
 /// Wi-SUN Domain string table
-const ws_br_agent_name_value_t ws_br_agent_domains_strs[];
+extern const ws_br_agent_name_value_t ws_br_agent_domains_strs[];
 
 /// Wi-SUN Keychain string table
-const ws_br_agent_name_value_t ws_br_agent_keychain_strs[];
+extern const ws_br_agent_name_value_t ws_br_agent_keychain_strs[];
 
 /// BR Agent message code string table
-const ws_br_agent_name_value_t ws_br_agent_msg_code_strs[];
+extern const ws_br_agent_name_value_t ws_br_agent_msg_code_strs[];
 
 /// Wi-SUN PHY types string table
-const ws_br_agent_name_value_t ws_br_agent_phy_type_strs[];
+extern const ws_br_agent_name_value_t ws_br_agent_phy_type_strs[];
 
 /**
  * @brief Print the application banner to standard output.

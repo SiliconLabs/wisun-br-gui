@@ -39,7 +39,7 @@
 #define __add_msg_code_and_len_to_buf(ptr, msg)       \
   do {                                                \
     *(uint32_t *)ptr = htonl(msg->msg_code);          \
-    ptr += sizeof(ws_br_agent_msg_code_t);            \
+    ptr += sizeof(ws_br_agent_msg_raw_code_t);        \
     *(uint32_t *)ptr = htonl(msg->payload_len);       \
     ptr += sizeof(ws_br_agent_msg_len_t);             \
   } while(0)

@@ -76,7 +76,7 @@ ws_br_agent_ret_t ws_br_agent_settings_load_config(const char * conf_file,
   
   fclose(file);
 
-  ws_br_agent_log_info("Configuration loaded successfully from '%s' (%d lines processed)\n", conf_file, line_number);
+  ws_br_agent_log_info("Configuration loaded successfully (%d lines processed)\n", line_number);
   return WS_BR_AGENT_RET_OK;
 }
 

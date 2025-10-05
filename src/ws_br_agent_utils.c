@@ -40,6 +40,12 @@
 
 #define MAX_LINE_BUF_SIZE (16U * 5U + 2U)
 
+#define HELP_STR \
+"Usage: wisun-soc-br-agent [--log <log file path>] \
+[--config <config file path>] \
+[--soc <SoC host address>] \
+[--help]\n"
+
 #if WS_BR_AGENT_SETTINGS_HAVE_KEYS
 static void print_4x16_keys(const uint8_t keys[4][16]);
 #endif
@@ -127,6 +133,11 @@ void ws_br_agent_utils_print_app_banner(void)
   ws_br_agent_app_print("*%*c" WS_BR_AGENT_APP_COPYRIGHT_STR "%*c*\n", padding_left, ' ', padding_right, ' ');
   for (int i = 0; i < banner_width; i++) ws_br_agent_app_print("*");
   ws_br_agent_app_print("\n");
+}
+
+void ws_br_agent_utils_print_help(void)
+{
+  printf(HELP_STR);
 }
 
 int32_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const msg)

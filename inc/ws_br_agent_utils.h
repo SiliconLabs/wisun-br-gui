@@ -69,6 +69,12 @@ extern const ws_br_agent_name_value_t ws_br_agent_phy_type_strs[];
 void ws_br_agent_utils_print_app_banner(void);
 
 /**
+ * @brief Print the help message to standard output.
+ * @details Displays usage information and available command-line options.
+ */
+void ws_br_agent_utils_print_help(void);
+
+/**
  * @brief Print the contents of a message structure.
  * @param[in] msg Pointer to the message structure to print.
  * @return WS_BR_AGENT_RET_OK on success, error code otherwise.

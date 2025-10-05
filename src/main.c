@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #include "ws_br_agent_defs.h"
 #include "ws_br_agent_log.h"
@@ -43,10 +44,19 @@
 
 static void sigint_hnd(int signum);
 static volatile sig_atomic_t main_thread_stop = 0;
-const char *ws_br_agent_conf_file_path = NULL;
 
 int main(int argc, char *argv[])
 {
+  const char *conf_file_path = NULL;
+  const char *soc_host_addr = NULL;
+  ws_br_agent_msg_t msg = { 0U };
+  ws_br_agent_settings_t settings = { 0U };
+
+  struct sockaddr_in6 new_addr = { 
+    .sin6_family = AF_INET6, 
+    .sin6_port = htons(WS_BR_AGENT_SOC_PORT)
+  };
+  
   struct sigaction sa;
   int opt;
 
@@ -60,20 +70,29 @@ int main(int argc, char *argv[])
     else if (!strcmp(argv[i], "--config")
              || !strcmp(argv[i], "-c") && (i + 1 < argc)) {
       // parse settings
-      ws_br_agent_conf_file_path = argv[i + 1];
+      conf_file_path = argv[i + 1];
       ++i;
+    }
+    else if (!strcmp(argv[i], "--soc") ||
+              !strcmp(argv[i], "-s") && (i + 1 < argc)) {
+        // set SoC device path
+        soc_host_addr = argv[i + 1];
+        ++i;
     }
     else if (!strcmp(argv[i], "--help")
              || !strcmp(argv[i], "-h")) {
-      printf("Usage: %s [--log <log file path>] [--settings <config file path>] [--help]\n", argv[0]);
+      ws_br_agent_utils_print_help();
       exit(EXIT_SUCCESS);
     } else {
       printf("Unknown argument: %s\n", argv[i]);
+      ws_br_agent_utils_print_help();
       exit(EXIT_FAILURE);
     }
   }
 
+  // Print app banner
   ws_br_agent_utils_print_app_banner();
+
   assert(ws_br_agent_log_init() == WS_BR_AGENT_RET_OK);
   assert(ws_br_agent_soc_host_init() == WS_BR_AGENT_RET_OK);
   assert(ws_br_agent_srv_init() == WS_BR_AGENT_RET_OK);
@@ -83,9 +102,29 @@ int main(int argc, char *argv[])
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
   sigaction(SIGINT, &sa, NULL);
-  
-  if (ws_br_agent_conf_file_path != NULL) {
-    ws_br_agent_soc_host_update_settings(ws_br_agent_conf_file_path);
+
+  if (conf_file_path != NULL) {
+    ws_br_agent_soc_host_update_settings(conf_file_path);
+  }
+
+  if (soc_host_addr != NULL) {
+    if (inet_pton(AF_INET6, soc_host_addr, &new_addr.sin6_addr) != 1) {
+      ws_br_agent_log_error("Invalid SoC Host IPv6 address: %s\n", soc_host_addr);
+      return EXIT_FAILURE;
+    }
+    if (ws_br_agent_soc_host_set_remote_addr(&new_addr) != WS_BR_AGENT_RET_OK) {
+      ws_br_agent_log_error("Failed to set SoC Host remote address: %s\n", soc_host_addr);
+      return EXIT_FAILURE;
+    }
+    ws_br_agent_log_info("Set SoC Host remote address: %s\n", soc_host_addr);
+    (void) ws_br_agent_soc_host_get_settings(&settings);
+
+    msg.msg_code = WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS;
+    msg.payload = (uint8_t *)&settings;
+    msg.payload_len = sizeof(ws_br_agent_settings_t);
+    if (ws_br_agent_soc_host_send_req(&msg, NULL) != WS_BR_AGENT_RET_OK) {
+      ws_br_agent_log_warn("Failed to send SoC Host request\n");
+    }
   }
 
   while (!main_thread_stop) {

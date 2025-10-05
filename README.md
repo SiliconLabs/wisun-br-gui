@@ -80,6 +80,39 @@ The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.BorderRou
 - Designed for use with graphical UI (wisun-br-gui) and automated scripts
 - **File logging**: All logs can be written to a file (default: `/var/log/wisun-soc-br-agent.log`).
 - **Configurable logging**: Enable/disable colors, debug, and console/file logging via build defines.
+- **Configuration file support**: Load Wi-SUN settings from configuration files
+- **Host configuration**: Specify SoC host address via command line. The application updates the given Border Router SoC host automatically, if it's connected to the Wi-Fi network
+
+## Configuration
+
+The agent supports flexible configuration through command-line arguments and configuration files.
+
+### Command Line Arguments
+
+```bash
+./wisun-soc-br-agent [OPTIONS]
+```
+
+**Available Options:**
+- `--config <file>` or `-c <file>`: Load Wi-SUN settings from configuration file
+- `--host <address>` or `-h <address>`: Set EFR32 SoC host IPv6 address (optional, updates remote host configuration)
+- `--log <file>` or `-l <file>`: Specify custom log file path
+
+**Examples:**
+```bash
+# Load settings from config file
+./wisun-soc-br-agent --config /etc/wisun/network.conf
+
+# Optionally set SoC host address
+./wisun-soc-br-agent --host fd12:3456::1
+
+# Combined usage
+./wisun-soc-br-agent --config /etc/wisun/network.conf --host fd12:3456::1 --log /var/log/wisun.log
+```
+
+### Configuration Files
+
+Configuration files use simple `key=value` format. See the `config/` directory in this repository for reference configuration files and supported parameters.
 
 ## Logging
 

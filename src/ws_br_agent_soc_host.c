@@ -69,7 +69,7 @@ static const ws_br_agent_settings_t default_host_settings = {
 
 static ws_br_agent_soc_host_t host = { 0U };
 
-static pthread_mutex_t host_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t host_mutex;
 
 static ws_br_agent_soc_host_topology_t host_topology = { 
   .entry_count = 0U, 
@@ -78,10 +78,31 @@ static ws_br_agent_soc_host_topology_t host_topology = {
 
 ws_br_agent_ret_t ws_br_agent_soc_host_init(void) 
 {
-  if (pthread_mutex_init(&host_mutex, NULL) != 0) {
-    ws_br_agent_log_error("Mutex init failed\n");
+  pthread_mutexattr_t attr;
+  
+  // Initialize mutex attributes
+  if (pthread_mutexattr_init(&attr) != 0) {
+    ws_br_agent_log_error("Mutex attr init failed\n");
     return WS_BR_AGENT_RET_ERR;
   }
+  
+  // Set mutex type to recursive
+  if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE) != 0) {
+    ws_br_agent_log_error("Mutex attr settype failed\n");
+    pthread_mutexattr_destroy(&attr);
+    return WS_BR_AGENT_RET_ERR;
+  }
+  
+  // Initialize mutex with recursive attributes
+  if (pthread_mutex_init(&host_mutex, &attr) != 0) {
+    ws_br_agent_log_error("Mutex init failed\n");
+    pthread_mutexattr_destroy(&attr);
+    return WS_BR_AGENT_RET_ERR;
+  }
+  
+  // Clean up attributes (no longer needed after mutex init)
+  pthread_mutexattr_destroy(&attr);
+  
   // Set local host with default settings for init
   ws_br_agent_soc_host_set("::1", NULL);
   return WS_BR_AGENT_RET_OK;

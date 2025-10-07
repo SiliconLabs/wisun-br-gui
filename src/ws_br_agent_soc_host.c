@@ -165,6 +165,13 @@ ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const 
     return WS_BR_AGENT_RET_ERR;
   }
 
+  if (resp_cb == NULL) {
+    close(sockfd);
+    ws_br_agent_log_info("OK\n");
+    pthread_mutex_unlock(&host_mutex);
+    return WS_BR_AGENT_RET_OK;
+  }
+
   r = recv(sockfd, rxtx_buf, WS_BR_AGENT_MAX_BUF_SIZE, 0);
 
   // No response or error

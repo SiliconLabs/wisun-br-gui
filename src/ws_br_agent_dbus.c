@@ -71,6 +71,8 @@ static int dbus_get_fan_version(sd_bus *bus, const char *path, const char *inter
 
 static ws_br_agent_ret_t dbus_init(sd_bus **bus, sd_bus_slot **slot);
 
+static bool is_zero_addr(const uint8_t addr[16]);
+
 static pthread_t dbus_thr;
 static sd_bus *bus = NULL;
 static sd_bus_slot *slot = NULL;
@@ -205,10 +207,15 @@ static int dbus_get_routing_graph(sd_bus *bus, const char *path, const char *int
     if (r < 0) return r;
     r = sd_bus_message_open_container(reply, 'a', "ay");
     if (r < 0) return r;
-    r = sd_bus_message_append_array(reply, 'y', entry->preferred, 16);
-    if (r < 0) return r;
-    r = sd_bus_message_append_array(reply, 'y', entry->backup, 16);
-    if (r < 0) return r;
+    // Only append if it's not BR (Always first element)
+    if (i) {
+      r = sd_bus_message_append_array(reply, 'y', entry->preferred, 16);
+      if (r < 0) return r;
+      if (!is_zero_addr(entry->backup)) {
+        r = sd_bus_message_append_array(reply, 'y', entry->backup, 16);
+        if (r < 0) return r;
+      }
+    } 
     r = sd_bus_message_close_container(reply); // close 'a'
     if (r < 0) return r;
     r = sd_bus_message_close_container(reply); // close 'r'
@@ -376,4 +383,14 @@ static void dbus_thr_fnc(void *arg)
   sd_bus_slot_unref(slot);
   sd_bus_unref(bus);
   ws_br_agent_log_warn("D-Bus service stopped\n");
+}
+
+static bool is_zero_addr(const uint8_t addr[16]) 
+{
+  for (size_t i = 0; i < 16U; ++i) {
+    if (addr[i]) {
+      return false;
+    }
+  }
+  return true;
 }

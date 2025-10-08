@@ -17,9 +17,9 @@ The Wi-SUN SoC Border Router Agent acts as an intermediary between the EFR32 SoC
 ┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
 │   EFR32 SoC     │────▶│  Wi-SUN BR Agent     │────▶│   D-Bus Clients │
 │   (Host)        │     │                      │     │  (System Apps)  │
-│  Port 4567      │     │  ┌─────────────────┐ │     │                 │
+│  Port 11501     │     │  ┌─────────────────┐ │     │                 │
 │ • Network Cfg   │◀────┤  │   TCP Server    │ │     │ • Properties    │
-│ • Topology      │     │  │   (Port 5678)   │ │◀────┤ • Monitoring    │
+│ • Topology      │     │  │   (Port 11500)  │ │◀────┤ • Monitoring    │
 │ • Status        │     │  └─────────────────┘ │     │ • Integration   │
 │                 │     │                      │     │                 │
 └─────────────────┘     │  ┌─────────────────┐ │     └─────────────────┘

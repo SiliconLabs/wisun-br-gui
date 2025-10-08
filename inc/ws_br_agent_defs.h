@@ -60,10 +60,10 @@ extern "C" {
 typedef int32_t ws_br_agent_ret_t;
 
 /// Port number for the Wi-SUN SoC Border Router Agent service
-#define WS_BR_AGENT_SERVICE_PORT 5678U
+#define WS_BR_AGENT_SERVICE_PORT 11500U
 
 /// Port number of the Wi-SUN SoC Border Router Agent SoC
-#define WS_BR_AGENT_SOC_PORT 4567U
+#define WS_BR_AGENT_SOC_PORT 11501U
 
 /// Maximum size of the Wi-SUN network name
 #define WS_BR_AGENT_NETWORK_NAME_SIZE 32

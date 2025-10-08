@@ -44,6 +44,9 @@
 #include "ws_br_agent_soc_host.h"
 #include "ws_br_agent_utils.h"
 
+
+#define DEFAULT_SOC_HOST_ADDR_STR "::1"
+
 static ws_br_agent_ret_t copy_topology(ws_br_agent_soc_host_topology_t * const dst_topology,
                                        const ws_br_agent_soc_host_topology_t * const src_topology);
 
@@ -104,7 +107,7 @@ ws_br_agent_ret_t ws_br_agent_soc_host_init(void)
   pthread_mutexattr_destroy(&attr);
   
   // Set local host with default settings for init
-  ws_br_agent_soc_host_set("::1", NULL);
+  ws_br_agent_soc_host_set(DEFAULT_SOC_HOST_ADDR_STR, NULL);
   return WS_BR_AGENT_RET_OK;
 }
 
@@ -120,8 +123,15 @@ ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const 
   if (req_msg == NULL) {
     return WS_BR_AGENT_RET_ERR;
   }
-  
+
   pthread_mutex_lock(&host_mutex);
+
+  if (!strcmp(DEFAULT_SOC_HOST_ADDR_STR, host.remote_addr_str)) {
+    ws_br_agent_log_warn("SoC host not registered yet\n");
+    pthread_mutex_unlock(&host_mutex);
+    return WS_BR_AGENT_RET_OK;
+  }
+
   ws_br_agent_log_info("Send '%s' request (0x%08x)...\n", 
                        ws_br_agent_utils_val_to_str(req_msg->msg_code, 
                                                     ws_br_agent_msg_code_strs, 
@@ -160,6 +170,14 @@ ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const 
   }
   free(rxtx_buf);
 
+  // No response expected
+  if (resp_cb == NULL) {
+    close(sockfd);
+    ws_br_agent_log_info("OK\n");
+    pthread_mutex_unlock(&host_mutex);
+    return WS_BR_AGENT_RET_OK;
+  }
+
   // Receive data
   rxtx_buf = malloc(WS_BR_AGENT_MAX_BUF_SIZE);
   if (rxtx_buf == NULL) {
@@ -167,13 +185,6 @@ ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const 
     close(sockfd);
     pthread_mutex_unlock(&host_mutex);
     return WS_BR_AGENT_RET_ERR;
-  }
-
-  if (resp_cb == NULL) {
-    close(sockfd);
-    ws_br_agent_log_info("OK\n");
-    pthread_mutex_unlock(&host_mutex);
-    return WS_BR_AGENT_RET_OK;
   }
 
   r = recv(sockfd, rxtx_buf, WS_BR_AGENT_MAX_BUF_SIZE, 0);
@@ -207,13 +218,11 @@ ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const 
   if (resp_cb != NULL) {
     if (resp_cb(msg) != WS_BR_AGENT_RET_OK) {
       ws_br_agent_log_warn("Response process callback failed\n");
-      ws_br_agent_msg_free(msg);
       close(sockfd);
       pthread_mutex_unlock(&host_mutex);
       return WS_BR_AGENT_RET_ERR;
     }
   }
-  ws_br_agent_msg_free(msg);
   close(sockfd);
   ws_br_agent_log_info("OK\n");
   pthread_mutex_unlock(&host_mutex);

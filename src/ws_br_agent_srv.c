@@ -51,7 +51,8 @@ static pthread_t srv_thr;
 static volatile sig_atomic_t srv_thread_stop = 0;
 static int listen_fd = -1L;
 static void srv_thr_fnc(void *arg);
-static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t *const req_msg);
+static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t *const req_msg,
+                                             const struct sockaddr_in6 * const clnt_addr);
 static ws_br_agent_ret_t handle_set_config_params_req(const ws_br_agent_msg_t *const req_msg,
                                                       const struct sockaddr_in6 * const clnt_addr);
 static ws_br_agent_ret_t handle_get_config_params_req(int conn_fd);
@@ -168,7 +169,7 @@ static void srv_thr_fnc(void *arg)
     switch (msg->msg_code) {
     // Handle topology request
     case WS_BR_AGENT_MSG_CODE_TOPOLOGY:
-      if (handle_topology_req(msg) != WS_BR_AGENT_RET_OK) {
+      if (handle_topology_req(msg, &client_addr) != WS_BR_AGENT_RET_OK) {
         break;
       }
       if (ws_br_agent_dbus_notify_topology_changed() != WS_BR_AGENT_RET_OK) {
@@ -212,13 +213,19 @@ static void srv_thr_fnc(void *arg)
   ws_br_agent_log_warn("Server thread stopped\n");
 }
 
-static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t *const req_msg)
+static ws_br_agent_ret_t handle_topology_req(const ws_br_agent_msg_t *const req_msg,
+                                             const struct sockaddr_in6 * const clnt_addr)
 {
   ws_br_agent_soc_host_topology_t topology = {0U, NULL};
 
-  if (req_msg == NULL || 
-      req_msg->payload_len % sizeof(ws_br_agent_soc_host_topology_entry_t)) {
+  if (clnt_addr == NULL || req_msg == NULL || req_msg->payload == NULL 
+      || !req_msg->payload_len || req_msg->payload_len % sizeof(ws_br_agent_soc_host_topology_entry_t)) {
     ws_br_agent_log_error("Failed to handle TOPOLOGY request\n");
+    return WS_BR_AGENT_RET_ERR;
+  }
+
+  if (ws_br_agent_soc_host_set_remote_addr(clnt_addr) != WS_BR_AGENT_RET_OK) {
+    ws_br_agent_log_error("Failed to set remote address\n");
     return WS_BR_AGENT_RET_ERR;
   }
 

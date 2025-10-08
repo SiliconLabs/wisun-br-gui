@@ -85,6 +85,12 @@ static volatile sig_atomic_t dbus_thread_stop = 0;
 
 static const sd_bus_vtable dbus_vtable[] = {
   SD_BUS_VTABLE_START(0),
+  SD_BUS_METHOD(WS_BR_AGENT_DBUS_METHOD_START_SOC_BORDER_ROUTER, "", NULL, 
+                dbus_method_start_br, 0),
+  SD_BUS_METHOD(WS_BR_AGENT_DBUS_METHOD_STOP_SOC_BORDER_ROUTER, "", NULL, 
+                dbus_method_stop_br, 0),
+  SD_BUS_METHOD(WS_BR_AGENT_DBUS_METHOD_SET_SOC_BORDER_ROUTER_CONFIG, "", NULL, 
+                dbus_method_set_config, 0),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH, "a(aybaay)", 
                   dbus_get_routing_graph, 0, SD_BUS_VTABLE_PROPERTY_EMITS_INVALIDATION),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_NETWORK_NAME, "s", 
@@ -99,23 +105,36 @@ static const sd_bus_vtable dbus_vtable[] = {
                   dbus_get_chan_plan_id, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_FAN_VERSION, "y", 
                   dbus_get_fan_version, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
-  SD_BUS_METHOD(WS_BR_AGENT_DBUS_METHOD_START_SOC_BORDER_ROUTER, "", "s", 
-                dbus_method_start_br, SD_BUS_VTABLE_UNPRIVILEGED),
-  SD_BUS_METHOD(WS_BR_AGENT_DBUS_METHOD_STOP_SOC_BORDER_ROUTER, "", "s", 
-                dbus_method_stop_br, SD_BUS_VTABLE_UNPRIVILEGED),
-  SD_BUS_METHOD(WS_BR_AGENT_DBUS_METHOD_SET_SOC_BORDER_ROUTER_CONFIG, "", "s", 
-                dbus_method_set_config, SD_BUS_VTABLE_UNPRIVILEGED),
   SD_BUS_VTABLE_END
 };
 
 
 ws_br_agent_ret_t ws_br_agent_dbus_init(void) 
 {
-  // Init thread to call dbus process
-  if (pthread_create(&dbus_thr, NULL, (void *)dbus_thr_fnc, NULL) != 0) {
+  pthread_attr_t attr;
+  size_t stack_size = 1024 * 1024; // 1MB stack size
+  
+  // Initialize thread attributes
+  if (pthread_attr_init(&attr) != 0) {
+    ws_br_agent_log_error("Failed to initialize thread attributes\n");
     return WS_BR_AGENT_RET_ERR;
   }
-
+  
+  // Set stack size
+  if (pthread_attr_setstacksize(&attr, stack_size) != 0) {
+    ws_br_agent_log_error("Failed to set thread stack size\n");
+    pthread_attr_destroy(&attr);
+    return WS_BR_AGENT_RET_ERR;
+  }
+  
+  // Create thread with increased stack size
+  if (pthread_create(&dbus_thr, &attr, (void *)dbus_thr_fnc, NULL) != 0) {
+    ws_br_agent_log_error("Failed to create D-Bus thread\n");
+    pthread_attr_destroy(&attr);
+    return WS_BR_AGENT_RET_ERR;
+  }
+  
+  pthread_attr_destroy(&attr);
   return WS_BR_AGENT_RET_OK;
 }
 
@@ -379,7 +398,6 @@ static int dbus_get_fan_version(sd_bus *bus, const char *path, const char *inter
 
 static int dbus_method_start_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
 {
-  const char *result_msg = "OK";
   ws_br_agent_msg_t msg = { 
     .msg_code = WS_BR_AGENT_MSG_CODE_START_BR, 
     .payload = NULL, 
@@ -392,17 +410,15 @@ static int dbus_method_start_br(sd_bus_message *m, void *userdata, sd_bus_error 
   // Send request to SoC host
   if (ws_br_agent_soc_host_send_req(&msg, NULL) != WS_BR_AGENT_RET_OK) {
     ws_br_agent_log_error("D-Bus: Failed to send start BR request to SoC host\n");
-    result_msg = "FAILED";
   } else {
     ws_br_agent_log_info("D-Bus: Start BR request sent successfully\n");
   }
   
-  return sd_bus_reply_method_return(m, "s", result_msg);
+  return sd_bus_reply_method_return(m, NULL);
 }
 
 static int dbus_method_stop_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
 {
-  const char *result_msg = "OK";
   ws_br_agent_msg_t msg = { 
     .msg_code = WS_BR_AGENT_MSG_CODE_STOP_BR, 
     .payload = NULL, 
@@ -415,17 +431,15 @@ static int dbus_method_stop_br(sd_bus_message *m, void *userdata, sd_bus_error *
   // Send request to SoC host
   if (ws_br_agent_soc_host_send_req(&msg, NULL) != WS_BR_AGENT_RET_OK) {
     ws_br_agent_log_error("D-Bus: Failed to send stop BR request to SoC host\n");
-    result_msg = "FAILED";
   } else {
     ws_br_agent_log_info("D-Bus: Stop BR request sent successfully\n");
   }
   
-  return sd_bus_reply_method_return(m, "s", result_msg);
+  return sd_bus_reply_method_return(m, NULL);
 }
 
 static int dbus_method_set_config(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
 {
-  const char *result_msg = "OK";
   ws_br_agent_msg_t msg = {
     .msg_code = WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS,
     .payload = NULL,
@@ -438,12 +452,11 @@ static int dbus_method_set_config(sd_bus_message *m, void *userdata, sd_bus_erro
   // Send request to SoC host
   if (ws_br_agent_soc_host_send_req(&msg, NULL) != WS_BR_AGENT_RET_OK) {
     ws_br_agent_log_error("D-Bus: Failed to send set config request to SoC host\n");
-    result_msg = "FAILED";
   } else {
     ws_br_agent_log_info("D-Bus: Set config request sent successfully\n");
   }
   
-  return sd_bus_reply_method_return(m, "s", result_msg);
+  return sd_bus_reply_method_return(m, NULL);
 }
 
 static void dbus_thr_fnc(void *arg)

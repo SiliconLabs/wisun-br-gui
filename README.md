@@ -37,7 +37,7 @@ The Wi-SUN SoC Border Router Agent acts as an intermediary between the EFR32 SoC
 ```
 
 ### Communication Flow
-1. **SoC Host ↔ BR Agent**: TCP communication (port 4567) for network configuration and topology status
+1. **SoC Host ↔ BR Agent**: TCP communication for network configuration and topology status
 2. **GUI ↔ BR Agent**: D-Bus interface for remote management and real-time monitoring
 3. **BR Agent → D-Bus**: Property exposure and change notifications for system integration
 
@@ -63,11 +63,20 @@ The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.BorderRou
 | `WisunChanPlanId` | `u` | Channel plan identifier for FAN 1.1 |
 | `WisunFanVersion` | `y` | FAN version (1 for FAN 1.0, 2 for FAN 1.1) |
 
+### Available Methods
+
+| Method | Input | Output | Description |
+|--------|-------|--------|-------------|
+| `StartSoCBorderRouter` | - | - | Start the border router on the SoC host (Note: Cannot restart after stop) |
+| `StopSoCBorderRouter` | - | - | Stop the border router on the SoC host (Permanent until SoC reset) |
+| `SetSoCBorderRouterConfig` | - | - | Apply current configuration to the SoC host |
+
 ### D-Bus Features
 
 - **Property Monitoring**: All properties support `PropertiesChanged` signals
+- **Method Calls**: Control border router operation via D-Bus methods
 - **System Integration**: Native systemd D-Bus integration for service management
-- **Scripting Support**: Query properties via `dbus-send` or `busctl` commands
+- **Scripting Support**: Query properties and call methods via `dbus-send` or `busctl` commands
 - **Real-time Updates**: Automatic topology change notifications via D-Bus signals
 
 ## Features
@@ -191,8 +200,25 @@ bash test/dbus-monitor-routinggraph.sh
 ```
 Real-time monitoring of `PropertiesChanged` signals for topology updates.
 
-### 3. Manual D-Bus Testing
+### 3. D-Bus Method Control Scripts
 
+The agent provides convenient shell scripts for controlling border router operations via D-Bus methods:
+
+#### Stop Border Router (`dbus-stop-br.sh`)
+```bash
+bash test/dbus-stop-br.sh
+```
+Sends a stop command to the SoC host to halt border router operation. **Note**: Once stopped, the border router cannot be restarted via software - a SoC reset is required.
+
+#### Set Configuration (`dbus-set-config.sh`)
+```bash
+bash test/dbus-set-config.sh
+```
+Applies the current Wi-SUN configuration settings to the SoC host.
+
+### 4. Manual D-Bus Testing
+
+#### Property Queries
 Query individual properties using `dbus-send`:
 ```bash
 # Get network name
@@ -202,6 +228,18 @@ dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
 
 # Monitor all property changes
 dbus-monitor --system "interface='org.freedesktop.DBus.Properties',member='PropertiesChanged'"
+```
+
+#### Method Calls
+Call border router control methods directly:
+```bash
+# Stop border router (permanent until SoC reset)
+dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
+  /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.StopSoCBorderRouter
+
+# Set configuration
+dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
+  /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.SetSoCBorderRouterConfig
 ```
 
 ## License

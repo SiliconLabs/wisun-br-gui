@@ -14,9 +14,9 @@ CODE_STR_MAP = {
 }
 
 APP_HOST = "::1"
-APP_PORT = 5678
+APP_PORT = 11500
 BOT_LISTEN_HOST = "::"
-BOT_LISTEN_PORT = 4567
+BOT_LISTEN_PORT = 11501
 SEND_INTERVAL = 5
 
 def make_random_topology():

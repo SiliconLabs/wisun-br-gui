@@ -117,6 +117,10 @@ ws_br_agent_ret_t ws_br_agent_soc_host_send_req(const ws_br_agent_msg_t * const 
   uint8_t *rxtx_buf = NULL;
   ws_br_agent_msg_t *msg = NULL;
 
+  if (req_msg == NULL) {
+    return WS_BR_AGENT_RET_ERR;
+  }
+  
   pthread_mutex_lock(&host_mutex);
   ws_br_agent_log_info("Send '%s' request (0x%08x)...\n", 
                        ws_br_agent_utils_val_to_str(req_msg->msg_code, 

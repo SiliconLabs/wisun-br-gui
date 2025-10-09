@@ -45,7 +45,7 @@
 #define WS_BR_AGENT_DBUS_PROPERTY_PHY_MODE_ID "WisunPhyModeId"
 #define WS_BR_AGENT_DBUS_PROPERTY_CHAN_PLAN_ID "WisunChanPlanId"
 #define WS_BR_AGENT_DBUS_PROPERTY_FAN_VERSION "WisunFanVersion"
-#define WS_BR_AGENT_DBUS_METHOD_START_SOC_BORDER_ROUTER "StartSoCBorderRouter"
+#define WS_BR_AGENT_DBUS_METHOD_START_SOC_BORDER_ROUTER "RestartSoCBorderRouter"
 #define WS_BR_AGENT_DBUS_METHOD_STOP_SOC_BORDER_ROUTER "StopSoCBorderRouter"
 #define WS_BR_AGENT_DBUS_METHOD_SET_SOC_BORDER_ROUTER_CONFIG "SetSoCBorderRouterConfig"
 
@@ -72,7 +72,7 @@ static int dbus_get_fan_version(sd_bus *bus, const char *path, const char *inter
                                const char *property, sd_bus_message *reply, 
                                void *userdata, sd_bus_error *ret_error);
 
-static int dbus_method_start_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error);
+static int dbus_method_restart_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error);
 static int dbus_method_stop_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error);
 static int dbus_method_set_config(sd_bus_message *m, void *userdata, sd_bus_error *ret_error);
 
@@ -86,7 +86,7 @@ static volatile sig_atomic_t dbus_thread_stop = 0;
 static const sd_bus_vtable dbus_vtable[] = {
   SD_BUS_VTABLE_START(0),
   SD_BUS_METHOD(WS_BR_AGENT_DBUS_METHOD_START_SOC_BORDER_ROUTER, "", NULL, 
-                dbus_method_start_br, 0),
+                dbus_method_restart_br, 0),
   SD_BUS_METHOD(WS_BR_AGENT_DBUS_METHOD_STOP_SOC_BORDER_ROUTER, "", NULL, 
                 dbus_method_stop_br, 0),
   SD_BUS_METHOD(WS_BR_AGENT_DBUS_METHOD_SET_SOC_BORDER_ROUTER_CONFIG, "", NULL, 
@@ -396,22 +396,22 @@ static int dbus_get_fan_version(sd_bus *bus, const char *path, const char *inter
   return r;
 }
 
-static int dbus_method_start_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
+static int dbus_method_restart_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
 {
   ws_br_agent_msg_t msg = { 
-    .msg_code = WS_BR_AGENT_MSG_CODE_START_BR, 
+    .msg_code = WS_BR_AGENT_MSG_CODE_RESTART_BR, 
     .payload = NULL, 
     .payload_len = 0 
   };
   
   (void)userdata;
   
-  ws_br_agent_log_info("D-Bus method StartSoCBorderRouter called\n");
+  ws_br_agent_log_info("D-Bus method RestartSoCBorderRouter called\n");
   // Send request to SoC host
   if (ws_br_agent_soc_host_send_req(&msg, NULL) != WS_BR_AGENT_RET_OK) {
-    ws_br_agent_log_error("D-Bus: Failed to send start BR request to SoC host\n");
+    ws_br_agent_log_error("D-Bus: Failed to send restart BR request to SoC host\n");
   } else {
-    ws_br_agent_log_info("D-Bus: Start BR request sent successfully\n");
+    ws_br_agent_log_info("D-Bus: Restart BR request sent successfully\n");
   }
   
   return sd_bus_reply_method_return(m, NULL);

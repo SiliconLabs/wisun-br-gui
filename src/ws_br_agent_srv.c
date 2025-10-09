@@ -192,7 +192,7 @@ static void srv_thr_fnc(void *arg)
       (void) handle_get_config_params_req(conn_fd);
       break;
     
-    case WS_BR_AGENT_MSG_CODE_START_BR:
+    case WS_BR_AGENT_MSG_CODE_RESTART_BR:
     case WS_BR_AGENT_MSG_CODE_STOP_BR:
       ws_br_agent_log_warn("Not handled request: '%s' (0x%08x)\n",
                             ws_br_agent_utils_val_to_str(msg->msg_code, 

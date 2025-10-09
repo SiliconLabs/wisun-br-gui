@@ -95,7 +95,7 @@ const ws_br_agent_name_value_t ws_br_agent_msg_code_strs[] = {
   { "TOPOLOGY",            WS_BR_AGENT_MSG_CODE_TOPOLOGY },
   { "GET_CONFIG_PARAMS",   WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS },
   { "SET_CONFIG_PARAMS",   WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS },
-  { "START_BR",            WS_BR_AGENT_MSG_CODE_START_BR },
+  { "RESTART_BR",          WS_BR_AGENT_MSG_CODE_RESTART_BR },
   { "STOP_BR",             WS_BR_AGENT_MSG_CODE_STOP_BR },
   { NULL, 0L }
 };

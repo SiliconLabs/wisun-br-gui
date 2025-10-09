@@ -57,7 +57,7 @@ uint8_t *ws_br_agent_msg_build_buf(const ws_br_agent_msg_t * const msg, size_t *
   switch(msg->msg_code) {
     case WS_BR_AGENT_MSG_CODE_TOPOLOGY:
     case WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS:
-    case WS_BR_AGENT_MSG_CODE_START_BR:
+    case WS_BR_AGENT_MSG_CODE_RESTART_BR:
     case WS_BR_AGENT_MSG_CODE_STOP_BR:
       start_ptr = malloc(WS_BR_AGENT_MSG_MIN_BUF_SIZE);
       if (start_ptr == NULL) {
@@ -103,7 +103,7 @@ ws_br_agent_msg_t *ws_br_agent_msg_parse_buf(const uint8_t * const buf, const si
   switch(ntohl(*ptr)) {
     case WS_BR_AGENT_MSG_CODE_TOPOLOGY:
     case WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS:
-    case WS_BR_AGENT_MSG_CODE_START_BR:
+    case WS_BR_AGENT_MSG_CODE_RESTART_BR:
     case WS_BR_AGENT_MSG_CODE_STOP_BR:
     case WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS:
       msg = (ws_br_agent_msg_t *)malloc(sizeof(ws_br_agent_msg_t));

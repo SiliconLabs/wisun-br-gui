@@ -3,7 +3,13 @@
 
 ## Overview
 
-Wi-SUN SoC Border Router Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN Border Router. It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration. This service is specifically designed for EFR32 Border Router SoC implementations and requires a SiWx917 Wi-Fi module along with a properly configured IPv6 network infrastructure.
+Wi-SUN SoC Border### Available Methods
+
+| Method | Input | Output | Description |
+|--------|-------|--------|-------------|
+| `RestartSoCBorderRouter` | - | - | Restart the border router on the SoC host (performs SoC reset) |
+| `StopSoCBorderRouter` | - | - | Stop the border router on the SoC host (Permanent until restart) |
+| `SetSoCBorderRouterConfig` | - | - | Apply current configuration to the SoC host | Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN Border Router. It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration. This service is specifically designed for EFR32 Border Router SoC implementations and requires a SiWx917 Wi-Fi module along with a properly configured IPv6 network infrastructure.
 
 The agent service communicates with the [Wi-SUN Border Router GUI](https://github.com/SiliconLabs/wisun-br-gui) application over D-Bus, providing a comprehensive graphical interface for network management, topology visualization, and real-time monitoring.
 
@@ -67,8 +73,8 @@ The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.BorderRou
 
 | Method | Input | Output | Description |
 |--------|-------|--------|-------------|
-| `StartSoCBorderRouter` | - | - | Start the border router on the SoC host (Note: Cannot restart after stop) |
-| `StopSoCBorderRouter` | - | - | Stop the border router on the SoC host (Permanent until SoC reset) |
+| `RestartSoCBorderRouter` | - | - | Restart the border router: stops FAN 1.1 network, reconfigures, and starts again |
+| `StopSoCBorderRouter` | - | - | Stop the border router on the SoC host (Permanent until manual SoC CLI restart) |
 | `SetSoCBorderRouterConfig` | - | - | Apply current configuration to the SoC host |
 
 ### D-Bus Features
@@ -204,11 +210,17 @@ Real-time monitoring of `PropertiesChanged` signals for topology updates.
 
 The agent provides convenient shell scripts for controlling border router operations via D-Bus methods:
 
+#### Restart Border Router (`dbus-restart-br.sh`)
+```bash
+bash test/dbus-restart-br.sh
+```
+Sends a restart command to the SoC host to stop the FAN 1.1 network, reconfigure, and start it again.
+
 #### Stop Border Router (`dbus-stop-br.sh`)
 ```bash
 bash test/dbus-stop-br.sh
 ```
-Sends a stop command to the SoC host to halt border router operation. **Note**: Once stopped, the border router cannot be restarted via software - a SoC reset is required.
+Sends a stop command to the SoC host to halt border router operation. **Note**: Once stopped, the effect is permanent until the network is manually started via SoC CLI directly.
 
 #### Set Configuration (`dbus-set-config.sh`)
 ```bash
@@ -233,7 +245,11 @@ dbus-monitor --system "interface='org.freedesktop.DBus.Properties',member='Prope
 #### Method Calls
 Call border router control methods directly:
 ```bash
-# Stop border router (permanent until SoC reset)
+# Restart border router (stops FAN 1.1 network, reconfigures, and starts again)
+dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
+  /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.RestartSoCBorderRouter
+
+# Stop border router
 dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
   /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.StopSoCBorderRouter
 

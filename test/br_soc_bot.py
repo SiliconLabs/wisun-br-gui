@@ -9,7 +9,7 @@ CODE_STR_MAP = {
     0x01: "TOPOLOGY",
     0x02: "GET_CONFIG_PARAMS",
     0x03: "SET_CONFIG_PARAMS",
-    0x04: "START_BR",
+    0x04: "RESTART_BR",
     0x05: "STOP_BR"
 }
 

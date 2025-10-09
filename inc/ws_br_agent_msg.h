@@ -46,8 +46,8 @@ extern "C" {
 #define WS_BR_AGENT_MSG_CODE_GET_CONFIG_PARAMS  (0x00000002U)
 /// Set config params msg code
 #define WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS  (0x00000003U)
-/// Start Border Router msg code
-#define WS_BR_AGENT_MSG_CODE_START_BR           (0x00000004U)
+/// Restart Border Router msg code
+#define WS_BR_AGENT_MSG_CODE_RESTART_BR         (0x00000004U)
 /// Stop Border Router msg code
 #define WS_BR_AGENT_MSG_CODE_STOP_BR            (0x00000005U)
 

@@ -42,5 +42,5 @@ install(DIRECTORY config/
     FILES_MATCHING PATTERN "*.conf")
 
 # Install man page
-install(FILES wisun-soc-br-agent.1
+install(FILES misc/wisun-soc-br-agent.1
     DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)

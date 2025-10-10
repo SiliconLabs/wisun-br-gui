@@ -3,7 +3,10 @@
 
 ## Overview
 
-Wi-SUN SoC Border Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN SoC Border Router. It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration. This service is specifically designed for EFR32 Border Router SoC implementations and requires a SiWx917 Wi-Fi module along with a properly configured IPv6 network infrastructure.
+Wi-SUN SoC Border Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN SoC Border Router. 
+It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration. 
+This service is specifically designed for EFR32 Border Router SoC implementations and requires a SiWx917 Wi-Fi module along with a properly configured IPv6 network infrastructure. 
+*Wi-SUN SoC Border Router Agent* SiSDK sample application provides the SoC example that operates with this service. 
 
 The agent service communicates with the [Wi-SUN Border Router GUI](https://github.com/SiliconLabs/wisun-br-gui) application over D-Bus, providing a comprehensive graphical interface for network management, topology visualization, and real-time monitoring.
 
@@ -216,7 +219,8 @@ The Wi-SUN SoC Border Router Agent can be configured as a systemd service for au
 After installing the binary and configuration files, set up the systemd service:
 
 ```bash
-# Run the setup script (installs service file and configures permissions)
+# Run the setup script
+cd misc
 sudo ./setup-service.sh
 ```
 

@@ -111,30 +111,11 @@ static const sd_bus_vtable dbus_vtable[] = {
 
 ws_br_agent_ret_t ws_br_agent_dbus_init(void) 
 {
-  pthread_attr_t attr;
-  size_t stack_size = 1024 * 1024; // 1MB stack size
-  
-  // Initialize thread attributes
-  if (pthread_attr_init(&attr) != 0) {
-    ws_br_agent_log_error("Failed to initialize thread attributes\n");
-    return WS_BR_AGENT_RET_ERR;
-  }
-  
-  // Set stack size
-  if (pthread_attr_setstacksize(&attr, stack_size) != 0) {
-    ws_br_agent_log_error("Failed to set thread stack size\n");
-    pthread_attr_destroy(&attr);
-    return WS_BR_AGENT_RET_ERR;
-  }
-  
   // Create thread with increased stack size
-  if (pthread_create(&dbus_thr, &attr, (void *)dbus_thr_fnc, NULL) != 0) {
+  if (pthread_create(&dbus_thr, NULL, (void *)dbus_thr_fnc, NULL) != 0) {
     ws_br_agent_log_error("Failed to create D-Bus thread\n");
-    pthread_attr_destroy(&attr);
     return WS_BR_AGENT_RET_ERR;
   }
-  
-  pthread_attr_destroy(&attr);
   return WS_BR_AGENT_RET_OK;
 }
 

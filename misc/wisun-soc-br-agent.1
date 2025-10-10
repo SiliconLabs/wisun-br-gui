@@ -5,7 +5,10 @@ wisun-soc-br-agent \- Wi-SUN SoC Border Router Agent
 .B wisun-soc-br-agent
 [\fIOPTIONS\fR]
 .SH DESCRIPTION
-Wi-SUN SoC Border Router Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN SoC Border Router. It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration.
+Wi-SUN SoC Border Router Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN SoC Border Router.
+It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration.
+This service is specifically designed for EFR32 Border Router SoC implementations and requires a SiWx917 Wi-Fi module along with a properly configured IPv6 network infrastructure.
+Wi-SUN SoC Border Router Agent SiSDK sample application provides the SoC example that operates with this service.
 
 The agent service acts as an intermediary between the EFR32 SoC host and external clients, providing both TCP and D-Bus interfaces for comprehensive network management.
 
@@ -58,7 +61,7 @@ FAN version: 1 for FAN 1.0, 2 for FAN 1.1 (type: y)
 Restart the border router: stops FAN 1.1 network, reconfigures, and starts again
 .TP
 .B StopSoCBorderRouter
-Stop the border router on the SoC host (permanent until manual SoC CLI restart)
+Stop the border router on the SoC host (Permanent until manual SoC CLI restart)
 .TP
 .B SetSoCBorderRouterConfig
 Apply current configuration to the SoC host
@@ -71,10 +74,29 @@ Configuration files containing Wi-SUN network settings
 .I /var/log/wisun-soc-br-agent.log
 Default log file location
 
+.SH LOGGING
+By default, logs are written to both the console and to /var/log/wisun-soc-br-agent.log.
+Log output includes timestamps and log levels (INFO, WARN, ERROR, DEBUG).
+
+.SS Build Defines
+Logging features can be controlled at build time using the following defines:
+.TP
+.B WS_BR_AGENT_LOG_ENABLE_COLORS
+Enable colored log output in console (default: 1)
+.TP
+.B WS_BR_AGENT_LOG_ENABLE_DEBUG
+Enable debug log output (default: 1)
+.TP
+.B WS_BR_AGENT_LOG_ENABLE_CONSOLE_LOG
+Enable logging to console (default: 1)
+.TP
+.B WS_BR_AGENT_LOG_ENABLE_FILE_LOG
+Enable logging to file (default: 1)
+
 .SH EXAMPLES
 .TP
 Load settings from config file:
-.B sudo wisun-soc-br-agent --config /etc/wisun/network.conf
+.B sudo wisun-soc-br-agent --config /etc/wisun-soc-br-agent/wisun_br_config.conf
 
 .TP
 Set SoC host address:
@@ -82,12 +104,16 @@ Set SoC host address:
 
 .TP
 Combined usage with custom log:
-.B sudo wisun-soc-br-agent --config /etc/wisun/network.conf --host fd12:3456::1 --log /tmp/wisun.log
+.B sudo wisun-soc-br-agent --config /etc/wisun-soc-br-agent/wisun_br_config.conf --host fd12:3456::1 --log /var/log/wisun.log
 
 .SH D-BUS EXAMPLES
 .TP
 Query network name property:
 .B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.BorderRouter string:WisunNetworkName
+
+.TP
+Query network topology:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.BorderRouter string:RoutingGraph
 
 .TP
 Restart border router:
@@ -96,6 +122,10 @@ Restart border router:
 .TP
 Stop border router:
 .B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.StopSoCBorderRouter
+
+.TP
+Set configuration:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.SetSoCBorderRouterConfig
 
 .SH AUTHOR
 Silicon Laboratories Inc.

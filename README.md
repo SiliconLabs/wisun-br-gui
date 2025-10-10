@@ -324,5 +324,37 @@ sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
 
 ## License
 
-Copyright (c) 2025 Silicon Labs, Inc.
+This project is licensed under the terms specified in the [LICENSE.txt](LICENSE.txt) file.
+
+Copyright (c) 2025 Silicon Laboratories Inc. All rights reserved.
+
+For complete licensing terms and conditions, please refer to the LICENSE.txt file included with this distribution.
+
+## Release Notes
+
+### Version 1.0.0 - Initial Release
+
+**Release Date:** December 2025
+
+**New Features:**
+- Initial implementation of Wi-SUN SoC Border Router Agent
+- TCP server for remote configuration and status queries (port 11500)
+- Comprehensive D-Bus interface for system integration
+- Support for EFR32 SoC Border Router implementations
+- Multi-threaded architecture with thread-safe operations
+- Configurable logging with file and console output
+- Configuration file support for Wi-SUN network settings
+- Systemd service integration with optional setup scripts
+- Manual page documentation and installation support
+
+**D-Bus Interface:**
+- Properties: RoutingGraph, WisunNetworkName, WisunSize, WisunDomain, WisunPhyModeId, WisunChanPlanId, WisunFanVersion
+- Methods: RestartSoCBorderRouter, StopSoCBorderRouter, SetSoCBorderRouterConfig
+- Real-time property change notifications via PropertiesChanged signals
+
+**Testing & Development Tools:**
+- Python TCP client simulation bot
+- D-Bus property query and monitoring scripts  
+- D-Bus method control scripts for border router operations
+- Comprehensive example configurations and documentation
 

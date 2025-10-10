@@ -44,7 +44,7 @@ extern "C" {
 
 /// Version of the Wi-SUN SoC Border Router Agent
 #ifndef WS_BR_AGENT_VERSION
-#define WS_BR_AGENT_VERSION "0.1"
+#define WS_BR_AGENT_VERSION "1.0.0"
 #endif
 
 /// Copyright string

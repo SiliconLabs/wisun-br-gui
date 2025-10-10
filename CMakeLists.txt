@@ -28,3 +28,19 @@ target_link_libraries(wisun-soc-br-agent PRIVATE pthread)
 
 # Link systemd sd-bus library
 target_link_libraries(wisun-soc-br-agent PRIVATE systemd)
+
+# Install rules
+include(GNUInstallDirs)
+
+# Install the main executable
+install(TARGETS wisun-soc-br-agent
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+# Install configuration files
+install(DIRECTORY config/
+    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/wisun-soc-br-agent
+    FILES_MATCHING PATTERN "*.conf")
+
+# Install man page
+install(FILES wisun-soc-br-agent.1
+    DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)

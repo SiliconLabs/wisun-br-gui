@@ -3,13 +3,7 @@
 
 ## Overview
 
-Wi-SUN SoC Border### Available Methods
-
-| Method | Input | Output | Description |
-|--------|-------|--------|-------------|
-| `RestartSoCBorderRouter` | - | - | Restart the border router on the SoC host (performs SoC reset) |
-| `StopSoCBorderRouter` | - | - | Stop the border router on the SoC host (Permanent until restart) |
-| `SetSoCBorderRouterConfig` | - | - | Apply current configuration to the SoC host | Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN Border Router. It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration. This service is specifically designed for EFR32 Border Router SoC implementations and requires a SiWx917 Wi-Fi module along with a properly configured IPv6 network infrastructure.
+Wi-SUN SoC Border Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN SoC Border Router. It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration. This service is specifically designed for EFR32 Border Router SoC implementations and requires a SiWx917 Wi-Fi module along with a properly configured IPv6 network infrastructure.
 
 The agent service communicates with the [Wi-SUN Border Router GUI](https://github.com/SiliconLabs/wisun-br-gui) application over D-Bus, providing a comprehensive graphical interface for network management, topology visualization, and real-time monitoring.
 
@@ -154,17 +148,64 @@ Example (CMake):
 cmake -DWS_BR_AGENT_LOG_ENABLE_COLORS=0 -DWS_BR_AGENT_LOG_ENABLE_DEBUG=0 ..
 ```
 
-## Build Steps
+## Build and Installation
 
-1. Install dependencies: GCC, CMake, systemd development headers (`libsystemd-dev`), pthreads.
-2. Build the agent:
-	 ```bash
-	 mkdir -p build
-	 cd build
-	 cmake ..
-	 make
-	 ```
-3. The binary will be located in `build/wisun-soc-br-agent`.
+### Prerequisites
+
+Install required dependencies:
+- **Ubuntu/Debian**: `sudo apt install build-essential cmake libsystemd-dev`
+- **RHEL/CentOS/Fedora**: `sudo yum install gcc cmake systemd-devel` (or `dnf`)
+
+### Build Steps
+
+1. Clone and build the project:
+   ```bash
+   git clone <repository-url>
+   cd wisun-soc-br-agent
+   mkdir build && cd build
+   cmake ..
+   make
+   ```
+
+2. For development/testing, the binary is located in `build/wisun-soc-br-agent`.
+
+### Installation
+
+Install the agent system-wide:
+
+```bash
+# From the build directory
+sudo make install
+```
+
+This installs:
+- **Executable**: `/usr/bin/wisun-soc-br-agent`
+- **Configuration**: `/etc/wisun-soc-br-agent/*.conf`
+- **Manual page**: `/usr/share/man/man1/wisun-soc-br-agent.1`
+
+### Custom Installation Prefix
+
+To install to a custom location:
+
+```bash
+cmake -DCMAKE_INSTALL_PREFIX=/opt/wisun ..
+make
+sudo make install
+```
+
+### Accessing Documentation
+
+After installation, view the manual page:
+
+```bash
+man wisun-soc-br-agent
+```
+
+The manual page contains detailed information about:
+- Command-line options and usage examples
+- D-Bus interface properties and methods
+- Configuration file locations
+- Practical D-Bus command examples
 
 ## Testing & Scripts
 

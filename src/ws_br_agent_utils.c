@@ -44,7 +44,8 @@
 "Usage: wisun-soc-br-agent [--log <log file path>] \
 [--config <config file path>] \
 [--soc <SoC host address>] \
-[--help]\n"
+[--help] \
+[--version]\n"
 
 #if WS_BR_AGENT_SETTINGS_HAVE_KEYS
 static void print_4x16_keys(const uint8_t keys[4][16]);
@@ -138,6 +139,11 @@ void ws_br_agent_utils_print_app_banner(void)
 void ws_br_agent_utils_print_help(void)
 {
   printf(HELP_STR);
+}
+
+void ws_br_agent_utils_print_version(void)
+{
+  printf(WS_BR_AGENT_APP_NAME " v" WS_BR_AGENT_VERSION "\n" WS_BR_AGENT_APP_COPYRIGHT_STR "\n");
 }
 
 int32_t ws_br_agent_utils_print_msg(const ws_br_agent_msg_t * const msg)

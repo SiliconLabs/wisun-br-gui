@@ -83,6 +83,11 @@ int main(int argc, char *argv[])
              || !strcmp(argv[i], "-h")) {
       ws_br_agent_utils_print_help();
       exit(EXIT_SUCCESS);
+    }
+    else if (!strcmp(argv[i], "--version")
+             || !strcmp(argv[i], "-v")) {
+      ws_br_agent_utils_print_version();
+      exit(EXIT_SUCCESS);
     } else {
       printf("Unknown argument: %s\n", argv[i]);
       ws_br_agent_utils_print_help();

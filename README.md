@@ -105,7 +105,7 @@ The agent supports flexible configuration through command-line arguments and con
 ### Command Line Arguments
 
 ```bash
-./wisun-soc-br-agent [OPTIONS]
+sudo ./wisun-soc-br-agent [OPTIONS]
 ```
 
 **Available Options:**
@@ -116,13 +116,13 @@ The agent supports flexible configuration through command-line arguments and con
 **Examples:**
 ```bash
 # Load settings from config file
-./wisun-soc-br-agent --config /etc/wisun/network.conf
+sudo ./wisun-soc-br-agent --config /etc/wisun/network.conf
 
 # Optionally set SoC host address
-./wisun-soc-br-agent --host fd12:3456::1
+sudo ./wisun-soc-br-agent --host fd12:3456::1
 
 # Combined usage
-./wisun-soc-br-agent --config /etc/wisun/network.conf --host fd12:3456::1 --log /var/log/wisun.log
+sudo ./wisun-soc-br-agent --config /etc/wisun/network.conf --host fd12:3456::1 --log /var/log/wisun.log
 ```
 
 ### Configuration Files
@@ -134,9 +134,9 @@ Configuration files use simple `key=value` format. See the `config/` directory i
 - By default, logs are written to the console and to `/var/log/wisun-soc-br-agent.log`.
 - You can specify a custom log file path at runtime:
 	```bash
-	./wisun-soc-br-agent --log /tmp/mylog.txt
+	sudo ./wisun-soc-br-agent --log /tmp/mylog.txt
 	# or
-	./wisun-soc-br-agent -l /tmp/mylog.txt
+	sudo ./wisun-soc-br-agent -l /tmp/mylog.txt
 	```
 - Log output includes timestamps and log levels (INFO, WARN, ERROR, DEBUG).
 
@@ -187,7 +187,7 @@ python3 test/br_soc_bot.py
 
 #### Query All Settings (`dbus-get-settings.sh`)
 ```bash
-bash test/dbus-get-settings.sh
+sudo bash test/dbus-get-settings.sh
 ```
 Retrieves and displays all Wi-SUN configuration properties:
 - Network name, size, and regulatory domain
@@ -196,13 +196,13 @@ Retrieves and displays all Wi-SUN configuration properties:
 
 #### Query Network Topology (`dbus-get-topology.sh`)
 ```bash
-bash test/dbus-get-topology.sh
+sudo bash test/dbus-get-topology.sh
 ```
 Fetches the current network routing graph with target and route information.
 
 #### Monitor Property Changes (`dbus-monitor-routinggraph.sh`)
 ```bash
-bash test/dbus-monitor-routinggraph.sh
+sudo bash test/dbus-monitor-routinggraph.sh
 ```
 Real-time monitoring of `PropertiesChanged` signals for topology updates.
 
@@ -212,19 +212,19 @@ The agent provides convenient shell scripts for controlling border router operat
 
 #### Restart Border Router (`dbus-restart-br.sh`)
 ```bash
-bash test/dbus-restart-br.sh
+sudo bash test/dbus-restart-br.sh
 ```
 Sends a restart command to the SoC host to stop the FAN 1.1 network, reconfigure, and start it again.
 
 #### Stop Border Router (`dbus-stop-br.sh`)
 ```bash
-bash test/dbus-stop-br.sh
+sudo bash test/dbus-stop-br.sh
 ```
 Sends a stop command to the SoC host to halt border router operation. **Note**: Once stopped, the effect is permanent until the network is manually started via SoC CLI directly.
 
 #### Set Configuration (`dbus-set-config.sh`)
 ```bash
-bash test/dbus-set-config.sh
+sudo bash test/dbus-set-config.sh
 ```
 Applies the current Wi-SUN configuration settings to the SoC host.
 
@@ -234,27 +234,27 @@ Applies the current Wi-SUN configuration settings to the SoC host.
 Query individual properties using `dbus-send`:
 ```bash
 # Get network name
-dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
+sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
   /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get \
   string:com.silabs.Wisun.BorderRouter string:WisunNetworkName
 
 # Monitor all property changes
-dbus-monitor --system "interface='org.freedesktop.DBus.Properties',member='PropertiesChanged'"
+sudo dbus-monitor --system "interface='org.freedesktop.DBus.Properties',member='PropertiesChanged'"
 ```
 
 #### Method Calls
 Call border router control methods directly:
 ```bash
 # Restart border router (stops FAN 1.1 network, reconfigures, and starts again)
-dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
+sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
   /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.RestartSoCBorderRouter
 
 # Stop border router
-dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
+sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
   /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.StopSoCBorderRouter
 
 # Set configuration
-dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
+sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
   /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.SetSoCBorderRouterConfig
 ```
 

@@ -34,11 +34,11 @@ include(GNUInstallDirs)
 
 # Install the main executable
 install(TARGETS wisun-soc-br-agent
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    RUNTIME DESTINATION /usr/bin)
 
 # Install configuration files
 install(DIRECTORY config/
-    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/wisun-soc-br-agent
+    DESTINATION /etc/wisun-soc-br-agent
     FILES_MATCHING PATTERN "*.conf")
 
 # Install man page

@@ -1,0 +1,11 @@
+[Unit]
+Description=Wi-SUN SoC Border Router Agent
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/wisun-soc-br-agent --config /etc/wisun-soc-br-agent/ws-soc-br-agent.conf
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

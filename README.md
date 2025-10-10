@@ -207,6 +207,25 @@ The manual page contains detailed information about:
 - Configuration file locations
 - Practical D-Bus command examples
 
+## Service Setup
+
+The Wi-SUN SoC Border Router Agent can be configured as a systemd service for automatic startup and management.
+
+### Service Installation
+
+After installing the binary and configuration files, set up the systemd service:
+
+```bash
+# Run the setup script (installs service file and configures permissions)
+sudo ./setup-service.sh
+```
+
+The setup script will:
+- Create a dedicated `wisun` user and group for security
+- Set up proper permissions for log and configuration directories
+- Install and enable the systemd service
+- Configure security policies
+
 ## Testing & Scripts
 
 ### 1. Python Bot Test Session (`br_soc_bot.py`)

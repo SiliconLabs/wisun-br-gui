@@ -102,7 +102,7 @@ The agent supports flexible configuration through command-line arguments and con
 ### Command Line Arguments
 
 ```bash
-sudo ./wisun-soc-br-agent [OPTIONS]
+sudo wisun-soc-br-agent [OPTIONS]
 ```
 
 **Available Options:**
@@ -113,13 +113,13 @@ sudo ./wisun-soc-br-agent [OPTIONS]
 **Examples:**
 ```bash
 # Load settings from config file
-sudo ./wisun-soc-br-agent --config /etc/wisun/network.conf
+sudo wisun-soc-br-agent --config /etc/wisun/network.conf
 
 # Optionally set SoC host address
-sudo ./wisun-soc-br-agent --host fd12:3456::1
+sudo wisun-soc-br-agent --host fd12:3456::1
 
 # Combined usage
-sudo ./wisun-soc-br-agent --config /etc/wisun/network.conf --host fd12:3456::1 --log /var/log/wisun.log
+sudo wisun-soc-br-agent --config /etc/wisun/network.conf --host fd12:3456::1 --log /var/log/wisun.log
 ```
 
 ### Configuration Files
@@ -131,9 +131,9 @@ Configuration files use simple `key=value` format. See the `config/` directory i
 - By default, logs are written to the console and to `/var/log/wisun-soc-br-agent.log`.
 - You can specify a custom log file path at runtime:
 	```bash
-	sudo ./wisun-soc-br-agent --log /tmp/mylog.txt
+	sudo wisun-soc-br-agent --log /tmp/mylog.txt
 	# or
-	sudo ./wisun-soc-br-agent -l /tmp/mylog.txt
+	sudo wisun-soc-br-agent -l /tmp/mylog.txt
 	```
 - Log output includes timestamps and log levels (INFO, WARN, ERROR, DEBUG).
 
@@ -321,6 +321,9 @@ sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
 sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
   /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.SetSoCBorderRouterConfig
 ```
+## Limitations / Known issues
+
+- Only FAN 1.1 PHY type is supported
 
 ## License
 

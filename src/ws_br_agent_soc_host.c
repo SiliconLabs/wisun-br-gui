@@ -83,7 +83,7 @@ static ws_br_agent_soc_host_topology_t host_topology = {
 ws_br_agent_ret_t ws_br_agent_soc_host_init(void) 
 {
   pthread_mutexattr_t attr;
-  
+
   // Initialize mutex attributes
   if (pthread_mutexattr_init(&attr) != 0) {
     ws_br_agent_log_error("Mutex attr init failed\n");
@@ -109,6 +109,8 @@ ws_br_agent_ret_t ws_br_agent_soc_host_init(void)
   
   // Set local host with default settings for init
   ws_br_agent_soc_host_set(DEFAULT_SOC_HOST_ADDR_STR, NULL);
+  ws_br_agent_log_debug("Default host settings loaded (%u bytes).\n", 
+                        sizeof(ws_br_agent_settings_t));
   return WS_BR_AGENT_RET_OK;
 }
 

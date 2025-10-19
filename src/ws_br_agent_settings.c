@@ -256,19 +256,37 @@ static ws_br_agent_ret_t parse_config_line(const char *line, ws_br_agent_setting
     }
   
   } else if (strcmp(key_start, "chan_plan_id") == 0) {
-    // Only FAN 1.1 supported currently
     if (settings->phy.type == WS_BR_AGENT_PHY_CONFIG_FAN11) {
       settings->phy.config.fan11.chan_plan_id = (uint8_t)strtol(value, NULL, 0);
       ws_br_agent_log_debug("Configure channel plan ID: %u\n", settings->phy.config.fan11.chan_plan_id);
     }
   
   } else if (strcmp(key_start, "phy_mode_id") == 0) {
-    // Only FAN 1.1 supported currently
     if (settings->phy.type == WS_BR_AGENT_PHY_CONFIG_FAN11) {
       settings->phy.config.fan11.phy_mode_id = (uint8_t)strtol(value, NULL, 0);
       ws_br_agent_log_debug("Configure PHY mode ID: %u\n", settings->phy.config.fan11.phy_mode_id);
     }
   
+  } else if (strcmp(key_start, "fan_version") == 0) {
+    if (strcmp(value, "1.0") == 0) {
+      settings->phy.type = WS_BR_AGENT_PHY_CONFIG_FAN10;
+      ws_br_agent_log_debug("Configure PHY config type: FAN 1.0\n");
+    } else if (strcmp(value, "1.1") == 0) {
+      settings->phy.type = WS_BR_AGENT_PHY_CONFIG_FAN11;
+      ws_br_agent_log_debug("Configure PHY config type: FAN 1.1\n");
+    } else {
+      ws_br_agent_log_warn("Unknown or not supported FAN version: %s\n", value);
+    }
+  } else if (strcmp(key_start, "class") == 0) {
+    if (settings->phy.type == WS_BR_AGENT_PHY_CONFIG_FAN10) {
+      settings->phy.config.fan10.op_class = (uint8_t)strtol(value, NULL, 0);
+      ws_br_agent_log_debug("Configure Operating Class: %u\n", settings->phy.config.fan10.op_class);
+    }
+  } else if (strcmp(key_start, "mode") == 0) {
+    if (settings->phy.type == WS_BR_AGENT_PHY_CONFIG_FAN10) {
+      settings->phy.config.fan10.op_mode = (uint8_t)strtol(value, NULL, 0);
+      ws_br_agent_log_debug("Configure Operating Mode: %u\n", settings->phy.config.fan10.op_mode);
+    }
   } else if (strcmp(key_start, "pan_id") == 0) {
     settings->pan_id = (uint16_t)strtol(value, NULL, 0);
     ws_br_agent_log_debug("Configure PAN ID: %u\n", settings->pan_id);

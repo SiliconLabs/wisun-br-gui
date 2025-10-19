@@ -454,25 +454,45 @@ static int dbus_get_mode(sd_bus *bus, const char *path, const char *interface,
                          const char *property, sd_bus_message *reply, 
                          void *userdata, sd_bus_error *ret_error)
 {
-  (void)userdata;
-  (void)bus;
-  (void)path;
-  (void)interface;
-  (void)property;
+  ws_br_agent_settings_t settings = { 0U };
+  uint8_t value = 0U;
 
-  return sd_bus_message_append(reply, "u", 0x0000U);
+  (void) bus;
+  (void) path;
+  (void) interface;
+  (void) property;
+  (void) userdata;
+  (void) ret_error;
+
+  if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
+    return -1;
+  }
+  value = settings.phy.type != WS_BR_AGENT_PHY_CONFIG_FAN10 ? 0U :
+           settings.phy.config.fan10.op_mode;
+
+  return sd_bus_message_append(reply, "u", value);
 }
 static int dbus_get_class(sd_bus *bus, const char *path, const char *interface,
                           const char *property, sd_bus_message *reply, 
                           void *userdata, sd_bus_error *ret_error)
 {
-  (void)userdata;
-  (void)bus;
-  (void)path;
-  (void)interface;
-  (void)property;
+  ws_br_agent_settings_t settings = { 0U };
+  uint8_t value = 0U;
 
-  return sd_bus_message_append(reply, "u", 0x0000U);
+  (void) bus;
+  (void) path;
+  (void) interface;
+  (void) property;
+  (void) userdata;
+  (void) ret_error;
+
+  if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
+    return -1;
+  }
+  value = settings.phy.type != WS_BR_AGENT_PHY_CONFIG_FAN10 ? 0U :
+           settings.phy.config.fan10.op_class;
+
+  return sd_bus_message_append(reply, "u", value);
 }
 
 static int dbus_method_restart_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)

@@ -268,6 +268,11 @@ static ws_br_agent_ret_t parse_config_line(const char *line, ws_br_agent_setting
       settings->phy.config.fan11.phy_mode_id = (uint8_t)strtol(value, NULL, 0);
       ws_br_agent_log_debug("Configure PHY mode ID: %u\n", settings->phy.config.fan11.phy_mode_id);
     }
+  
+  } else if (strcmp(key_start, "pan_id") == 0) {
+    settings->pan_id = (uint16_t)strtol(value, NULL, 0);
+    ws_br_agent_log_debug("Configure PAN ID: %u\n", settings->pan_id);
+
   } else {
     ws_br_agent_log_warn("Unknown config parameter: %s\n", key_start);
   }

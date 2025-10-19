@@ -277,6 +277,8 @@ typedef struct __attribute__((packed, aligned(1))) ws_br_agent_settings {
   ws_br_agent_phy_config_t phy;
   /// Default PHY
   bool is_default_phy;
+  /// PAN ID
+  uint16_t pan_id;
 } ws_br_agent_settings_t;
 
 /**

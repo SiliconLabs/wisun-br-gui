@@ -68,6 +68,7 @@ static const ws_br_agent_settings_t default_host_settings = {
   .phy.config.fan11.reg_domain = WS_BR_AGENT_REG_DOMAIN_EU,
   .phy.config.fan11.chan_plan_id = 32U,
   .phy.config.fan11.phy_mode_id = 1U,
+  .pan_id = 0xffff
 };
 
 static ws_br_agent_soc_host_t host = { 0U };

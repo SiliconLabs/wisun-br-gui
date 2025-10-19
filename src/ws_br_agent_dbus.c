@@ -45,6 +45,9 @@
 #define WS_BR_AGENT_DBUS_PROPERTY_PHY_MODE_ID "WisunPhyModeId"
 #define WS_BR_AGENT_DBUS_PROPERTY_CHAN_PLAN_ID "WisunChanPlanId"
 #define WS_BR_AGENT_DBUS_PROPERTY_FAN_VERSION "WisunFanVersion"
+#define WS_BR_AGENT_DBUS_PROPERTY_PAN_ID "WisunPanId"
+#define WS_BR_AGENT_DBUS_PROPERTY_CLASS "WisunClass"
+#define WS_BR_AGENT_DBUS_PROPERTY_MODE "WisunMode"
 #define WS_BR_AGENT_DBUS_METHOD_START_SOC_BORDER_ROUTER "RestartSoCBorderRouter"
 #define WS_BR_AGENT_DBUS_METHOD_STOP_SOC_BORDER_ROUTER "StopSoCBorderRouter"
 #define WS_BR_AGENT_DBUS_METHOD_SET_SOC_BORDER_ROUTER_CONFIG "SetSoCBorderRouterConfig"
@@ -71,6 +74,15 @@ static int dbus_get_chan_plan_id(sd_bus *bus, const char *path, const char *inte
 static int dbus_get_fan_version(sd_bus *bus, const char *path, const char *interface,
                                const char *property, sd_bus_message *reply, 
                                void *userdata, sd_bus_error *ret_error);
+static int dbus_get_pan_id(sd_bus *bus, const char *path, const char *interface,
+                           const char *property, sd_bus_message *reply, 
+                           void *userdata, sd_bus_error *ret_error);
+static int dbus_get_mode(sd_bus *bus, const char *path, const char *interface,
+                         const char *property, sd_bus_message *reply, 
+                         void *userdata, sd_bus_error *ret_error);
+static int dbus_get_class(sd_bus *bus, const char *path, const char *interface,
+                          const char *property, sd_bus_message *reply, 
+                          void *userdata, sd_bus_error *ret_error);
 
 static int dbus_method_restart_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error);
 static int dbus_method_stop_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error);
@@ -105,6 +117,12 @@ static const sd_bus_vtable dbus_vtable[] = {
                   dbus_get_chan_plan_id, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
   SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_FAN_VERSION, "y", 
                   dbus_get_fan_version, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
+  SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_PAN_ID, "q", 
+                  dbus_get_pan_id, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
+  SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_CLASS, "u", 
+                  dbus_get_class, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
+  SD_BUS_PROPERTY(WS_BR_AGENT_DBUS_PROPERTY_MODE, "u", 
+                  dbus_get_mode, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
   SD_BUS_VTABLE_END
 };
 
@@ -196,6 +214,13 @@ static int dbus_get_routing_graph(sd_bus *bus, const char *path, const char *int
   ws_br_agent_soc_host_topology_t topology = {0U, NULL};
   int r = -1;
 
+  (void) bus;
+  (void) path;
+  (void) interface;
+  (void) property;
+  (void) userdata;
+  (void) ret_error;
+
   if (ws_br_agent_soc_host_get_topology(&topology) != WS_BR_AGENT_RET_OK) {
     ws_br_agent_log_error("Failed to get topology for D-Bus property\n");
     return -1;
@@ -246,15 +271,19 @@ static int dbus_get_network_name(sd_bus *bus, const char *path, const char *inte
                                  void *userdata, sd_bus_error *ret_error)
 {
   ws_br_agent_settings_t settings = { 0U };
-  int r = -1;
+  
+  (void) bus;
+  (void) path;
+  (void) interface;
+  (void) property;
+  (void) userdata;
+  (void) ret_error;
 
   if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
     return -1;
   }
   
-  r = sd_bus_message_append(reply, "s", settings.network_name);
-  
-  return r;
+  return sd_bus_message_append(reply, "s", settings.network_name);
 }
 
 static int dbus_get_network_size(sd_bus *bus, const char *path, const char *interface,
@@ -262,18 +291,23 @@ static int dbus_get_network_size(sd_bus *bus, const char *path, const char *inte
                                  void *userdata, sd_bus_error *ret_error)
 {
   ws_br_agent_settings_t settings = { 0U };
-  int r = -1;
+
+  (void) bus;
+  (void) path;
+  (void) interface;
+  (void) property;
+  (void) userdata;
+  (void) ret_error;
 
   if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
     return -1;
   }
   
-  r = sd_bus_message_append(reply, "s",
-                            ws_br_agent_utils_val_to_str(settings.network_size, 
-                                                         ws_br_agent_nw_size_strs, 
-                                                         "Unknown"));
-  
-  return r;
+  return sd_bus_message_append(reply, "s",
+                               ws_br_agent_utils_val_to_str(settings.network_size, 
+                                                           ws_br_agent_nw_size_strs, 
+                                                           "Unknown"));
+
 }
 
 static int dbus_get_reg_domain(sd_bus *bus, const char *path, const char *interface,
@@ -281,8 +315,14 @@ static int dbus_get_reg_domain(sd_bus *bus, const char *path, const char *interf
                                void *userdata, sd_bus_error *ret_error)
 {
   ws_br_agent_settings_t settings = { 0U };
-  int r = -1;
   uint8_t value = 0;
+
+  (void) bus;
+  (void) path;
+  (void) interface;
+  (void) property;
+  (void) userdata;
+  (void) ret_error;
 
   if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
     return -1;
@@ -301,12 +341,10 @@ static int dbus_get_reg_domain(sd_bus *bus, const char *path, const char *interf
       break;
   }
 
-  r = sd_bus_message_append(reply, "s",
-                            ws_br_agent_utils_val_to_str(value, 
-                                                         ws_br_agent_domains_strs, 
-                                                         "Unknown"));
-
-  return r;
+  return sd_bus_message_append(reply, "s",
+                                ws_br_agent_utils_val_to_str(value, 
+                                                             ws_br_agent_domains_strs, 
+                                                             "Unknown"));
 }
 
 static int dbus_get_phy_mode_id(sd_bus *bus, const char *path, const char *interface,
@@ -314,17 +352,21 @@ static int dbus_get_phy_mode_id(sd_bus *bus, const char *path, const char *inter
                                void *userdata, sd_bus_error *ret_error)
 {
   ws_br_agent_settings_t settings = { 0U };
-  int r = -1;
   uint32_t value = 0U;
+
+  (void) bus;
+  (void) path;
+  (void) interface;
+  (void) property;
+  (void) userdata;
+  (void) ret_error;
 
   if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
     return -1;
   }
   value = settings.phy.type != WS_BR_AGENT_PHY_CONFIG_FAN11 ? 0U :
            settings.phy.config.fan11.phy_mode_id;
-  r = sd_bus_message_append(reply, "u", value);
-
-  return r;
+  return sd_bus_message_append(reply, "u", value);
 }
 
 static int dbus_get_chan_plan_id(sd_bus *bus, const char *path, const char *interface,
@@ -332,8 +374,14 @@ static int dbus_get_chan_plan_id(sd_bus *bus, const char *path, const char *inte
                                  void *userdata, sd_bus_error *ret_error)
 {
   ws_br_agent_settings_t settings = { 0U };
-  int r = -1;
   uint32_t value = 0U;
+
+  (void) bus;
+  (void) path;
+  (void) interface;
+  (void) property;
+  (void) userdata;
+  (void) ret_error;
 
   if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
     return -1;
@@ -341,9 +389,7 @@ static int dbus_get_chan_plan_id(sd_bus *bus, const char *path, const char *inte
   value = settings.phy.type != WS_BR_AGENT_PHY_CONFIG_FAN11 ? 0U :
            settings.phy.config.fan11.chan_plan_id;
 
-  r = sd_bus_message_append(reply, "u", value);
-
-  return r;
+  return sd_bus_message_append(reply, "u", value);
 }
 
 static int dbus_get_fan_version(sd_bus *bus, const char *path, const char *interface,
@@ -351,8 +397,14 @@ static int dbus_get_fan_version(sd_bus *bus, const char *path, const char *inter
                                void *userdata, sd_bus_error *ret_error)
 {
   ws_br_agent_settings_t settings = { 0U };
-  int r = -1;
   uint8_t value = 0U;
+
+  (void) bus;
+  (void) path;
+  (void) interface;
+  (void) property;
+  (void) userdata;
+  (void) ret_error;
 
   if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
     return -1;
@@ -372,9 +424,55 @@ static int dbus_get_fan_version(sd_bus *bus, const char *path, const char *inter
       break;
   }
 
-  r = sd_bus_message_append(reply, "y", value);
+  return sd_bus_message_append(reply, "y", value);
+}
 
-  return r;
+static int dbus_get_pan_id(sd_bus *bus, const char *path, const char *interface,
+                           const char *property, sd_bus_message *reply, 
+                           void *userdata, sd_bus_error *ret_error)
+{
+  uint16_t pan_id = 0U;
+  ws_br_agent_settings_t settings = { 0U };
+  int r = -1;
+  uint32_t value = 0U;
+
+  (void)userdata;
+  (void)bus;
+  (void)path;
+  (void)interface;
+  (void)property;
+
+  if (ws_br_agent_soc_host_get_settings(&settings) != WS_BR_AGENT_RET_OK) {
+    return -1;
+  }
+  pan_id = settings.pan_id;
+
+  return sd_bus_message_append(reply, "q", pan_id);
+}
+
+static int dbus_get_mode(sd_bus *bus, const char *path, const char *interface,
+                         const char *property, sd_bus_message *reply, 
+                         void *userdata, sd_bus_error *ret_error)
+{
+  (void)userdata;
+  (void)bus;
+  (void)path;
+  (void)interface;
+  (void)property;
+
+  return sd_bus_message_append(reply, "u", 0x0000U);
+}
+static int dbus_get_class(sd_bus *bus, const char *path, const char *interface,
+                          const char *property, sd_bus_message *reply, 
+                          void *userdata, sd_bus_error *ret_error)
+{
+  (void)userdata;
+  (void)bus;
+  (void)path;
+  (void)interface;
+  (void)property;
+
+  return sd_bus_message_append(reply, "u", 0x0000U);
 }
 
 static int dbus_method_restart_br(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
@@ -385,7 +483,8 @@ static int dbus_method_restart_br(sd_bus_message *m, void *userdata, sd_bus_erro
     .payload_len = 0 
   };
   
-  (void)userdata;
+  (void) userdata;
+  (void) ret_error;
   
   ws_br_agent_log_info("D-Bus method RestartSoCBorderRouter called\n");
   // Send request to SoC host
@@ -406,8 +505,9 @@ static int dbus_method_stop_br(sd_bus_message *m, void *userdata, sd_bus_error *
     .payload_len = 0 
   };
   
-  (void)userdata;
-  
+  (void) userdata;
+  (void) ret_error;
+
   ws_br_agent_log_info("D-Bus method StopSoCBorderRouter called\n");
   // Send request to SoC host
   if (ws_br_agent_soc_host_send_req(&msg, NULL) != WS_BR_AGENT_RET_OK) {
@@ -427,8 +527,9 @@ static int dbus_method_set_config(sd_bus_message *m, void *userdata, sd_bus_erro
     .payload_len = sizeof(ws_br_agent_settings_t)
   };
   
-  (void)userdata;
-  
+  (void) userdata;
+  (void) ret_error;
+
   ws_br_agent_log_info("D-Bus method SetSoCBorderRouterConfig called\n");
   // Send request to SoC host
   if (ws_br_agent_soc_host_send_req(&msg, NULL) != WS_BR_AGENT_RET_OK) {

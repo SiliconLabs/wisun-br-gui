@@ -65,6 +65,9 @@ The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.BorderRou
 | `WisunPhyModeId` | `u` | PHY mode identifier for FAN 1.1 |
 | `WisunChanPlanId` | `u` | Channel plan identifier for FAN 1.1 |
 | `WisunFanVersion` | `y` | FAN version (1 for FAN 1.0, 2 for FAN 1.1) |
+| `WisunPanId` | `q` | Personal Area Network ID (16-bit identifier) |
+| `WisunClass` | `u` | Wi-SUN operating class for FAN 1.0|
+| `WisunMode` | `u` | Wi-SUN operating mode for FAN 1.0|
 
 ### Available Methods
 
@@ -323,7 +326,6 @@ sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
 ```
 ## Limitations / Known issues
 
-- Only FAN 1.1 PHY type is supported
 
 ## License
 
@@ -351,7 +353,7 @@ For complete licensing terms and conditions, please refer to the LICENSE.txt fil
 - Manual page documentation and installation support
 
 **D-Bus Interface:**
-- Properties: RoutingGraph, WisunNetworkName, WisunSize, WisunDomain, WisunPhyModeId, WisunChanPlanId, WisunFanVersion
+- Properties: RoutingGraph, WisunNetworkName, WisunSize, WisunDomain, WisunPhyModeId, WisunChanPlanId, WisunFanVersion, WisunPanId, WisunClass, WisunMode
 - Methods: RestartSoCBorderRouter, StopSoCBorderRouter, SetSoCBorderRouterConfig
 - Real-time property change notifications via PropertiesChanged signals
 

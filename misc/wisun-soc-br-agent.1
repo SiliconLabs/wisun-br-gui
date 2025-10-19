@@ -54,6 +54,15 @@ Channel plan identifier for FAN 1.1 (type: u)
 .TP
 .B WisunFanVersion
 FAN version: 1 for FAN 1.0, 2 for FAN 1.1 (type: y)
+.TP
+.B WisunPanId
+Personal Area Network ID - 16-bit network identifier (type: q)
+.TP
+.B WisunClass
+Wi-SUN operating class for FAN 1.0 (type: u)
+.TP
+.B WisunMode
+Wi-SUN operating mode  for FAN 1.0 (type: u)
 
 .SS Methods
 .TP
@@ -106,6 +115,18 @@ Set SoC host address:
 Combined usage with custom log:
 .B sudo wisun-soc-br-agent --config /etc/wisun-soc-br-agent/wisun_br_config.conf --host fd12:3456::1 --log /var/log/wisun.log
 
+.SH CONFIGURATION FILE EXAMPLE
+.TP
+FAN 1.1 configuration
+.nf
+network_name=WiSUN-Network  
+size=Large
+pan_id=4660
+domain=EU
+chan_plan_id=33
+phy_mode_id=3
+.fi
+
 .SH D-BUS EXAMPLES
 .TP
 Query network name property:
@@ -114,6 +135,14 @@ Query network name property:
 .TP
 Query network topology:
 .B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.BorderRouter string:RoutingGraph
+
+.TP
+Query PAN ID:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.BorderRouter string:WisunPanId
+
+.TP
+Query FAN version:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.BorderRouter string:WisunFanVersion
 
 .TP
 Restart border router:

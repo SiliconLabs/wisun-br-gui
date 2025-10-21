@@ -109,7 +109,7 @@ ws_br_agent_ret_t ws_br_agent_soc_host_init(void)
   
   // Set local host with default settings for init
   ws_br_agent_soc_host_set(DEFAULT_SOC_HOST_ADDR_STR, NULL);
-  ws_br_agent_log_debug("Default host settings loaded (%u bytes).\n", 
+  ws_br_agent_log_debug("Default host settings loaded (%lu bytes).\n", 
                         sizeof(ws_br_agent_settings_t));
   return WS_BR_AGENT_RET_OK;
 }

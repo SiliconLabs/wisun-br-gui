@@ -36,6 +36,9 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <poll.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include "ws_br_agent_defs.h"
 #include "ws_br_agent_log.h"
@@ -94,11 +97,12 @@ static void srv_thr_fnc(void *arg)
   ssize_t r = 0L;
   ws_br_agent_msg_t *msg = NULL;
   ws_br_agent_soc_host_topology_t topology = {0U, NULL};
+  struct pollfd pfd = {0};
 
   (void)arg;
   ws_br_agent_log_warn("Server thread started\n");
 
-  listen_fd = socket(AF_INET6, SOCK_STREAM, 0);
+  listen_fd = socket(AF_INET6, SOCK_STREAM | SOCK_NONBLOCK, 0);
   if (listen_fd < 0)
   {
     ws_br_agent_log_error("Server socket creation failed\n");
@@ -127,25 +131,51 @@ static void srv_thr_fnc(void *arg)
     close(listen_fd);
     return;
   }
-
-  ws_br_agent_log_info("Server listening on port %d\n", WS_BR_AGENT_SERVICE_PORT);
+  
+  ws_br_agent_log_info("Server listening on port %u\n", WS_BR_AGENT_SERVICE_PORT);
 
   while (!srv_thread_stop) {
+    
+    pfd.fd = listen_fd;
+    pfd.events = POLLIN;
+    
+    // Poll with timeout to check srv_thread_stop
+    r = poll(&pfd, 1, 100);
+    
+    if (r < 0) {
+      if (errno == EINTR && srv_thread_stop) {
+        break;
+      }
+      ws_br_agent_log_error("Poll failed: %s\n", strerror(errno));
+      continue;
+    }
+    
+    if (!r) {
+      // Timeout - continue to check srv_thread_stop
+      continue;
+    }
+    
+    if (!(pfd.revents & POLLIN)) {
+      continue;
+    }
     conn_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &client_len);
     if (conn_fd < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        continue; // No connection available
+      }
       if (srv_thread_stop) {
         break;
       }
-      ws_br_agent_log_warn("Accept failed\n");
-      usleep(DISPACH_DELAY_US);
+      ws_br_agent_log_warn("Accept failed: %s\n", strerror(errno));
       continue;
     }
+    
     inet_ntop(AF_INET6, &client_addr.sin6_addr, client_ip, sizeof(client_ip));
     ws_br_agent_log_info("Accepted connection from %s:%d\n", client_ip, ntohs(client_addr.sin6_port));
 
     r = recv(conn_fd, buf, WS_BR_AGENT_MAX_BUF_SIZE, 0);
     if (r < 0) {
-      ws_br_agent_log_warn("Receive failed\n");
+      ws_br_agent_log_warn("Receive failed: %s\n", strerror(errno));
       close(conn_fd);
       continue;
     }

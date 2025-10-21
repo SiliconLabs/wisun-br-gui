@@ -36,9 +36,17 @@ const WSBRDGakKeysContent = () => {
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
 
-    const { active } = useContext(AppContext);
+    const { active, socAgentActive } = useContext(AppContext);
 
     useEffect(() => {
+        if (socAgentActive) {
+            if (loading) {
+                setLoading(false);
+            }
+            setHasError(false);
+            return;
+        }
+
         // only make a dbus request if the service is active
         if (active !== true) {
             if (loading) {
@@ -70,11 +78,22 @@ const WSBRDGakKeysContent = () => {
         };
 
         getProperties();
-    }, [active, loading]);
+    }, [active, loading, socAgentActive]);
 
     if (loading) {
         return (
             <Loading />
+        );
+    }
+
+    if (socAgentActive) {
+        return (
+            <CenteredContent>
+                <Alert
+                    variant='info'
+                    title="Wi-SUN SoC Border Router Agent service is active. GAK Keys are unavailable."
+                />
+            </CenteredContent>
         );
     }
 

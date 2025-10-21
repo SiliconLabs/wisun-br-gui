@@ -15,11 +15,12 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Alert, TextArea } from "@patternfly/react-core";
 import cockpit from 'cockpit';
 import CenteredContent from "../../utils/CenteredContent";
 import Loading from "../../utils/Loading";
+import { AppContext } from "../../app";
 
 const _ = cockpit.gettext;
 
@@ -30,6 +31,7 @@ const WSBRDConfEditorContent = () => {
     const [cockpitTag, setCockpitTag] = useState(undefined);
     const [hasError, setHasError] = useState(false);
     const [error, setError] = useState(null);
+    const { socAgentActive } = useContext(AppContext);
 
     useEffect(() => {
         file.read().then((data, tag) => {
@@ -77,12 +79,22 @@ const WSBRDConfEditorContent = () => {
     }
 
     return (
-        <TextArea
-            style={{ height: '100%' }}
-            aria-label="wsbrd-conf"
-            value={content}
-            onChange={onContentChange}
-        />
+        <>
+            {socAgentActive && (
+                <Alert
+                    variant='info'
+                    isInline
+                    title="Wi-SUN SoC Border Router Agent service is active. Editing is disabled."
+                />
+            )}
+            <TextArea
+                style={{ height: '100%' }}
+                aria-label="wsbrd-conf"
+                value={content}
+                onChange={onContentChange}
+                isDisabled={socAgentActive}
+            />
+        </>
     );
 };
 

@@ -16,13 +16,17 @@
  */
 
 import { FlexItem, Grid, GridItem } from "@patternfly/react-core";
+import { useContext } from "react";
 import WSBRDActiveConf from "./WSBRDActiveConf/WSBRDActiveConf";
 import WSBRDConfEditor from "./WSBRDConfEditor/WSBRDConfEditor";
 import WSBRDGakKeys from "./WSBRDGakKeys/WSBRDGakKeys";
 import WSBRDGtkKeys from "./WSBRDGtkKeys/WSBRDGtkKeys";
 import WSBRDStatus from "./WSBRDStatus";
+import { AppContext } from "../app";
 
 const Dashboard = () => {
+    const { wsbrdInstalled } = useContext(AppContext);
+
     return (
         <Grid hasGutter>
             <GridItem lg={6}>
@@ -36,9 +40,11 @@ const Dashboard = () => {
                     <GridItem>
                         <WSBRDStatus />
                     </GridItem>
-                    <GridItem>
-                        <WSBRDConfEditor />
-                    </GridItem>
+                    {wsbrdInstalled && (
+                        <GridItem>
+                            <WSBRDConfEditor />
+                        </GridItem>
+                    )}
                 </Grid>
             </GridItem>
             <GridItem lg={6}>
@@ -46,12 +52,16 @@ const Dashboard = () => {
                     <FlexItem>
                         <WSBRDActiveConf />
                     </FlexItem>
-                    <FlexItem>
-                        <WSBRDGakKeys />
-                    </FlexItem>
-                    <FlexItem>
-                        <WSBRDGtkKeys />
-                    </FlexItem>
+                    {wsbrdInstalled && (
+                        <FlexItem>
+                            <WSBRDGakKeys />
+                        </FlexItem>
+                    )}
+                    {wsbrdInstalled && (
+                        <FlexItem>
+                            <WSBRDGtkKeys />
+                        </FlexItem>
+                    )}
                 </Grid>
             </GridItem>
         </Grid>

@@ -39,36 +39,123 @@ export const AppContext = createContext({
     active: undefined,
     setActive: undefined,
     loading: undefined,
-    setLoading: undefined
+    setLoading: undefined,
+    wsbrdInstalled: undefined,
+    setWsbrdInstalled: undefined,
+    socAgentActive: undefined,
+    setSocAgentActive: undefined
 });
 
 const App = () => {
     const [active, setActive] = useState(undefined);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState(0);
+    const [wsbrdInstalled, setWsbrdInstalled] = useState(undefined);
+    const [socAgentActive, setSocAgentActive] = useState(false);
 
     const dashboardRef = createRef();
     const topologyRef = createRef();
 
     useEffect(() => {
-        cockpit.spawn(["systemctl", "show", "-p", "ActiveState", "--value", "wisun-borderrouter.service"],
-            { superuser: "require" })
+        let isMounted = true;
+
+        setLoading(true);
+
+        const parseServiceStates = (data) => {
+            const trimmedData = data.trim();
+            if (trimmedData.length === 0) {
+                return { loadState: null, activeState: null };
+            }
+
+            const values = trimmedData.split('\n');
+
+            return {
+                loadState: values[0] || null,
+                activeState: values[1] || null
+            };
+        };
+
+        const wsbrdPromise = cockpit.spawn([
+            "systemctl",
+            "show",
+            "-p",
+            "LoadState",
+            "-p",
+            "ActiveState",
+            "--value",
+            "wisun-borderrouter.service"
+        ], { superuser: "require" })
             .then((data) => {
-                if (data.trim().localeCompare('active') === 0) {
+                if (!isMounted) {
+                    return;
+                }
+
+                const { loadState, activeState } = parseServiceStates(data);
+                const isInstalled = loadState !== null && loadState.localeCompare('not-found') !== 0;
+
+                setWsbrdInstalled(isInstalled);
+
+                if (!isInstalled) {
+                    setActive(null);
+                    return;
+                }
+
+                if (activeState && activeState.localeCompare('active') === 0) {
                     setActive(true);
-                } else if (data.trim().localeCompare('inactive') === 0) {
+                } else if (activeState && activeState.localeCompare('inactive') === 0) {
                     setActive(false);
                 } else {
                     setActive(null);
                 }
-
-                setLoading(false);
             })
             .catch((err) => {
                 console.log(err);
+                if (!isMounted) {
+                    return;
+                }
+
+                setWsbrdInstalled(false);
                 setActive(null);
-                setLoading(false);
             });
+
+        const socAgentPromise = cockpit.spawn([
+            "systemctl",
+            "show",
+            "-p",
+            "LoadState",
+            "-p",
+            "ActiveState",
+            "--value",
+            "wisun-soc-br-agent.service"
+        ], { superuser: "require" })
+            .then((data) => {
+                if (!isMounted) {
+                    return;
+                }
+
+                const { loadState, activeState } = parseServiceStates(data);
+                const isInstalled = loadState !== null && loadState.localeCompare('not-found') !== 0;
+
+                setSocAgentActive(isInstalled && activeState && activeState.localeCompare('active') === 0);
+            })
+            .catch((err) => {
+                console.log(err);
+                if (!isMounted) {
+                    return;
+                }
+
+                setSocAgentActive(false);
+            });
+
+        Promise.allSettled([wsbrdPromise, socAgentPromise]).then(() => {
+            if (isMounted) {
+                setLoading(false);
+            }
+        });
+
+        return () => {
+            isMounted = false;
+        };
     }, [active]);
 
     return (
@@ -106,7 +193,18 @@ const App = () => {
                     (active === undefined || loading)
                         ? <Loading />
                         : (
-                            <AppContext.Provider value={{ active, setActive, loading, setLoading }}>
+                            <AppContext.Provider
+                                value={{
+                                    active,
+                                    setActive,
+                                    loading,
+                                    setLoading,
+                                    wsbrdInstalled,
+                                    setWsbrdInstalled,
+                                    socAgentActive,
+                                    setSocAgentActive
+                                }}
+                            >
                                 {
                                     activeTab === 0 && <Dashboard />
                                 }

@@ -110,7 +110,7 @@ sudo wisun-soc-br-agent [OPTIONS]
 
 **Available Options:**
 - `--config <file>` or `-c <file>`: Load Wi-SUN settings from configuration file
-- `--host <address>` or `-h <address>`: Set EFR32 SoC host IPv6 address (optional, updates remote host configuration)
+- `--soc <address>` or `-h <address>`: Set EFR32 SoC host IPv6 address (optional, updates remote host configuration)
 - `--log <file>` or `-l <file>`: Specify custom log file path
 
 **Examples:**
@@ -119,10 +119,10 @@ sudo wisun-soc-br-agent [OPTIONS]
 sudo wisun-soc-br-agent --config /etc/wisun/network.conf
 
 # Optionally set SoC host address
-sudo wisun-soc-br-agent --host fd12:3456::1
+sudo wisun-soc-br-agent --soc fd12:3456::1
 
 # Combined usage
-sudo wisun-soc-br-agent --config /etc/wisun/network.conf --host fd12:3456::1 --log /var/log/wisun.log
+sudo wisun-soc-br-agent --config /etc/wisun/network.conf --soc fd12:3456::1 --log /var/log/wisun.log
 ```
 
 ### Configuration Files

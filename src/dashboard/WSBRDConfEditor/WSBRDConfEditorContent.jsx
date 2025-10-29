@@ -93,6 +93,8 @@ const WSBRDConfEditorContent = () => {
                 value={content}
                 onChange={onContentChange}
                 isDisabled={socAgentActive}
+                resizeOrientation='vertical'
+
             />
         </>
     );

@@ -25,7 +25,10 @@ import WSBRDStatus from "./WSBRDStatus";
 import { AppContext } from "../app";
 
 const Dashboard = () => {
-    const { wsbrdInstalled } = useContext(AppContext);
+    // Added: read service metadata and selection
+    const { wsbrdInstalled, services, selectedService } = useContext(AppContext);
+    // Added: show the editor only for Linux
+    const showLinuxConfig = selectedService === 'linux' && services.linux.installed;
 
     return (
         <Grid hasGutter>
@@ -40,7 +43,7 @@ const Dashboard = () => {
                     <GridItem>
                         <WSBRDStatus />
                     </GridItem>
-                    {wsbrdInstalled && (
+                    {showLinuxConfig && ( // Added: gate the configuration editor behind the Linux service selection
                         <GridItem>
                             <WSBRDConfEditor />
                         </GridItem>

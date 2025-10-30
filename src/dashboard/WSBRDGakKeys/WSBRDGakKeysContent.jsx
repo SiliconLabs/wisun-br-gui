@@ -36,24 +36,26 @@ const WSBRDGakKeysContent = () => {
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
 
-    const { active, socAgentActive } = useContext(AppContext);
+    // Added: include the selected service for gating
+    const { active, socAgentActive, selectedService } = useContext(AppContext);
 
     useEffect(() => {
+        if (!selectedService) { // Added: avoid querying keys until a service is chosen
+            return; // Added: bail out when no service is selected
+        }
         if (socAgentActive) {
-            if (loading) {
-                setLoading(false);
-            }
+            setLoading(false); // Added: hide the spinner while the SoC agent is active
             setHasError(false);
             return;
         }
 
         // only make a dbus request if the service is active
         if (active !== true) {
-            if (loading) {
-                setLoading(false);
-            }
+            setLoading(false); // Added: clear loading when the service is not running
             return;
         }
+
+        setLoading(true); // Added: indicate loading before fetching GAK keys
 
         const getProperties = () => {
             const dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
@@ -78,7 +80,18 @@ const WSBRDGakKeysContent = () => {
         };
 
         getProperties();
-    }, [active, loading, socAgentActive]);
+    }, [active, socAgentActive, selectedService]); // Added: refresh GAK data when selection or status changes
+
+    if (!selectedService) { // Added: prompt the user to pick a service before listing GAK keys
+        return (
+            <CenteredContent> {/* Added: center the call-to-action message */}
+                <Alert // Added: expand props for readability
+                    variant='info'
+                    title="Select a service to view GAK keys"
+                /> {/* Added: explain why the list is empty */}
+            </CenteredContent>
+        );
+    }
 
     if (loading) {
         return (

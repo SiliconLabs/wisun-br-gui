@@ -46,16 +46,19 @@ const WSBRDActiveConfContent = () => {
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
 
-    const { active } = useContext(AppContext);
+    const { active, selectedService } = useContext(AppContext); // Added: gate data by selected service
 
     useEffect(() => {
+        if (!selectedService) { // Added: skip fetching until a service is selected
+            return; // Added: leave existing state untouched without a service selection
+        }
         // only make a dbus request if the service is active
         if (active !== true) {
-            if (loading) {
-                setLoading(false);
-            }
+            setLoading(false); // Added: clear the loading indicator when the service is inactive or unavailable
             return;
         }
+
+        setLoading(true); // Added: show a spinner while fetching fresh configuration data
 
         const getProperties = () => {
             const dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
@@ -94,7 +97,18 @@ const WSBRDActiveConfContent = () => {
         };
 
         getProperties();
-    }, [active, loading]);
+    }, [active, selectedService]); // Added: refetch data whenever the active state or selected service changes
+
+    if (!selectedService) { // Added: prompt the user when no service has been selected yet
+        return (
+            <CenteredContent> {/* Added: center the selection prompt */}
+                <Alert // Added: expand props for readability
+                    variant='info'
+                    title="Select a service to view its configuration"
+                /> {/* Added: ask the user to pick a service */}
+            </CenteredContent>
+        );
+    }
 
     if (loading) {
         return (

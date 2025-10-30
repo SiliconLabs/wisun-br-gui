@@ -69,7 +69,7 @@ const Topology = () => {
     const [selectedNode, setSelectedNode] = useState(null);
     const [autoZoom, setAutoZoom] = useState(true);
 
-    const { active } = useContext(AppContext);
+    const { active, selectedService } = useContext(AppContext); // Added: include the selected service before loading
 
     const options = {
         physics: { stabilization: { enabled: false } },
@@ -191,6 +191,10 @@ const Topology = () => {
     }, [setStateGraph, setLoading]);
 
     const initializeDbus = useCallback(() => {
+        if (!selectedService) { // Added: do not initialize DBus until a service is selected
+            if (loading) setLoading(false); // Added: hide the loading spinner when nothing is selected
+            return; // Added: exit until the user picks a service
+        }
         if (active !== true) {
             if (loading) setLoading(false);
             return;
@@ -217,7 +221,12 @@ const Topology = () => {
                 }
             });
         });
-    }, [active, loading, processGraphData]);
+    }, [ // Added: expanded dependency list for readability
+        active,
+        loading,
+        processGraphData,
+        selectedService
+    ]); // Added: rerun initialization when the selected service changes
 
     useEffect(() => {
         initializeDbus();
@@ -244,6 +253,17 @@ const Topology = () => {
         setIsExpanded(false);
         setSelectedNode(null);
     };
+
+    if (!selectedService) { // Added: prompt the user when no service is selected
+        return (
+            <CenteredContent> {/* Added: center the selection prompt */}
+                <Alert // Added: expand props for readability
+                    variant='info'
+                    title="Select a service to view the network topology"
+                /> {/* Added: explain why no topology is displayed */}
+            </CenteredContent>
+        );
+    }
 
     if (loading) {
         return (

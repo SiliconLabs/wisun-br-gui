@@ -31,9 +31,13 @@ const WSBRDConfEditorContent = () => {
     const [cockpitTag, setCockpitTag] = useState(undefined);
     const [hasError, setHasError] = useState(false);
     const [error, setError] = useState(null);
-    const { socAgentActive } = useContext(AppContext);
+    // Added: ensure editing targets the Linux service
+    const { socAgentActive, selectedService } = useContext(AppContext);
 
     useEffect(() => {
+        if (selectedService !== 'linux') { // Added: skip reading when Linux is not selected
+            return; // Added: avoid unnecessary filesystem access when another service is chosen
+        }
         file.read().then((data, tag) => {
             // if data is null it means the file does not exist
             if (data === null) {
@@ -52,7 +56,7 @@ const WSBRDConfEditorContent = () => {
                 setHasError(true);
                 setError('Could not read configuration file');
             });
-    }, [file]);
+    }, [file, selectedService]); // Added: reload the configuration when switching back to the Linux service
 
     const onContentChange = (value) => {
         setContent(value);
@@ -63,6 +67,17 @@ const WSBRDConfEditorContent = () => {
                 setError('Unable to save changes, please refresh the page');
             });
     };
+
+    if (selectedService !== 'linux') { // Added: show a notice when Linux is not selected
+        return (
+            <CenteredContent> {/* Added: center the notice about service selection */}
+                <Alert // Added: expand props for readability
+                    variant='info'
+                    title="Select the Linux Border Router Service to edit wsbrd.conf"
+                /> {/* Added: explain why the editor is unavailable */}
+            </CenteredContent>
+        );
+    }
 
     if (content === undefined) {
         return (

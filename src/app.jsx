@@ -27,7 +27,7 @@ import {
     Tab,
     TabTitleText
 } from '@patternfly/react-core';
-import { useState, useEffect, createContext, createRef } from 'react';
+import { useState, useEffect, createContext, createRef } from 'react'; // Added: import React hooks used below
 import cockpit from 'cockpit';
 import Dashboard from './dashboard/Dashboard';
 import Topology from './topology/Topology';
@@ -35,23 +35,45 @@ import Loading from './utils/Loading';
 
 const _ = cockpit.gettext;
 
+export const SERVICE_UNITS = { // Added: expose service names for reuse across the app
+    linux: 'wisun-borderrouter.service', // Added: systemd unit name for the Linux border router
+    soc: 'wisun-soc-br-agent.service' // Added: systemd unit name for the SoC border router agent
+};
+
 export const AppContext = createContext({
-    active: undefined,
-    setActive: undefined,
-    loading: undefined,
-    setLoading: undefined,
-    wsbrdInstalled: undefined,
-    setWsbrdInstalled: undefined,
-    socAgentActive: undefined,
-    setSocAgentActive: undefined
+    active: undefined, // Added: tracks the active state of the selected service
+    loading: undefined, // Added: exposes loading status to child components
+    setLoading: undefined, // Added: allows children to toggle the global loading indicator
+    services: undefined, // Added: shares aggregated service metadata with descendants
+    selectedService: undefined, // Added: stores which service the user picked
+    setSelectedService: undefined, // Added: lets children update the selected service
+    refreshServices: undefined, // Added: function to trigger service status refreshes
+    wsbrdInstalled: undefined, // Added: indicates if the Linux service is present
+    socAgentActive: undefined // Added: signals if the SoC agent service is running
 });
 
 const App = () => {
-    const [active, setActive] = useState(undefined);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true); // Added: manage the global loading indicator
     const [activeTab, setActiveTab] = useState(0);
-    const [wsbrdInstalled, setWsbrdInstalled] = useState(undefined);
-    const [socAgentActive, setSocAgentActive] = useState(false);
+    // Added: track metadata for both services
+    const [services, setServices] = useState({
+        // Added: seed Linux metadata
+        linux: {
+            installed: undefined,
+            active: undefined,
+            loadState: null,
+            activeState: null
+        },
+        // Added: seed SoC metadata
+        soc: {
+            installed: undefined,
+            active: undefined,
+            loadState: null,
+            activeState: null
+        }
+    });
+    const [selectedService, setSelectedService] = useState(undefined); // Added: store the chosen service
+    const [refreshCounter, setRefreshCounter] = useState(0); // Added: trigger status refreshes
 
     const dashboardRef = createRef();
     const topologyRef = createRef();
@@ -74,89 +96,114 @@ const App = () => {
                 activeState: values[1] || null
             };
         };
-
-        const wsbrdPromise = cockpit.spawn([
-            "systemctl",
-            "show",
-            "-p",
-            "LoadState",
-            "-p",
-            "ActiveState",
-            "--value",
-            "wisun-borderrouter.service"
-        ], { superuser: "require" })
-            .then((data) => {
-                if (!isMounted) {
-                    return;
-                }
-
-                const { loadState, activeState } = parseServiceStates(data);
-                const isInstalled = loadState !== null && loadState.localeCompare('not-found') !== 0;
-
-                setWsbrdInstalled(isInstalled);
-
-                if (!isInstalled) {
-                    setActive(null);
-                    return;
-                }
-
-                if (activeState && activeState.localeCompare('active') === 0) {
-                    setActive(true);
-                } else if (activeState && activeState.localeCompare('inactive') === 0) {
-                    setActive(false);
-                } else {
-                    setActive(null);
-                }
-            })
-            .catch((err) => {
-                console.log(err);
-                if (!isMounted) {
-                    return;
-                }
-
-                setWsbrdInstalled(false);
-                setActive(null);
-            });
-
-        const socAgentPromise = cockpit.spawn([
-            "systemctl",
-            "show",
-            "-p",
-            "LoadState",
-            "-p",
-            "ActiveState",
-            "--value",
-            "wisun-soc-br-agent.service"
-        ], { superuser: "require" })
-            .then((data) => {
-                if (!isMounted) {
-                    return;
-                }
-
-                const { loadState, activeState } = parseServiceStates(data);
-                const isInstalled = loadState !== null && loadState.localeCompare('not-found') !== 0;
-
-                setSocAgentActive(isInstalled && activeState && activeState.localeCompare('active') === 0);
-            })
-            .catch((err) => {
-                console.log(err);
-                if (!isMounted) {
-                    return;
-                }
-
-                setSocAgentActive(false);
-            });
-
-        Promise.allSettled([wsbrdPromise, socAgentPromise]).then(() => {
-            if (isMounted) {
-                setLoading(false);
+        const computeActiveState = (activeState) => { // Added: normalize systemd state values
+            if (!activeState) { // Added: guard against missing state strings
+                return null; // Added: treat missing information as unknown
             }
+            if (activeState.localeCompare('active') === 0) { // Added: map "active" to true
+                return true; // Added: reflect active state as true
+            }
+            if (activeState.localeCompare('inactive') === 0) { // Added: map "inactive" to false
+                return false; // Added: reflect inactive state as false
+            }
+            return null; // Added: default to unknown for other states
+        };
+
+        const nextServices = { // Added: collect refreshed service data
+            linux: {
+                installed: false,
+                active: undefined,
+                loadState: null,
+                activeState: null
+            }, // Added: initialize Linux snapshot
+            soc: {
+                installed: false,
+                active: undefined,
+                loadState: null,
+                activeState: null
+            } // Added: initialize SoC snapshot
+        };
+
+        // Added: query each service status
+        const servicePromises = Object.entries(SERVICE_UNITS).map(([key, unit]) => {
+            return cockpit.spawn([ // Added: invoke systemctl show for the current service
+                'systemctl', // Added: call systemctl to query unit properties
+                'show', // Added: request unit details
+                '-p', // Added: specify property retrieval
+                'LoadState', // Added: ask for the load state property
+                '-p', // Added: continue listing properties
+                'ActiveState', // Added: ask for the active state property
+                '--value', // Added: request only the property values
+                unit // Added: target the current systemd unit
+            ], { superuser: 'require' })
+                .then((data) => { // Added: process successful service status queries
+                    if (!isMounted) { // Added: prevent state updates when component is unmounted
+                        return; // Added: exit early if component is not mounted
+                    }
+
+                    // Added: parse systemctl output for the service
+                    const { loadState, activeState } = parseServiceStates(data);
+                    // Added: detect installation
+                    const isInstalled = loadState !== null && loadState.localeCompare('not-found') !== 0;
+
+                    nextServices[key] = { // Added: store refreshed service information
+                        installed: isInstalled, // Added: capture installation status
+                        // Added: compute active status when installed
+                        active: isInstalled ? computeActiveState(activeState) : null,
+                        loadState, // Added: keep the raw load state for reference
+                        activeState // Added: keep the raw active state for reference
+                    };
+                })
+                .catch((err) => { // Added: handle systemctl errors per service
+                    console.log(err); // Added: log errors for troubleshooting
+                    if (!isMounted) { // Added: avoid state writes when unmounted
+                        return; // Added: exit if component is not mounted
+                    }
+
+                    nextServices[key] = { // Added: default to unavailable service metadata on errors
+                        installed: false, // Added: mark service as unavailable on failure
+                        active: null, // Added: mark active state as unknown on failure
+                        loadState: null, // Added: clear load state after failure
+                        activeState: null // Added: clear active state after failure
+                    };
+                });
+        });
+
+        Promise.allSettled(servicePromises).then(() => { // Added: wait for both service queries to finish
+            if (!isMounted) { // Added: verify component is still mounted before updating state
+                return; // Added: exit early when unmounted
+            }
+
+            setServices(nextServices); // Added: commit refreshed service metadata to state
+            setLoading(false); // Added: hide the global loading indicator after refreshing
+            setSelectedService((prevSelected) => { // Added: adjust selected service when installation states change
+                // Added: preserve previous selection if still valid
+                if (prevSelected && nextServices[prevSelected]?.installed) {
+                    return prevSelected; // Added: keep user choice when possible
+                }
+                const installedServices = Object.entries(nextServices)
+                    .filter(([, service]) => service.installed); // Added: gather installed services
+                // Added: auto-select single available service
+                if (installedServices.length === 1) {
+                    // Added: pick the only installed service automatically
+                    return installedServices[0][0];
+                }
+                return undefined; // Added: require manual selection when zero or multiple services are installed
+            });
         });
 
         return () => {
             isMounted = false;
         };
-    }, [active]);
+    }, [refreshCounter]); // Added: refresh service states whenever a refresh is requested
+
+    // Added: derive the active state of the chosen service
+    const active = selectedService ? services[selectedService]?.active : undefined;
+    // Added: compute Linux service availability
+    const wsbrdInstalled = services.linux.installed === true;
+    // Added: expose whether the SoC service currently runs
+    const socAgentActive = services.soc.active === true;
+    const refreshServices = () => setRefreshCounter((value) => value + 1); // Added: helper to trigger a status refresh
 
     return (
         <Page
@@ -190,19 +237,20 @@ const App = () => {
         >
             <PageSection>
                 {
-                    (active === undefined || loading)
+                    loading
                         ? <Loading />
-                        : (
+                        : ( // Added: render application content even when no service is selected
                             <AppContext.Provider
                                 value={{
                                     active,
-                                    setActive,
                                     loading,
                                     setLoading,
                                     wsbrdInstalled,
-                                    setWsbrdInstalled,
-                                    socAgentActive,
-                                    setSocAgentActive
+                                    services, // Added: share both service states with the rest of the app
+                                    selectedService, // Added: provide the chosen service to children
+                                    setSelectedService, // Added: let children update the selected service
+                                    refreshServices, // Added: allow components to refresh service states after actions
+                                    socAgentActive // Added: expose SoC agent activity information to children
                                 }}
                             >
                                 {

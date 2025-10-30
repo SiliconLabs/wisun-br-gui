@@ -36,24 +36,26 @@ const WSBRDGtkKeysContent = () => {
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
 
-    const { active, socAgentActive } = useContext(AppContext);
+    // Added: include the selected service for gating
+    const { active, socAgentActive, selectedService } = useContext(AppContext);
 
     useEffect(() => {
+        if (!selectedService) { // Added: avoid querying keys until a service is chosen
+            return; // Added: exit early when no service selection exists
+        }
         if (socAgentActive) {
-            if (loading) {
-                setLoading(false);
-            }
+            setLoading(false); // Added: stop showing the spinner when the SoC agent is active
             setHasError(false);
             return;
         }
 
         // only make a dbus request if the service is active
         if (active !== true) {
-            if (loading) {
-                setLoading(false);
-            }
+            setLoading(false); // Added: clear loading state when the service is inactive
             return;
         }
+
+        setLoading(true); // Added: show a spinner while fetching GTK keys
 
         const getProperties = () => {
             const dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
@@ -78,7 +80,18 @@ const WSBRDGtkKeysContent = () => {
         };
 
         getProperties();
-    }, [active, loading, socAgentActive]);
+    }, [active, socAgentActive, selectedService]); // Added: refresh GTK data when service or selection changes
+
+    if (!selectedService) { // Added: prompt the user to choose a service before displaying GTK information
+        return (
+            <CenteredContent> {/* Added: center the call-to-action message */}
+                <Alert // Added: expand props for readability
+                    variant='info'
+                    title="Select a service to view GTK keys"
+                /> {/* Added: explain why no data is shown */}
+            </CenteredContent>
+        );
+    }
 
     if (loading) {
         return (

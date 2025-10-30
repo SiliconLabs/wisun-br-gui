@@ -30,7 +30,7 @@ Display help message and exit.
 Display version information and exit.
 
 .SH D-BUS INTERFACE
-The agent exposes a comprehensive D-Bus interface at \fBcom.silabs.Wisun.BorderRouter\fR for system integration and monitoring.
+The agent exposes a comprehensive D-Bus interface at \fBcom.silabs.Wisun.SocBorderRouterAgent\fR for system integration and monitoring.
 
 .SS Properties
 .TP
@@ -130,31 +130,31 @@ phy_mode_id=3
 .SH D-BUS EXAMPLES
 .TP
 Query network name property:
-.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.BorderRouter string:WisunNetworkName
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.SocBorderRouterAgent string:WisunNetworkName
 
 .TP
 Query network topology:
-.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.BorderRouter string:RoutingGraph
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.SocBorderRouterAgent string:RoutingGraph
 
 .TP
 Query PAN ID:
-.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.BorderRouter string:WisunPanId
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.SocBorderRouterAgent string:WisunPanId
 
 .TP
 Query FAN version:
-.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.BorderRouter string:WisunFanVersion
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.SocBorderRouterAgent string:WisunFanVersion
 
 .TP
 Restart border router:
-.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.RestartSoCBorderRouter
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.RestartSoCBorderRouter
 
 .TP
 Stop border router:
-.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.StopSoCBorderRouter
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.StopSoCBorderRouter
 
 .TP
 Set configuration:
-.B dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.SetSoCBorderRouterConfig
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.SetSoCBorderRouterConfig
 
 .SH AUTHOR
 Silicon Laboratories Inc.

@@ -44,3 +44,7 @@ install(DIRECTORY config/
 # Install man page
 install(FILES misc/wisun-soc-br-agent.1
     DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+
+# Install D-Bus policy file
+install(FILES misc/com.silabs.Wisun.SocBorderRouterAgent.conf
+    DESTINATION /etc/dbus-1/system.d/)

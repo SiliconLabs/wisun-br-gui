@@ -4,6 +4,6 @@
 # Usage: ./dbus-set-config.sh
 
 dbus-send --system --print-reply \
-    --dest=com.silabs.Wisun.BorderRouter \
-    /com/silabs/Wisun/BorderRouter \
-    com.silabs.Wisun.BorderRouter.SetSoCBorderRouterConfig
+    --dest=com.silabs.Wisun.SocBorderRouterAgent \
+    /com/silabs/Wisun/SocBorderRouterAgent \
+    com.silabs.Wisun.SocBorderRouterAgent.SetSoCBorderRouterConfig

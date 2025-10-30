@@ -52,7 +52,7 @@ The Wi-SUN SoC Border Router Agent acts as an intermediary between the EFR32 SoC
 
 ## D-Bus Interface
 
-The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.BorderRouter` for system integration and monitoring.
+The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.SocBorderRouterAgent` for system integration and monitoring.
 
 ### Available Properties
 
@@ -301,9 +301,9 @@ Applies the current Wi-SUN configuration settings to the SoC host.
 Query individual properties using `dbus-send`:
 ```bash
 # Get network name
-sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
-  /com/silabs/Wisun/BorderRouter org.freedesktop.DBus.Properties.Get \
-  string:com.silabs.Wisun.BorderRouter string:WisunNetworkName
+sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
+  /com/silabs/Wisun/SocBorderRouterAgent org.freedesktop.DBus.Properties.Get \
+  string:com.silabs.Wisun.SocBorderRouterAgent string:WisunNetworkName
 
 # Monitor all property changes
 sudo dbus-monitor --system "interface='org.freedesktop.DBus.Properties',member='PropertiesChanged'"
@@ -313,16 +313,16 @@ sudo dbus-monitor --system "interface='org.freedesktop.DBus.Properties',member='
 Call border router control methods directly:
 ```bash
 # Restart border router (stops FAN 1.1 network, reconfigures, and starts again)
-sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
-  /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.RestartSoCBorderRouter
+sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
+  /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.RestartSoCBorderRouter
 
 # Stop border router
-sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
-  /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.StopSoCBorderRouter
+sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
+  /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.StopSoCBorderRouter
 
 # Set configuration
-sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.BorderRouter \
-  /com/silabs/Wisun/BorderRouter com.silabs.Wisun.BorderRouter.SetSoCBorderRouterConfig
+sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
+  /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.SetSoCBorderRouterConfig
 ```
 ## Limitations / Known issues
 

@@ -4,6 +4,6 @@
 # Usage: ./dbus-restart-br.sh
 
 dbus-send --system --print-reply \
-    --dest=com.silabs.Wisun.BorderRouter \
-    /com/silabs/Wisun/BorderRouter \
-    com.silabs.Wisun.BorderRouter.RestartSoCBorderRouter
+    --dest=com.silabs.Wisun.SocBorderRouterAgent \
+    /com/silabs/Wisun/SocBorderRouterAgent \
+    com.silabs.Wisun.SocBorderRouterAgent.RestartSoCBorderRouter

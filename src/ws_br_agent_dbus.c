@@ -36,8 +36,8 @@
 #include "ws_br_agent_utils.h"
 #include "ws_br_agent_soc_host.h"
 
-#define WS_BR_AGENT_DBUS_PATH "/com/silabs/Wisun/BorderRouter"
-#define WS_BR_AGENT_DBUS_INTERFACE "com.silabs.Wisun.BorderRouter"
+#define WS_BR_AGENT_DBUS_PATH "/com/silabs/Wisun/SocBorderRouterAgent"
+#define WS_BR_AGENT_DBUS_INTERFACE "com.silabs.Wisun.SocBorderRouterAgent"
 #define WS_BR_AGENT_DBUS_PROPERTY_ROUTING_GRAPH "RoutingGraph"
 #define WS_BR_AGENT_DBUS_PROPERTY_NETWORK_NAME "WisunNetworkName"
 #define WS_BR_AGENT_DBUS_PROPERTY_NETWORK_SIZE "WisunSize"
@@ -197,7 +197,7 @@ static ws_br_agent_ret_t dbus_init(sd_bus **bus, sd_bus_slot **slot)
     return WS_BR_AGENT_RET_ERR;
   }
 
-  r = sd_bus_request_name(*bus, "com.silabs.Wisun.BorderRouter", 0);
+  r = sd_bus_request_name(*bus, WS_BR_AGENT_DBUS_INTERFACE, 0);
   if (r < 0) {
     ws_br_agent_log_error("Failed to acquire service name: %s\n", strerror(-r));
     return WS_BR_AGENT_RET_ERR;

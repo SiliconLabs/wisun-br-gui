@@ -25,7 +25,7 @@ import {
 } from "@patternfly/react-core";
 import cockpit from 'cockpit';
 import CenteredContent from "../../utils/CenteredContent";
-import { AppContext } from "../../app";
+import { AppContext, SERVICE_SHORT_NAMES } from "../../app"; // Added: leverage shared service metadata
 import Loading from "../../utils/Loading";
 
 const _ = cockpit.gettext;
@@ -46,11 +46,17 @@ const WSBRDActiveConfContent = () => {
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
 
-    const { active, selectedService } = useContext(AppContext); // Added: gate data by selected service
+    const { active, selectedService, serviceDbus } = useContext(AppContext); // Added: gate data by selected service
+    const selectedServiceName = selectedService
+        ? SERVICE_SHORT_NAMES[selectedService] // Added: resolve a short name for contextual messaging
+        : null; // Added: fall back to a neutral label when no service is selected
 
     useEffect(() => {
         if (!selectedService) { // Added: skip fetching until a service is selected
             return; // Added: leave existing state untouched without a service selection
+        }
+        if (!serviceDbus) { // Added: ensure DBus identifiers are ready before fetching data
+            return; // Added: exit early when DBus metadata is missing
         }
         // only make a dbus request if the service is active
         if (active !== true) {
@@ -59,9 +65,13 @@ const WSBRDActiveConfContent = () => {
         }
 
         setLoading(true); // Added: show a spinner while fetching fresh configuration data
+        setHasError(false); // Added: reset error state before each fetch
 
         const getProperties = () => {
-            const dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
+            const dbusClient = cockpit.dbus( // Added: target the DBus endpoint for the chosen service
+                serviceDbus.busName,
+                { bus: "system" }
+            );
 
             dbusClient.wait(() => {
                 const proxy = dbusClient.proxy();
@@ -97,7 +107,8 @@ const WSBRDActiveConfContent = () => {
         };
 
         getProperties();
-    }, [active, selectedService]); // Added: refetch data whenever the active state or selected service changes
+    // Added: refetch data whenever the active state or selected service changes
+    }, [active, selectedService, serviceDbus]);
 
     if (!selectedService) { // Added: prompt the user when no service has been selected yet
         return (
@@ -127,7 +138,10 @@ const WSBRDActiveConfContent = () => {
     if (active === false) {
         return (
             <CenteredContent>
-                <Alert variant='info' title="Start WSBRD to view its configuration" />
+                <Alert
+                    variant='info'
+                    title={`Start ${selectedServiceName || 'the selected service'} to view its configuration`}
+                /> {/* Added: tailor the prompt to the active service */}
             </CenteredContent>
         );
     }

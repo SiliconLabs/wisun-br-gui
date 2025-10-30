@@ -40,6 +40,27 @@ export const SERVICE_UNITS = { // Added: expose service names for reuse across t
     soc: 'wisun-soc-br-agent.service' // Added: systemd unit name for the SoC border router agent
 };
 
+export const SERVICE_DBUS = { // Added: map each service to its DBus identifiers
+    linux: { // Added: identifiers for the Linux border router service
+        busName: 'com.silabs.Wisun.BorderRouter', // Added: DBus bus name exposed by wsbrd
+        objectPath: '/com/silabs/Wisun/BorderRouter' // Added: DBus object path used for property monitoring
+    },
+    soc: { // Added: identifiers for the SoC border router agent service
+        busName: 'com.silabs.Wisun.SocBorderRouterAgent', // Added: DBus bus name exposed by the SoC agent
+        objectPath: '/com/silabs/Wisun/SocBorderRouterAgent' // Added: DBus object path exposed by the SoC agent
+    }
+};
+
+export const SERVICE_LABELS = { // Added: user-facing labels for each service
+    linux: _('Linux Border Router Service'), // Added: label for the Linux border router service
+    soc: _('SoC Border Router Agent Service') // Added: label for the SoC border router agent service
+};
+
+export const SERVICE_SHORT_NAMES = { // Added: short names used in inline messages
+    linux: _('WSBRD'), // Added: shorthand for the Linux border router service
+    soc: _('SoC Border Router Agent') // Added: shorthand for the SoC border router agent service
+};
+
 export const AppContext = createContext({
     active: undefined, // Added: tracks the active state of the selected service
     loading: undefined, // Added: exposes loading status to child components
@@ -48,8 +69,7 @@ export const AppContext = createContext({
     selectedService: undefined, // Added: stores which service the user picked
     setSelectedService: undefined, // Added: lets children update the selected service
     refreshServices: undefined, // Added: function to trigger service status refreshes
-    wsbrdInstalled: undefined, // Added: indicates if the Linux service is present
-    socAgentActive: undefined // Added: signals if the SoC agent service is running
+    serviceDbus: undefined // Added: exposes DBus identifiers for the active service
 });
 
 const App = () => {
@@ -199,10 +219,9 @@ const App = () => {
 
     // Added: derive the active state of the chosen service
     const active = selectedService ? services[selectedService]?.active : undefined;
-    // Added: compute Linux service availability
-    const wsbrdInstalled = services.linux.installed === true;
-    // Added: expose whether the SoC service currently runs
-    const socAgentActive = services.soc.active === true;
+    const serviceDbus = selectedService
+        ? SERVICE_DBUS[selectedService] // Added: resolve DBus identifiers when a service is chosen
+        : null; // Added: fall back to null when no service is selected
     const refreshServices = () => setRefreshCounter((value) => value + 1); // Added: helper to trigger a status refresh
 
     return (
@@ -245,12 +264,11 @@ const App = () => {
                                     active,
                                     loading,
                                     setLoading,
-                                    wsbrdInstalled,
                                     services, // Added: share both service states with the rest of the app
                                     selectedService, // Added: provide the chosen service to children
                                     setSelectedService, // Added: let children update the selected service
                                     refreshServices, // Added: allow components to refresh service states after actions
-                                    socAgentActive // Added: expose SoC agent activity information to children
+                                    serviceDbus // Added: provide DBus information for the selected service
                                 }}
                             >
                                 {

@@ -26,7 +26,8 @@ import {
 import cockpit from 'cockpit';
 import CenteredContent from "../../utils/CenteredContent";
 import Loading from "../../utils/Loading";
-import { AppContext } from "../../app";
+import { AppContext, SERVICE_SHORT_NAMES } from "../../app";
+// Added: reuse service metadata for context-aware messaging
 import { base64ToHex } from "../../utils/functions";
 
 const _ = cockpit.gettext;
@@ -37,16 +38,17 @@ const WSBRDGtkKeysContent = () => {
     const [hasError, setHasError] = useState(false);
 
     // Added: include the selected service for gating
-    const { active, socAgentActive, selectedService } = useContext(AppContext);
+    const { active, selectedService, serviceDbus } = useContext(AppContext);
+    const selectedServiceName = selectedService
+        ? SERVICE_SHORT_NAMES[selectedService] // Added: resolve a human-friendly label for prompts
+        : null; // Added: fall back to a neutral label when no service is selected
 
     useEffect(() => {
         if (!selectedService) { // Added: avoid querying keys until a service is chosen
             return; // Added: exit early when no service selection exists
         }
-        if (socAgentActive) {
-            setLoading(false); // Added: stop showing the spinner when the SoC agent is active
-            setHasError(false);
-            return;
+        if (!serviceDbus) { // Added: ensure DBus identifiers exist before making requests
+            return; // Added: exit early when DBus information is unavailable
         }
 
         // only make a dbus request if the service is active
@@ -56,9 +58,13 @@ const WSBRDGtkKeysContent = () => {
         }
 
         setLoading(true); // Added: show a spinner while fetching GTK keys
+        setHasError(false); // Added: reset error state before retrieving data
 
         const getProperties = () => {
-            const dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
+            const dbusClient = cockpit.dbus( // Added: target the selected service DBus endpoint
+                serviceDbus.busName,
+                { bus: "system" }
+            );
 
             dbusClient.wait(() => {
                 const proxy = dbusClient.proxy();
@@ -80,7 +86,7 @@ const WSBRDGtkKeysContent = () => {
         };
 
         getProperties();
-    }, [active, socAgentActive, selectedService]); // Added: refresh GTK data when service or selection changes
+    }, [active, selectedService, serviceDbus]); // Added: refresh GTK data when service or selection changes
 
     if (!selectedService) { // Added: prompt the user to choose a service before displaying GTK information
         return (
@@ -99,17 +105,6 @@ const WSBRDGtkKeysContent = () => {
         );
     }
 
-    if (socAgentActive) {
-        return (
-            <CenteredContent>
-                <Alert
-                    variant='info'
-                    title="Wi-SUN SoC Border Router Agent service is active. GTK Keys are unavailable."
-                />
-            </CenteredContent>
-        );
-    }
-
     if (hasError === true || active === null) {
         return (
             <CenteredContent>
@@ -121,7 +116,10 @@ const WSBRDGtkKeysContent = () => {
     if (active === false) {
         return (
             <CenteredContent>
-                <Alert variant='info' title="Start WSBRD to view its GTK Keys" />
+                <Alert
+                    variant='info'
+                    title={`Start ${selectedServiceName || 'the selected service'} to view its GTK Keys`}
+                /> {/* Added: tailor the prompt to the current service */}
             </CenteredContent>
         );
     }

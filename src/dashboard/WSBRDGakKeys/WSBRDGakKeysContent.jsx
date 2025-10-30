@@ -25,7 +25,7 @@ import {
 } from "@patternfly/react-core";
 import cockpit from 'cockpit';
 import CenteredContent from "../../utils/CenteredContent";
-import { AppContext } from "../../app";
+import { AppContext, SERVICE_SHORT_NAMES } from "../../app"; // Added: use shared service labels for dynamic messaging
 import Loading from "../../utils/Loading";
 import { base64ToHex } from "../../utils/functions";
 
@@ -37,16 +37,17 @@ const WSBRDGakKeysContent = () => {
     const [hasError, setHasError] = useState(false);
 
     // Added: include the selected service for gating
-    const { active, socAgentActive, selectedService } = useContext(AppContext);
+    const { active, selectedService, serviceDbus } = useContext(AppContext);
+    const selectedServiceName = selectedService
+        ? SERVICE_SHORT_NAMES[selectedService] // Added: resolve a friendly service name for prompts
+        : null; // Added: fall back to a neutral label when no service is selected
 
     useEffect(() => {
         if (!selectedService) { // Added: avoid querying keys until a service is chosen
             return; // Added: bail out when no service is selected
         }
-        if (socAgentActive) {
-            setLoading(false); // Added: hide the spinner while the SoC agent is active
-            setHasError(false);
-            return;
+        if (!serviceDbus) { // Added: ensure DBus identifiers are available before querying
+            return; // Added: exit early when DBus information is missing
         }
 
         // only make a dbus request if the service is active
@@ -56,9 +57,13 @@ const WSBRDGakKeysContent = () => {
         }
 
         setLoading(true); // Added: indicate loading before fetching GAK keys
+        setHasError(false); // Added: reset error state before issuing a fresh request
 
         const getProperties = () => {
-            const dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
+            const dbusClient = cockpit.dbus( // Added: target the selected service DBus endpoint
+                serviceDbus.busName,
+                { bus: "system" }
+            );
 
             dbusClient.wait(() => {
                 const proxy = dbusClient.proxy();
@@ -80,7 +85,7 @@ const WSBRDGakKeysContent = () => {
         };
 
         getProperties();
-    }, [active, socAgentActive, selectedService]); // Added: refresh GAK data when selection or status changes
+    }, [active, selectedService, serviceDbus]); // Added: refresh GAK data when selection or status changes
 
     if (!selectedService) { // Added: prompt the user to pick a service before listing GAK keys
         return (
@@ -99,17 +104,6 @@ const WSBRDGakKeysContent = () => {
         );
     }
 
-    if (socAgentActive) {
-        return (
-            <CenteredContent>
-                <Alert
-                    variant='info'
-                    title="Wi-SUN SoC Border Router Agent service is active. GAK Keys are unavailable."
-                />
-            </CenteredContent>
-        );
-    }
-
     if (hasError === true || active === null) {
         return (
             <CenteredContent>
@@ -121,7 +115,10 @@ const WSBRDGakKeysContent = () => {
     if (active === false) {
         return (
             <CenteredContent>
-                <Alert variant='info' title="Start WSBRD to view its GAK Keys" />
+                <Alert
+                    variant='info'
+                    title={`Start ${selectedServiceName || 'the selected service'} to view its GAK Keys`}
+                /> {/* Added: tailor the prompt to the active service */}
             </CenteredContent>
         );
     }

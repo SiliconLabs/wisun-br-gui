@@ -23,7 +23,7 @@ import {
     useRef
 } from "react";
 import cockpit from "cockpit";
-import { AppContext } from "../app";
+import { AppContext, SERVICE_SHORT_NAMES } from "../app"; // Added: reuse shared service metadata
 import Graph from "react-graph-vis";
 import {
     Alert,
@@ -69,7 +69,11 @@ const Topology = () => {
     const [selectedNode, setSelectedNode] = useState(null);
     const [autoZoom, setAutoZoom] = useState(true);
 
-    const { active, selectedService } = useContext(AppContext); // Added: include the selected service before loading
+    // Added: include the selected service before loading
+    const { active, selectedService, serviceDbus } = useContext(AppContext);
+    const selectedServiceName = selectedService
+        ? SERVICE_SHORT_NAMES[selectedService] // Added: resolve a short name for prompts
+        : null; // Added: fall back to a neutral label when no service is selected
 
     const options = {
         physics: { stabilization: { enabled: false } },
@@ -195,16 +199,26 @@ const Topology = () => {
             if (loading) setLoading(false); // Added: hide the loading spinner when nothing is selected
             return; // Added: exit until the user picks a service
         }
+        if (!serviceDbus) { // Added: ensure DBus identifiers are available before connecting
+            if (loading) setLoading(false); // Added: keep the UI responsive when DBus metadata is missing
+            return; // Added: exit early when DBus information is unavailable
+        }
         if (active !== true) {
             if (loading) setLoading(false);
             return;
         }
-        dbusClient.current = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
+        // Added: connect to the DBus endpoint for the selected service
+        dbusClient.current = cockpit.dbus(
+            serviceDbus.busName,
+            { bus: "system" }
+        );
 
         dbusClient.current.wait(() => {
             const proxy = dbusClient.current.proxy();
-            const proxy_signal = dbusClient.current.proxy("org.freedesktop.DBus.Properties",
-                "/com/silabs/Wisun/BorderRouter");
+            const proxy_signal = dbusClient.current.proxy(
+                "org.freedesktop.DBus.Properties",
+                serviceDbus.objectPath
+            ); // Added: subscribe to property updates on the selected service path
             proxy.wait().then(() => {
                 if (proxy.valid === false) {
                     setHasError(true);
@@ -225,7 +239,8 @@ const Topology = () => {
         active,
         loading,
         processGraphData,
-        selectedService
+        selectedService,
+        serviceDbus
     ]); // Added: rerun initialization when the selected service changes
 
     useEffect(() => {
@@ -282,7 +297,10 @@ const Topology = () => {
     if (active === false) {
         return (
             <CenteredContent>
-                <Alert variant="info" title="Start WSBRD to view the network topology" />
+                <Alert
+                    variant="info"
+                    title={`Start ${selectedServiceName || 'the selected service'} to view the network topology`}
+                /> {/* Added: tailor the prompt to the active service */}
             </CenteredContent>
         );
     }

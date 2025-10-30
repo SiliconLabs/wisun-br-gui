@@ -32,7 +32,7 @@ const WSBRDConfEditorContent = () => {
     const [hasError, setHasError] = useState(false);
     const [error, setError] = useState(null);
     // Added: ensure editing targets the Linux service
-    const { socAgentActive, selectedService } = useContext(AppContext);
+    const { selectedService } = useContext(AppContext);
 
     useEffect(() => {
         if (selectedService !== 'linux') { // Added: skip reading when Linux is not selected
@@ -94,24 +94,14 @@ const WSBRDConfEditorContent = () => {
     }
 
     return (
-        <>
-            {socAgentActive && (
-                <Alert
-                    variant='info'
-                    isInline
-                    title="Wi-SUN SoC Border Router Agent service is active. Editing is disabled."
-                />
-            )}
-            <TextArea
-                style={{ height: '100%' }}
-                aria-label="wsbrd-conf"
-                value={content}
-                onChange={onContentChange}
-                isDisabled={socAgentActive}
-                resizeOrientation='vertical'
+        <TextArea
+            style={{ height: '100%' }}
+            aria-label="wsbrd-conf"
+            value={content}
+            onChange={onContentChange}
+            resizeOrientation='vertical'
 
-            />
-        </>
+        />
     );
 };
 

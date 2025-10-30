@@ -42,7 +42,8 @@ import ExclamationCircleIcon from '@patternfly/react-icons/dist/esm/icons/exclam
 import CheckCircleIcon from '@patternfly/react-icons/dist/esm/icons/check-circle-icon';
 import PauseIcon from '@patternfly/react-icons/dist/esm/icons/pause-icon';
 import cockpit from 'cockpit';
-import { AppContext, SERVICE_UNITS } from "../app"; // Added: reuse shared context and service mapping
+// Added: reuse shared context and service mapping
+import { AppContext, SERVICE_LABELS, SERVICE_SHORT_NAMES, SERVICE_UNITS } from "../app";
 
 const _ = cockpit.gettext;
 
@@ -59,9 +60,13 @@ const WSBRDStatus = () => {
     } = useContext(AppContext);
     // Added: resolve the systemd unit for the chosen service
     const serviceUnit = selectedService ? SERVICE_UNITS[selectedService] : null;
+    const selectedServiceName = selectedService
+        ? SERVICE_SHORT_NAMES[selectedService] // Added: obtain a short label for messaging
+        : null; // Added: fall back to a neutral label when no service is selected
     const installedServices = Object.entries(services)
         .filter(([, service]) => service.installed); // Added: list installed services for the selector
-    const multipleServicesInstalled = installedServices.length > 1; // Added: detect when both services are available
+    const multipleServicesInstalled =
+        installedServices.length > 1; // Added: detect when both services are available
 
     const onDropdownItemClick = (value) => {
         if (!serviceUnit) { // Added: skip actions when no service is selected
@@ -173,7 +178,7 @@ const WSBRDStatus = () => {
                             <Radio
                                 id="ws-service-linux"
                                 name="ws-service-selection"
-                                label="Linux Border Router Service"
+                                label={SERVICE_LABELS.linux}
                                 isChecked={selectedService === 'linux'}
                                 isDisabled={!services.linux.installed}
                                 onChange={() => setSelectedService('linux')}
@@ -181,7 +186,7 @@ const WSBRDStatus = () => {
                             <Radio
                                 id="ws-service-soc"
                                 name="ws-service-selection"
-                                label="SoC Border Router Agent Service"
+                                label={SERVICE_LABELS.soc}
                                 isChecked={selectedService === 'soc'}
                                 isDisabled={!services.soc.installed}
                                 onChange={() => setSelectedService('soc')}
@@ -209,7 +214,8 @@ const WSBRDStatus = () => {
                                             onClick={onLogsClick}
                                             isDisabled={!serviceUnit}
                                         >
-                                            Check wsbrd logs
+                                            {`Check ${selectedServiceName || 'service'} logs`}
+                                            {/* Added: align copy with the selected service */}
                                         </Button>
                                     </DescriptionListDescription>
                                 </DescriptionListGroup>

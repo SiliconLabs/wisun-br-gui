@@ -26,11 +26,11 @@ import { AppContext } from "../app";
 
 const Dashboard = () => {
     // Added: read service metadata and selection
-    const { wsbrdInstalled, services, selectedService } = useContext(AppContext);
+    const { services, selectedService } = useContext(AppContext);
     // Added: show the editor only for Linux
     const showLinuxConfig = selectedService === 'linux' && services.linux.installed;
-    // Added: display key cards only when the Linux service is selected
-    const showLinuxKeys = selectedService === 'linux' && wsbrdInstalled;
+    // Added: only display the GAK/GTK cards for the Linux wsbrd service selection
+    const showKeyCards = selectedService === 'linux' && services.linux.installed;
 
     return (
         <Grid hasGutter>
@@ -57,12 +57,12 @@ const Dashboard = () => {
                     <FlexItem>
                         <WSBRDActiveConf />
                     </FlexItem>
-                    {showLinuxKeys && (
+                    {showKeyCards && (
                         <FlexItem>
                             <WSBRDGakKeys />
                         </FlexItem>
                     )}
-                    {showLinuxKeys && (
+                    {showKeyCards && (
                         <FlexItem>
                             <WSBRDGtkKeys />
                         </FlexItem>

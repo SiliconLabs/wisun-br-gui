@@ -29,6 +29,8 @@ const Dashboard = () => {
     const { wsbrdInstalled, services, selectedService } = useContext(AppContext);
     // Added: show the editor only for Linux
     const showLinuxConfig = selectedService === 'linux' && services.linux.installed;
+    // Added: display key cards only when the Linux service is selected
+    const showLinuxKeys = selectedService === 'linux' && wsbrdInstalled;
 
     return (
         <Grid hasGutter>
@@ -55,12 +57,12 @@ const Dashboard = () => {
                     <FlexItem>
                         <WSBRDActiveConf />
                     </FlexItem>
-                    {wsbrdInstalled && (
+                    {showLinuxKeys && (
                         <FlexItem>
                             <WSBRDGakKeys />
                         </FlexItem>
                     )}
-                    {wsbrdInstalled && (
+                    {showLinuxKeys && (
                         <FlexItem>
                             <WSBRDGtkKeys />
                         </FlexItem>

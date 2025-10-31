@@ -128,9 +128,13 @@ const WSBRDActiveConfContent = () => {
     }
 
     if (hasError === true || active === null) {
+        const errorServiceName = selectedServiceName || 'the selected service';
         return (
             <CenteredContent>
-                <Alert variant='danger' title="Could not retrieve WSBRD active configuration" />
+                <Alert
+                    variant='danger'
+                    title={`Could not retrieve ${errorServiceName} active configuration`}
+                />
             </CenteredContent>
         );
     }

@@ -42,14 +42,16 @@ import ExclamationCircleIcon from '@patternfly/react-icons/dist/esm/icons/exclam
 import CheckCircleIcon from '@patternfly/react-icons/dist/esm/icons/check-circle-icon';
 import PauseIcon from '@patternfly/react-icons/dist/esm/icons/pause-icon';
 import cockpit from 'cockpit';
-// Added: reuse shared context and service mapping
 import { AppContext, SERVICE_LABELS, SERVICE_SHORT_NAMES, SERVICE_UNITS } from "../app";
 
 const _ = cockpit.gettext;
 
+/**
+ * Presents the service lifecycle controls and keeps selection state aligned
+ * with the rest of the application via the shared context.
+ */
 const WSBRDStatus = () => {
     const [isOpen, setIsOpen] = useState(false);
-    // Added: pull selection and service data from context
     const {
         active,
         setLoading,
@@ -58,47 +60,45 @@ const WSBRDStatus = () => {
         setSelectedService,
         refreshServices
     } = useContext(AppContext);
-    // Added: resolve the systemd unit for the chosen service
     const serviceUnit = selectedService ? SERVICE_UNITS[selectedService] : null;
     const selectedServiceName = selectedService
-        ? SERVICE_SHORT_NAMES[selectedService] // Added: obtain a short label for messaging
-        : null; // Added: fall back to a neutral label when no service is selected
+        ? SERVICE_SHORT_NAMES[selectedService]
+        : null;
     const installedServices = Object.entries(services)
-        .filter(([, service]) => service.installed); // Added: list installed services for the selector
-    const multipleServicesInstalled =
-        installedServices.length > 1; // Added: detect when both services are available
+        .filter(([, service]) => service.installed);
+    const multipleServicesInstalled = installedServices.length > 1;
 
     const onDropdownItemClick = (value) => {
-        if (!serviceUnit) { // Added: skip actions when no service is selected
-            setIsOpen(false); // Added: close the dropdown without performing an action
-            return; // Added: exit early when no service is chosen
+        if (!serviceUnit) {
+            setIsOpen(false);
+            return;
         }
         setLoading(true);
 
         cockpit.spawn(
             ["systemctl", value, serviceUnit],
             { superuser: "require" }
-        ) // Added: control the chosen service unit
+        )
             .then(() => {
-                refreshServices(); // Added: refresh status after a successful command
+                refreshServices();
             })
             .catch((err) => {
                 console.log(err);
-                refreshServices(); // Added: refresh even after failures to resync the UI
+                refreshServices();
             });
         setIsOpen(false);
     };
 
     const onLogsClick = () => {
-        if (!serviceUnit) { // Added: guard log navigation when no service is chosen
-            return; // Added: exit if the user has not selected a service
+        if (!serviceUnit) {
+            return;
         }
-        cockpit.jump(`/system/logs#/?prio=debug&service=${serviceUnit}`); // Added: open logs for the selected service
+        cockpit.jump(`/system/logs#/?prio=debug&service=${serviceUnit}`);
     };
 
     const getStatusText = () => {
-        if (!serviceUnit) { // Added: prompt the user to choose a service before showing status
-            return 'Select a service to view its status'; // Added: instruct the user to pick a service
+        if (!serviceUnit) {
+            return 'Select a service to view its status';
         }
         if (active === undefined) {
             return 'Loading...';
@@ -113,8 +113,8 @@ const WSBRDStatus = () => {
     };
 
     const getStatusIcon = () => {
-        if (!serviceUnit) { // Added: hide status icon when no service is selected
-            return null; // Added: render nothing until a service is chosen
+        if (!serviceUnit) {
+            return null;
         }
         if (active === undefined) {
             return <Spinner isSVG />;
@@ -167,14 +167,14 @@ const WSBRDStatus = () => {
                         isOpen={isOpen}
                         position={DropdownPosition.right}
                         isPlain
-                        isDisabled={!serviceUnit} // Added: disable actions until a service is selected
+                        isDisabled={!serviceUnit}
                     />
                 </CardActions>
             </CardHeader>
             <CardBody>
-                {multipleServicesInstalled && ( // Added: show service selection when both units are available
-                    <Form isHorizontal> {/* Added: arrange the selection radios within a horizontal form */}
-                        <FormGroup label="Service" fieldId="ws-service-selection"> {/* Added: label the radio group */}
+                {multipleServicesInstalled && (
+                    <Form isHorizontal>
+                        <FormGroup label="Service" fieldId="ws-service-selection">
                             <Radio
                                 id="ws-service-linux"
                                 name="ws-service-selection"
@@ -207,7 +207,7 @@ const WSBRDStatus = () => {
                                 </DescriptionListGroup>
                                 <DescriptionListGroup>
                                     <DescriptionListDescription>
-                                        <Button // Added: expanded props to satisfy lint requirements
+                                        <Button
                                             variant="link"
                                             isSmall
                                             isInline
@@ -215,7 +215,6 @@ const WSBRDStatus = () => {
                                             isDisabled={!serviceUnit}
                                         >
                                             {`Check ${selectedServiceName || 'service'} logs`}
-                                            {/* Added: align copy with the selected service */}
                                         </Button>
                                     </DescriptionListDescription>
                                 </DescriptionListGroup>

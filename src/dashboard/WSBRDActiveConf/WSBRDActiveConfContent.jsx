@@ -25,11 +25,14 @@ import {
 } from "@patternfly/react-core";
 import cockpit from 'cockpit';
 import CenteredContent from "../../utils/CenteredContent";
-import { AppContext, SERVICE_SHORT_NAMES } from "../../app"; // Added: leverage shared service metadata
+import { AppContext, SERVICE_SHORT_NAMES } from "../../app";
 import Loading from "../../utils/Loading";
 
 const _ = cockpit.gettext;
 
+/**
+ * Summarizes the active border router configuration available through DBus.
+ */
 const WSBRDActiveConfContent = () => {
     const [networkName, setNetworkName] = useState('');
     const [panID, setPanID] = useState('');
@@ -46,29 +49,25 @@ const WSBRDActiveConfContent = () => {
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
 
-    const { active, selectedService, serviceDbus } = useContext(AppContext); // Added: gate data by selected service
+    const { active, selectedService, serviceDbus } = useContext(AppContext);
     const selectedServiceName = selectedService
-        ? SERVICE_SHORT_NAMES[selectedService] // Added: resolve a short name for contextual messaging
-        : null; // Added: fall back to a neutral label when no service is selected
+        ? SERVICE_SHORT_NAMES[selectedService]
+        : null;
 
     useEffect(() => {
-        if (!selectedService) { // Added: skip fetching until a service is selected
-            return; // Added: leave existing state untouched without a service selection
+        if (!selectedService || !serviceDbus) {
+            return;
         }
-        if (!serviceDbus) { // Added: ensure DBus identifiers are ready before fetching data
-            return; // Added: exit early when DBus metadata is missing
-        }
-        // only make a dbus request if the service is active
         if (active !== true) {
-            setLoading(false); // Added: clear the loading indicator when the service is inactive or unavailable
+            setLoading(false);
             return;
         }
 
-        setLoading(true); // Added: show a spinner while fetching fresh configuration data
-        setHasError(false); // Added: reset error state before each fetch
+        setLoading(true);
+        setHasError(false);
 
         const getProperties = () => {
-            const dbusClient = cockpit.dbus( // Added: target the DBus endpoint for the chosen service
+            const dbusClient = cockpit.dbus(
                 serviceDbus.busName,
                 { bus: "system" }
             );
@@ -81,7 +80,6 @@ const WSBRDActiveConfContent = () => {
                         setHasError(true);
                         setLoading(false);
                     } else if (proxy.WisunMode === undefined) {
-                        // the service is not yet ready, dbus is set to be called again in one second
                         setTimeout(getProperties, 1000);
                     } else {
                         setNetworkName(proxy.data.WisunNetworkName);
@@ -90,11 +88,9 @@ const WSBRDActiveConfContent = () => {
                         setDomain(proxy.data.WisunDomain);
 
                         if (proxy.data.WisunClass === 0) {
-                            // for FAN 1.1
                             setWisunChanPlanId(proxy.data.WisunChanPlanId);
                             setWisunPHYModeId(proxy.data.WisunPhyModeId);
                         } else {
-                            // for FAN 1.0
                             setMode(`0x${proxy.data.WisunMode.toString(16).toUpperCase()}`);
                         }
 
@@ -107,16 +103,15 @@ const WSBRDActiveConfContent = () => {
         };
 
         getProperties();
-    // Added: refetch data whenever the active state or selected service changes
     }, [active, selectedService, serviceDbus]);
 
-    if (!selectedService) { // Added: prompt the user when no service has been selected yet
+    if (!selectedService) {
         return (
-            <CenteredContent> {/* Added: center the selection prompt */}
-                <Alert // Added: expand props for readability
+            <CenteredContent>
+                <Alert
                     variant='info'
                     title="Select a service to view its configuration"
-                /> {/* Added: ask the user to pick a service */}
+                />
             </CenteredContent>
         );
     }
@@ -145,7 +140,7 @@ const WSBRDActiveConfContent = () => {
                 <Alert
                     variant='info'
                     title={`Start ${selectedServiceName || 'the selected service'} to view its configuration`}
-                /> {/* Added: tailor the prompt to the active service */}
+                />
             </CenteredContent>
         );
     }

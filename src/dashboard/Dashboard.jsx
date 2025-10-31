@@ -24,13 +24,12 @@ import WSBRDGtkKeys from "./WSBRDGtkKeys/WSBRDGtkKeys";
 import WSBRDStatus from "./WSBRDStatus";
 import { AppContext } from "../app";
 
+/**
+ * The dashboard bundles operational cards for the currently selected service.
+ */
 const Dashboard = () => {
-    // Added: read service metadata and selection
     const { services, selectedService } = useContext(AppContext);
-    // Added: show the editor only for Linux
-    const showLinuxConfig = selectedService === 'linux' && services.linux.installed;
-    // Added: only display the GAK/GTK cards for the Linux wsbrd service selection
-    const showKeyCards = selectedService === 'linux' && services.linux.installed;
+    const isLinuxServiceSelected = selectedService === 'linux' && services.linux.installed;
 
     return (
         <Grid hasGutter>
@@ -45,7 +44,7 @@ const Dashboard = () => {
                     <GridItem>
                         <WSBRDStatus />
                     </GridItem>
-                    {showLinuxConfig && ( // Added: gate the configuration editor behind the Linux service selection
+                    {isLinuxServiceSelected && (
                         <GridItem>
                             <WSBRDConfEditor />
                         </GridItem>
@@ -57,12 +56,12 @@ const Dashboard = () => {
                     <FlexItem>
                         <WSBRDActiveConf />
                     </FlexItem>
-                    {showKeyCards && (
+                    {isLinuxServiceSelected && (
                         <FlexItem>
                             <WSBRDGakKeys />
                         </FlexItem>
                     )}
-                    {showKeyCards && (
+                    {isLinuxServiceSelected && (
                         <FlexItem>
                             <WSBRDGtkKeys />
                         </FlexItem>

@@ -25,42 +25,40 @@ import {
 } from "@patternfly/react-core";
 import cockpit from 'cockpit';
 import CenteredContent from "../../utils/CenteredContent";
-import { AppContext, SERVICE_SHORT_NAMES } from "../../app"; // Added: use shared service labels for dynamic messaging
+import { AppContext, SERVICE_SHORT_NAMES } from "../../app";
 import Loading from "../../utils/Loading";
 import { base64ToHex } from "../../utils/functions";
 
 const _ = cockpit.gettext;
 
+/**
+ * Displays GAK keys reported by the active service via DBus.
+ */
 const WSBRDGakKeysContent = () => {
     const [gakKeys, setGakKeys] = useState([]);
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
 
-    // Added: include the selected service for gating
     const { active, selectedService, serviceDbus } = useContext(AppContext);
     const selectedServiceName = selectedService
-        ? SERVICE_SHORT_NAMES[selectedService] // Added: resolve a friendly service name for prompts
-        : null; // Added: fall back to a neutral label when no service is selected
+        ? SERVICE_SHORT_NAMES[selectedService]
+        : null;
 
     useEffect(() => {
-        if (!selectedService) { // Added: avoid querying keys until a service is chosen
-            return; // Added: bail out when no service is selected
-        }
-        if (!serviceDbus) { // Added: ensure DBus identifiers are available before querying
-            return; // Added: exit early when DBus information is missing
-        }
-
-        // only make a dbus request if the service is active
-        if (active !== true) {
-            setLoading(false); // Added: clear loading when the service is not running
+        if (!selectedService || !serviceDbus) {
             return;
         }
 
-        setLoading(true); // Added: indicate loading before fetching GAK keys
-        setHasError(false); // Added: reset error state before issuing a fresh request
+        if (active !== true) {
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setHasError(false);
 
         const getProperties = () => {
-            const dbusClient = cockpit.dbus( // Added: target the selected service DBus endpoint
+            const dbusClient = cockpit.dbus(
                 serviceDbus.busName,
                 { bus: "system" }
             );
@@ -73,7 +71,6 @@ const WSBRDGakKeysContent = () => {
                         setHasError(true);
                         setLoading(false);
                     } else if (proxy.WisunMode === undefined) {
-                        // the service is not yet ready, dbus is set to be called again in one second
                         setTimeout(getProperties, 1000);
                     } else {
                         setGakKeys([...proxy.data.Gaks]);
@@ -85,15 +82,15 @@ const WSBRDGakKeysContent = () => {
         };
 
         getProperties();
-    }, [active, selectedService, serviceDbus]); // Added: refresh GAK data when selection or status changes
+    }, [active, selectedService, serviceDbus]);
 
-    if (!selectedService) { // Added: prompt the user to pick a service before listing GAK keys
+    if (!selectedService) {
         return (
-            <CenteredContent> {/* Added: center the call-to-action message */}
-                <Alert // Added: expand props for readability
+            <CenteredContent>
+                <Alert
                     variant='info'
                     title="Select a service to view GAK keys"
-                /> {/* Added: explain why the list is empty */}
+                />
             </CenteredContent>
         );
     }
@@ -118,7 +115,7 @@ const WSBRDGakKeysContent = () => {
                 <Alert
                     variant='info'
                     title={`Start ${selectedServiceName || 'the selected service'} to view its GAK Keys`}
-                /> {/* Added: tailor the prompt to the active service */}
+                />
             </CenteredContent>
         );
     }

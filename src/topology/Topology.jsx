@@ -23,7 +23,7 @@ import {
     useRef
 } from "react";
 import cockpit from "cockpit";
-import { AppContext, SERVICE_SHORT_NAMES } from "../app"; // Added: reuse shared service metadata
+import { AppContext, SERVICE_SHORT_NAMES } from "../app";
 import Graph from "react-graph-vis";
 import {
     Alert,
@@ -52,12 +52,37 @@ export const NodeRoles = Object.freeze({
 });
 
 const NodeRolesColors = ["#d91e2a", "#00b970", "#fad54c"];
-const EdgesColor = "#0f62fe";
-let RoutingGraphindexedByIpv6 = [];
-let borderrouterIpv6;
+const EDGE_COLOR = "#0f62fe";
+let routingGraphByIpv6 = {};
+let borderRouterIpv6;
 
+const GRAPH_OPTIONS = {
+    physics: { stabilization: { enabled: false } },
+    layout: {
+        improvedLayout: true,
+        hierarchical: {
+            enabled: true,
+            direction: 'UD',
+            sortMethod: 'hubsize',
+            blockShifting: false,
+            edgeMinimization: true,
+            parentCentralization: true,
+        },
+    },
+    edges: {
+        color: EDGE_COLOR,
+        arrows: { to: false }
+    },
+    height: '100%',
+    width: '100%'
+};
+
+/**
+ * Topology renders the Wi-SUN routing graph for the active service and keeps
+ * the visualization synchronized with DBus updates.
+ */
 const Topology = () => {
-    const dbusClient = useRef(null); // Moved inside the component
+    const dbusClient = useRef(null);
     const [loading, setLoading] = useState(true);
     const [stateGraph, setStateGraph] = useState({
         nodes: [],
@@ -65,76 +90,51 @@ const Topology = () => {
     });
     const [hasError, setHasError] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
-    const [network, setNetwork] = useState(undefined);
+    const [network, setNetwork] = useState();
     const [selectedNode, setSelectedNode] = useState(null);
     const [autoZoom, setAutoZoom] = useState(true);
 
-    // Added: include the selected service before loading
     const { active, selectedService, serviceDbus } = useContext(AppContext);
     const selectedServiceName = selectedService
-        ? SERVICE_SHORT_NAMES[selectedService] // Added: resolve a short name for prompts
-        : null; // Added: fall back to a neutral label when no service is selected
+        ? SERVICE_SHORT_NAMES[selectedService]
+        : null;
 
-    const options = {
-        physics: { stabilization: { enabled: false } },
-        layout: {
-            improvedLayout: true,
-            hierarchical: {
-                enabled: true, // Enable hierarchical layout
-                direction: 'UD', // Direction of the layout: 'UD' (Up-Down), 'LR' (Left-Right), etc.
-                sortMethod: 'hubsize', // Use hubsize to sort nodes based on connectivity
-                blockShifting: false, // Enable block shifting to optimize the layout
-                edgeMinimization: true, // Minimize edge crossings
-                parentCentralization: true, // Centralize parent nodes relative to their children
-            },
-        },
-        edges: {
-            color: EdgesColor,
-            arrows: { to: false }
-        },
-        height: '100%',
-        width: '100%'
-    };
     const nodeLevelRef = useRef(0);
 
     const processGraphData = useCallback((proxy) => {
-        const checkLinkToBR = (id, visited = new Set()) => {
+        const checkLinkToBorderRouter = (id, visited = new Set()) => {
             if (visited.has(id)) {
-                // Cycle detected, stop recursion
                 return false;
             }
             visited.add(id);
 
-            if (RoutingGraphindexedByIpv6[id][2].length === 0 &&
-                RoutingGraphindexedByIpv6[id][0] === borderrouterIpv6) {
-                return true;
-            } else if (RoutingGraphindexedByIpv6[id][2].length === 0 &&
-                RoutingGraphindexedByIpv6[id][0] !== borderrouterIpv6) {
-                return false;
-            } else if (RoutingGraphindexedByIpv6[id][2] !== 0 &&
-                RoutingGraphindexedByIpv6[RoutingGraphindexedByIpv6[id][2][0]] !== undefined) {
-                if (checkLinkToBR(RoutingGraphindexedByIpv6[id][2][0], visited)) {
-                    nodeLevelRef.current = nodeLevelRef.current + 1;
+            if (routingGraphByIpv6[id][2].length === 0) {
+                return routingGraphByIpv6[id][0] === borderRouterIpv6;
+            }
+            const parentId = routingGraphByIpv6[id][2][0];
+            if (routingGraphByIpv6[id][2] !== 0 && routingGraphByIpv6[parentId] !== undefined) {
+                if (checkLinkToBorderRouter(parentId, visited)) {
+                    nodeLevelRef.current += 1;
                     return true;
                 }
-            } else {
-                return false;
             }
+            return false;
         };
 
         const nodes = [];
         const edges = [];
-        // Transform the array into an object indexed by 'id'
-        RoutingGraphindexedByIpv6 = proxy.RoutingGraph.reduce((acc, item) => {
+
+        routingGraphByIpv6 = proxy.RoutingGraph.reduce((acc, item) => {
             acc[item[0]] = item;
             return acc;
         }, {});
+
         for (let i = 0; i < proxy.RoutingGraph.length; i++) {
             const ipv6 = base64ToHex(proxy.RoutingGraph[i][0]);
             let nodeRole;
             if (proxy.RoutingGraph[i][1] === false && proxy.RoutingGraph[i][2].length === 0 && i === 0) {
                 nodeRole = NodeRoles.BorderRouter;
-                borderrouterIpv6 = proxy.RoutingGraph[i][0];
+                borderRouterIpv6 = proxy.RoutingGraph[i][0];
             } else if (proxy.RoutingGraph[i][1] === true) {
                 nodeRole = NodeRoles.LFN;
             } else {
@@ -143,46 +143,28 @@ const Topology = () => {
 
             let parentIPv6;
             nodeLevelRef.current = 0;
-            if (checkLinkToBR(proxy.RoutingGraph[i][0])) {
+            if (checkLinkToBorderRouter(proxy.RoutingGraph[i][0])) {
                 if (proxy.RoutingGraph[i][2][0] !== undefined) {
                     parentIPv6 = base64ToHex(proxy.RoutingGraph[i][2][0]);
-                    nodes.push({
-                        id: ipv6,
-                        label: ipv6.slice(ipv6.length - 4),
-                        color: NodeRolesColors[nodeRole],
-                        ipv6: beautifyIpv6String(ipv6),
-                        parentIPv6: beautifyIpv6String(parentIPv6),
-                        nodeRole,
-                        level: nodeLevelRef.current,
-                        shape: nodeRole === NodeRoles.BorderRouter ? "box" : "ellipse",
-                        font: nodeRole === NodeRoles.BorderRouter ? "18px arial black" : "14px arial black"
-                    });
-                    edges.push({
-                        id: ipv6,
-                        from: ipv6,
-                        to: parentIPv6,
-                        dashes: nodeRole === NodeRoles.LFN,
-                        width: 2
-                    });
-                } else {
-                    nodes.push({
-                        id: ipv6,
-                        label: ipv6.slice(ipv6.length - 4),
-                        color: NodeRolesColors[nodeRole],
-                        ipv6: beautifyIpv6String(ipv6),
-                        nodeRole,
-                        level: nodeLevelRef.current,
-                        shape: nodeRole === NodeRoles.BorderRouter ? "box" : "ellipse",
-                        font: nodeRole === NodeRoles.BorderRouter ? "18px arial black" : "14px arial black"
-                    });
-                    edges.push({
-                        id: ipv6,
-                        from: ipv6,
-                        to: parentIPv6,
-                        dashes: nodeRole === NodeRoles.LFN,
-                        width: 2
-                    });
                 }
+                nodes.push({
+                    id: ipv6,
+                    label: ipv6.slice(ipv6.length - 4),
+                    color: NodeRolesColors[nodeRole],
+                    ipv6: beautifyIpv6String(ipv6),
+                    parentIPv6: parentIPv6 ? beautifyIpv6String(parentIPv6) : undefined,
+                    nodeRole,
+                    level: nodeLevelRef.current,
+                    shape: nodeRole === NodeRoles.BorderRouter ? "box" : "ellipse",
+                    font: nodeRole === NodeRoles.BorderRouter ? "18px arial black" : "14px arial black"
+                });
+                edges.push({
+                    id: ipv6,
+                    from: ipv6,
+                    to: parentIPv6,
+                    dashes: nodeRole === NodeRoles.LFN,
+                    width: 2
+                });
             }
         }
 
@@ -192,22 +174,16 @@ const Topology = () => {
         });
 
         setLoading(false);
-    }, [setStateGraph, setLoading]);
+    }, []);
 
     const initializeDbus = useCallback(() => {
-        if (!selectedService) { // Added: do not initialize DBus until a service is selected
-            if (loading) setLoading(false); // Added: hide the loading spinner when nothing is selected
-            return; // Added: exit until the user picks a service
-        }
-        if (!serviceDbus) { // Added: ensure DBus identifiers are available before connecting
-            if (loading) setLoading(false); // Added: keep the UI responsive when DBus metadata is missing
-            return; // Added: exit early when DBus information is unavailable
-        }
-        if (active !== true) {
-            if (loading) setLoading(false);
+        if (!selectedService || !serviceDbus || active !== true) {
+            if (loading) {
+                setLoading(false);
+            }
             return;
         }
-        // Added: connect to the DBus endpoint for the selected service
+
         dbusClient.current = cockpit.dbus(
             serviceDbus.busName,
             { bus: "system" }
@@ -215,16 +191,16 @@ const Topology = () => {
 
         dbusClient.current.wait(() => {
             const proxy = dbusClient.current.proxy();
-            const proxy_signal = dbusClient.current.proxy(
+            const proxySignal = dbusClient.current.proxy(
                 "org.freedesktop.DBus.Properties",
                 serviceDbus.objectPath
-            ); // Added: subscribe to property updates on the selected service path
+            );
             proxy.wait().then(() => {
                 if (proxy.valid === false) {
                     setHasError(true);
                     setLoading(false);
                 } else if (proxy.WisunMode !== undefined) {
-                    proxy_signal.addEventListener("signal", (event, name, args) => {
+                    proxySignal.addEventListener("signal", (event, name, args) => {
                         if (args[2][0] === "RoutingGraph") {
                             setTimeout(() => {
                                 processGraphData(proxy);
@@ -235,13 +211,13 @@ const Topology = () => {
                 }
             });
         });
-    }, [ // Added: expanded dependency list for readability
+    }, [
         active,
         loading,
         processGraphData,
         selectedService,
         serviceDbus
-    ]); // Added: rerun initialization when the selected service changes
+    ]);
 
     useEffect(() => {
         initializeDbus();
@@ -261,21 +237,23 @@ const Topology = () => {
                 }
             });
         }
-    }, [autoZoom, network]); // Removed isMounted as it was unused
+    }, [autoZoom, network]);
 
     const closeDrawer = () => {
-        network.unselectAll();
+        if (network) {
+            network.unselectAll();
+        }
         setIsExpanded(false);
         setSelectedNode(null);
     };
 
-    if (!selectedService) { // Added: prompt the user when no service is selected
+    if (!selectedService) {
         return (
-            <CenteredContent> {/* Added: center the selection prompt */}
-                <Alert // Added: expand props for readability
+            <CenteredContent>
+                <Alert
                     variant='info'
                     title="Select a service to view the network topology"
-                /> {/* Added: explain why no topology is displayed */}
+                />
             </CenteredContent>
         );
     }
@@ -300,7 +278,7 @@ const Topology = () => {
                 <Alert
                     variant="info"
                     title={`Start ${selectedServiceName || 'the selected service'} to view the network topology`}
-                /> {/* Added: tailor the prompt to the active service */}
+                />
             </CenteredContent>
         );
     }
@@ -340,7 +318,7 @@ const Topology = () => {
             >
                 <DrawerContentBody style={{ position: 'relative' }}>
                     <Graph
-                        graph={stateGraph} options={options} events={events} getNetwork={(n) => setNetwork(n)}
+                        graph={stateGraph} options={GRAPH_OPTIONS} events={events} getNetwork={(n) => setNetwork(n)}
                     />
                     <Button
                         variant="primary" icon={<BarsIcon />} onClick={() => setIsExpanded(true)} style={

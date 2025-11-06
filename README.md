@@ -235,22 +235,7 @@ The setup script will:
 
 ## Testing & Scripts
 
-### 1. Python Bot Test Session (`br_soc_bot.py`)
-
-The Python bot provides comprehensive TCP client simulation with multi-threaded operations:
-
-```bash
-python3 test/br_soc_bot.py
-```
-
-**Features:**
-- Multi-threaded TCP client simulation
-- Random topology generation and updates
-- Configuration requests and responses
-- Structured message protocol testing
-- Concurrent client session testing
-
-### 2. D-Bus Property Scripts
+### 1. D-Bus Property Scripts
 
 #### Query All Settings (`dbus-get-settings.sh`)
 ```bash
@@ -273,7 +258,7 @@ sudo bash test/dbus-monitor-routinggraph.sh
 ```
 Real-time monitoring of `PropertiesChanged` signals for topology updates.
 
-### 3. D-Bus Method Control Scripts
+### 2. D-Bus Method Control Scripts
 
 The agent provides convenient shell scripts for controlling border router operations via D-Bus methods:
 

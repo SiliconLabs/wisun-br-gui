@@ -1,0 +1,168 @@
+.TH WISUN-SOC-BR-AGENT 1 "October 2025" "wisun-soc-br-agent 1.0.0" "User Commands"
+.SH NAME
+wisun-soc-br-agent \- Wi-SUN SoC Border Router Agent
+.SH SYNOPSIS
+.B wisun-soc-br-agent
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+Wi-SUN SoC Border Router Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN SoC Border Router.
+It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration.
+This service is specifically designed for EFR32 Border Router SoC implementations and requires a SiWx917 Wi-Fi module along with a properly configured IPv6 network infrastructure.
+Wi-SUN SoC Border Router Agent SiSDK sample application provides the SoC example that operates with this service.
+
+The agent service acts as an intermediary between the EFR32 SoC host and external clients, providing both TCP and D-Bus interfaces for comprehensive network management.
+
+.SH OPTIONS
+.TP
+.BR \-c ", " \-\-config " " \fIFILE\fR
+Load Wi-SUN settings from configuration file \fIFILE\fR.
+.TP
+.BR \-h ", " \-\-host " " \fIADDRESS\fR
+Set EFR32 SoC host IPv6 address. Optional parameter that updates remote host configuration.
+.TP
+.BR \-l ", " \-\-log " " \fIFILE\fR
+Specify custom log file path. Default is /var/log/wisun-soc-br-agent.log.
+.TP
+.BR \-\-help
+Display help message and exit.
+.TP
+.BR \-\-version
+Display version information and exit.
+
+.SH D-BUS INTERFACE
+The agent exposes a comprehensive D-Bus interface at \fBcom.silabs.Wisun.SocBorderRouterAgent\fR for system integration and monitoring.
+
+.SS Properties
+.TP
+.B RoutingGraph
+Network topology with target, preferred, and backup routes (type: a(aybaay))
+.TP
+.B WisunNetworkName
+Wi-SUN network name/identifier (type: s)
+.TP
+.B WisunSize
+Network size configuration: Small/Medium/Large (type: s)
+.TP
+.B WisunDomain
+Regulatory domain setting (type: s)
+.TP
+.B WisunPhyModeId
+PHY mode identifier for FAN 1.1 (type: u)
+.TP
+.B WisunChanPlanId
+Channel plan identifier for FAN 1.1 (type: u)
+.TP
+.B WisunFanVersion
+FAN version: 1 for FAN 1.0, 2 for FAN 1.1 (type: y)
+.TP
+.B WisunPanId
+Personal Area Network ID - 16-bit network identifier (type: q)
+.TP
+.B WisunClass
+Wi-SUN operating class for FAN 1.0 (type: u)
+.TP
+.B WisunMode
+Wi-SUN operating mode  for FAN 1.0 (type: u)
+
+.SS Methods
+.TP
+.B RestartSoCBorderRouter
+Restart the border router: stops FAN 1.1 network, reconfigures, and starts again
+.TP
+.B StopSoCBorderRouter
+Stop the border router on the SoC host (Permanent until manual SoC CLI restart)
+.TP
+.B SetSoCBorderRouterConfig
+Apply current configuration to the SoC host
+
+.SH FILES
+.TP
+.I /etc/wisun-soc-br-agent/*.conf
+Configuration files containing Wi-SUN network settings
+.TP
+.I /var/log/wisun-soc-br-agent.log
+Default log file location
+
+.SH LOGGING
+By default, logs are written to both the console and to /var/log/wisun-soc-br-agent.log.
+Log output includes timestamps and log levels (INFO, WARN, ERROR, DEBUG).
+
+.SS Build Defines
+Logging features can be controlled at build time using the following defines:
+.TP
+.B WS_BR_AGENT_LOG_ENABLE_COLORS
+Enable colored log output in console (default: 1)
+.TP
+.B WS_BR_AGENT_LOG_ENABLE_DEBUG
+Enable debug log output (default: 1)
+.TP
+.B WS_BR_AGENT_LOG_ENABLE_CONSOLE_LOG
+Enable logging to console (default: 1)
+.TP
+.B WS_BR_AGENT_LOG_ENABLE_FILE_LOG
+Enable logging to file (default: 1)
+
+.SH EXAMPLES
+.TP
+Load settings from config file:
+.B sudo wisun-soc-br-agent --config /etc/wisun-soc-br-agent/wisun_br_config.conf
+
+.TP
+Set SoC host address:
+.B sudo wisun-soc-br-agent --soc fd12:3456::1
+
+.TP
+Combined usage with custom log:
+.B sudo wisun-soc-br-agent --config /etc/wisun-soc-br-agent/wisun_br_config.conf --soc fd12:3456::1 --log /var/log/wisun.log
+
+.SH CONFIGURATION FILE EXAMPLE
+.TP
+FAN 1.1 configuration
+.nf
+network_name=WiSUN-Network  
+size=Large
+pan_id=4660
+domain=EU
+chan_plan_id=33
+phy_mode_id=3
+.fi
+
+.SH D-BUS EXAMPLES
+.TP
+Query network name property:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.SocBorderRouterAgent string:WisunNetworkName
+
+.TP
+Query network topology:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.SocBorderRouterAgent string:RoutingGraph
+
+.TP
+Query PAN ID:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.SocBorderRouterAgent string:WisunPanId
+
+.TP
+Query FAN version:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent org.freedesktop.DBus.Properties.Get string:com.silabs.Wisun.SocBorderRouterAgent string:WisunFanVersion
+
+.TP
+Restart border router:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.RestartSoCBorderRouter
+
+.TP
+Stop border router:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.StopSoCBorderRouter
+
+.TP
+Set configuration:
+.B dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.SetSoCBorderRouterConfig
+
+.SH AUTHOR
+Silicon Laboratories Inc.
+
+.SH COPYRIGHT
+Copyright (c) 2025 Silicon Labs, Inc.
+
+.SH SEE ALSO
+.BR systemd (1),
+.BR dbus-send (1),
+.BR systemctl (1)

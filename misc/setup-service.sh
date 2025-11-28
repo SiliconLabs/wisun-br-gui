@@ -14,24 +14,24 @@ fi
 
 # Copy service file to systemd directory
 echo "Installing systemd service file..."
-cp wisun-soc-br-agent.service /etc/systemd/system/
+cp wisun-br-bridge-agent.service /etc/systemd/system/
 
 # Reload systemd and enable service
 echo "Configuring systemd service..."
 systemctl daemon-reload
-systemctl enable wisun-soc-br-agent.service
+systemctl enable wisun-br-bridge-agent.service
 
 echo "Setup complete!"
 echo ""
 echo "Service management commands:"
-echo "  Start service:    sudo systemctl start wisun-soc-br-agent"
-echo "  Stop service:     sudo systemctl stop wisun-soc-br-agent"
-echo "  Service status:   sudo systemctl status wisun-soc-br-agent"
-echo "  View logs:        sudo journalctl -u wisun-soc-br-agent -f"
-echo "  Restart service:  sudo systemctl restart wisun-soc-br-agent"
+echo "  Start service:    sudo systemctl start wisun-br-bridge-agent"
+echo "  Stop service:     sudo systemctl stop wisun-br-bridge-agent"
+echo "  Service status:   sudo systemctl status wisun-br-bridge-agent"
+echo "  View logs:        sudo journalctl -u wisun-br-bridge-agent -f"
+echo "  Restart service:  sudo systemctl restart wisun-br-bridge-agent"
 echo ""
 echo "To remove the service:"
-echo "  sudo systemctl stop wisun-soc-br-agent"
-echo "  sudo systemctl disable wisun-soc-br-agent"
-echo "  sudo rm /etc/systemd/system/wisun-soc-br-agent.service"
+echo "  sudo systemctl stop wisun-br-bridge-agent"
+echo "  sudo systemctl disable wisun-br-bridge-agent"
+echo "  sudo rm /etc/systemd/system/wisun-br-bridge-agent.service"
 echo "  sudo systemctl daemon-reload"

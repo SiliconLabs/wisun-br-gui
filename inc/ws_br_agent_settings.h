@@ -209,7 +209,7 @@ typedef enum ws_br_agent_reg_domain{
 /// Network size enum
 typedef enum ws_br_agent_network_size {
   /// Small network size
-  WS_BR_AGENT_NETWORK_SIZE_SMALL,
+  WS_BR_AGENT_NETWORK_SIZE_SMALL = 1,
   /// Medium network size
   WS_BR_AGENT_NETWORK_SIZE_MEDIUM,
   /// Large network size

@@ -123,7 +123,8 @@ static ws_br_agent_ret_t parse_config_line(const char *line, ws_br_agent_setting
   char *trimmed_line;
   char *comment_pos;
   int tmp_val;
-  
+  extern const char *soc_host_addr;
+
   if (line == NULL || settings == NULL) {
     return WS_BR_AGENT_RET_ERR;
   }
@@ -171,7 +172,12 @@ static ws_br_agent_ret_t parse_config_line(const char *line, ws_br_agent_setting
   }
   
   // Parse configuration values
-  if (strcmp(key_start, "network_name") == 0) {
+  if (strcmp(key_start, "soc_wifi_address") == 0) {
+    if (soc_host_addr == NULL) {
+      soc_host_addr = strdup(value);
+      ws_br_agent_log_debug("Configure SoC IPv6 Wi-Fi address: %s\n", soc_host_addr);
+    }
+  } else if (strcmp(key_start, "network_name") == 0) {
     if (parse_escape_sequences(settings->network_name, value, 
                            WS_BR_AGENT_NETWORK_NAME_SIZE + 1) == 0) {
       ws_br_agent_log_debug("Configure network name: %s\n", settings->network_name);

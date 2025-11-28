@@ -42,13 +42,13 @@
 #include "ws_br_agent_utils.h"
 #include "ws_br_agent_dbus.h"
 
+const char *soc_host_addr = NULL;
 static void sigint_hnd(int signum);
 static volatile sig_atomic_t main_thread_stop = 0;
 
 int main(int argc, char *argv[])
 {
   const char *conf_file_path = NULL;
-  const char *soc_host_addr = NULL;
   ws_br_agent_msg_t msg = { 0U };
   ws_br_agent_settings_t settings = { 0U };
 
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     else if (!strcmp(argv[i], "--soc") ||
               !strcmp(argv[i], "-s") && (i + 1 < argc)) {
         // set SoC device path
-        soc_host_addr = argv[i + 1];
+        soc_host_addr = strdup(argv[i + 1]);
         ++i;
     }
     else if (!strcmp(argv[i], "--help")
@@ -115,8 +115,10 @@ int main(int argc, char *argv[])
   if (soc_host_addr != NULL) {
     if (inet_pton(AF_INET6, soc_host_addr, &new_addr.sin6_addr) != 1) {
       ws_br_agent_log_error("Invalid SoC Host IPv6 address: %s\n", soc_host_addr);
+      free((void *) soc_host_addr);
       return EXIT_FAILURE;
     }
+    free((void *) soc_host_addr);
     if (ws_br_agent_soc_host_set_remote_addr(&new_addr) != WS_BR_AGENT_RET_OK) {
       ws_br_agent_log_error("Failed to set SoC Host remote address: %s\n", soc_host_addr);
       return EXIT_FAILURE;

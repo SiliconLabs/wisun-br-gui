@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 /// Application name
-#define WS_BR_AGENT_APP_NAME "Wi-SUN SoC Border Router Agent Service"
+#define WS_BR_AGENT_APP_NAME "Wi-SUN SoC Border Router Brige Agent Service"
 
 /// Version of the Wi-SUN SoC Border Router Agent
 #ifndef WS_BR_AGENT_VERSION

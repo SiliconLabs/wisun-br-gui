@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 3.10)
-project(wisun-soc-br-agent C)
+project(wisun-br-bridge-agent C)
 
 # Set output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build)
@@ -21,28 +21,28 @@ include_directories(${CMAKE_SOURCE_DIR}/inc)
 file(GLOB SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
 
 # Add executable
-add_executable(wisun-soc-br-agent ${SOURCES})
+add_executable(wisun-br-bridge-agent ${SOURCES})
 
 # Link pthread library
-target_link_libraries(wisun-soc-br-agent PRIVATE pthread)
+target_link_libraries(wisun-br-bridge-agent PRIVATE pthread)
 
 # Link systemd sd-bus library
-target_link_libraries(wisun-soc-br-agent PRIVATE systemd)
+target_link_libraries(wisun-br-bridge-agent PRIVATE systemd)
 
 # Install rules
 include(GNUInstallDirs)
 
 # Install the main executable
-install(TARGETS wisun-soc-br-agent
+install(TARGETS wisun-br-bridge-agent
     RUNTIME DESTINATION /usr/bin)
 
 # Install configuration files
 install(DIRECTORY config/
-    DESTINATION /etc/wisun-soc-br-agent
+    DESTINATION /etc/wisun-br-bridge-agent
     FILES_MATCHING PATTERN "*.conf")
 
 # Install man page
-install(FILES misc/wisun-soc-br-agent.1
+install(FILES misc/wisun-br-bridge-agent.1
     DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
 # Install D-Bus policy file

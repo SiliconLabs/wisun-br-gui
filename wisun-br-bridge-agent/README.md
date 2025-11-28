@@ -1,20 +1,20 @@
 
-# Wi-SUN SoC Border Router Agent
+# Wi-SUN Border Router Bridge Agent
 
 ## Overview
 
-Wi-SUN SoC Border Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN SoC Border Router. 
+Wi-SUN Border Router Bridge Agent is a Linux-based service for managing and monitoring a Silicon Labs Wi-SUN SoC Border Router. 
 It exposes a TCP server for remote configuration and status queries, and integrates with D-Bus for IPC and system integration. 
 This service is specifically designed for EFR32 Border Router SoC implementations and requires a SiWx917 Wi-Fi module along with a properly configured IPv6 network infrastructure. 
-*Wi-SUN SoC Border Router Agent* SiSDK sample application provides the SoC example that operates with this service. 
+*Wi-SUN Border Router Bridge Agent* SiSDK sample application provides the SoC example that operates with this service. 
 
 The agent service communicates with the [Wi-SUN Border Router GUI](https://github.com/SiliconLabs/wisun-br-gui) application over D-Bus, providing a comprehensive graphical interface for network management, topology visualization, and real-time monitoring.
 
-![Wi-SUN SoC Border Router Agent](assets/wisun-soc-br-agent.png)
+![Wi-SUN Border Router Bridge Agent](assets/wisun-br-bridge-agent.png)
 
 ## Architecture & Communication
 
-The Wi-SUN SoC Border Router Agent acts as an intermediary between the EFR32 SoC host and external clients, providing both TCP and D-Bus interfaces for comprehensive network management.
+The Wi-SUN Border Router Bridge Agent acts as an intermediary between the EFR32 SoC host and external clients, providing both TCP and D-Bus interfaces for comprehensive network management.
 
 ```
 ┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
@@ -215,7 +215,7 @@ The manual page contains detailed information about:
 
 ## Service Setup
 
-The Wi-SUN SoC Border Router Agent can be configured as a systemd service for automatic startup and management.
+The Wi-SUN Border Router Bridge Agent can be configured as a systemd service for automatic startup and management.
 
 ### Service Installation
 
@@ -327,7 +327,7 @@ For complete licensing terms and conditions, please refer to the LICENSE.txt fil
 **Release Date:** December 2025
 
 **New Features:**
-- Initial implementation of Wi-SUN SoC Border Router Agent
+- Initial implementation of Wi-SUN Border Router Bridge Agent
 - TCP server for remote configuration and status queries (port 11500)
 - Comprehensive D-Bus interface for system integration
 - Support for EFR32 SoC Border Router implementations

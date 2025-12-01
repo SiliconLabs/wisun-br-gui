@@ -117,13 +117,13 @@ int main(int argc, char *argv[])
       ws_br_agent_log_error("Invalid SoC Host IPv6 address: %s\n", soc_host_addr);
       free((void *) soc_host_addr);
       return EXIT_FAILURE;
-    }
-    free((void *) soc_host_addr);
+    } 
     if (ws_br_agent_soc_host_set_remote_addr(&new_addr) != WS_BR_AGENT_RET_OK) {
       ws_br_agent_log_error("Failed to set SoC Host remote address: %s\n", soc_host_addr);
       return EXIT_FAILURE;
     }
     ws_br_agent_log_info("Set SoC Host remote address: %s\n", soc_host_addr);
+    free((void *) soc_host_addr);
     (void) ws_br_agent_soc_host_get_settings(&settings);
 
     msg.msg_code = WS_BR_AGENT_MSG_CODE_SET_CONFIG_PARAMS;

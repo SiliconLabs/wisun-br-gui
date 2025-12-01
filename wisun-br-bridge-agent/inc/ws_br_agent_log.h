@@ -46,7 +46,7 @@ extern "C" {
 #endif
 
 #ifndef WS_BR_AGENT_LOG_ENABLE_DEBUG
-#define WS_BR_AGENT_LOG_ENABLE_DEBUG        1U
+#define WS_BR_AGENT_LOG_ENABLE_DEBUG        0U
 #endif
 
 #ifndef WS_BR_AGENT_LOG_ENABLE_CONSOLE_LOG

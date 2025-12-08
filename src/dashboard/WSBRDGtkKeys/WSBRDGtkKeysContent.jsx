@@ -15,7 +15,13 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { useContext, useEffect, useState } from "react";
+import {
+    useCallback,
+    useContext,
+    useEffect,
+    useRef,
+    useState
+} from "react";
 import {
     DescriptionList,
     DescriptionListDescription,
@@ -38,20 +44,37 @@ const WSBRDGtkKeysContent = () => {
     const [gtkKeys, setGtkKeys] = useState([]);
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
+    const retryTimeoutRef = useRef(null);
 
     const { active, selectedService, serviceDbus } = useContext(AppContext);
     const selectedServiceName = selectedService
         ? SERVICE_SHORT_NAMES[selectedService]
         : null;
 
+    const clearRetryTimeout = useCallback(() => {
+        if (retryTimeoutRef.current !== null) {
+            clearTimeout(retryTimeoutRef.current);
+            retryTimeoutRef.current = null;
+        }
+    }, []);
+
     useEffect(() => {
+        clearRetryTimeout();
+        let isSubscribed = true;
+
         if (!selectedService || !serviceDbus) {
-            return;
+            return () => {
+                isSubscribed = false;
+                clearRetryTimeout();
+            };
         }
 
         if (active !== true) {
             setLoading(false);
-            return;
+            return () => {
+                isSubscribed = false;
+                clearRetryTimeout();
+            };
         }
 
         setLoading(true);
@@ -64,15 +87,31 @@ const WSBRDGtkKeysContent = () => {
             );
 
             dbusClient.wait(() => {
+                if (!isSubscribed) {
+                    dbusClient.close();
+                    return;
+                }
+
                 const proxy = dbusClient.proxy();
 
                 proxy.wait().then(() => {
+                    if (!isSubscribed) {
+                        dbusClient.close();
+                        return;
+                    }
+
                     if (proxy.valid === false) {
                         setHasError(true);
                         setLoading(false);
                     } else if (proxy.WisunMode === undefined) {
-                        setTimeout(getProperties, 1000);
+                        clearRetryTimeout();
+                        retryTimeoutRef.current = setTimeout(() => {
+                            if (isSubscribed) {
+                                getProperties();
+                            }
+                        }, 1000);
                     } else {
+                        clearRetryTimeout();
                         setGtkKeys([...proxy.data.Gtks]);
                         setLoading(false);
                     }
@@ -82,7 +121,12 @@ const WSBRDGtkKeysContent = () => {
         };
 
         getProperties();
-    }, [active, selectedService, serviceDbus]);
+
+        return () => {
+            isSubscribed = false;
+            clearRetryTimeout();
+        };
+    }, [active, clearRetryTimeout, selectedService, serviceDbus]);
 
     if (!selectedService) {
         return (

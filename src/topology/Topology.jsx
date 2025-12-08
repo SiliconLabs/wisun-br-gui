@@ -20,7 +20,8 @@ import {
     useContext,
     useState,
     useCallback,
-    useRef
+    useRef,
+    useMemo
 } from "react";
 import cockpit from "cockpit";
 import { AppContext, SERVICE_SHORT_NAMES } from "../app";
@@ -53,8 +54,6 @@ export const NodeRoles = Object.freeze({
 
 const NodeRolesColors = ["#d91e2a", "#00b970", "#fad54c"];
 const EDGE_COLOR = "#0f62fe";
-let routingGraphByIpv6 = {};
-let borderRouterIpv6;
 
 const GRAPH_OPTIONS = {
     physics: { stabilization: { enabled: false } },
@@ -100,41 +99,80 @@ const Topology = () => {
         : null;
 
     const nodeLevelRef = useRef(0);
+    const animationFrameRef = useRef(null);
+    const proxySignalRef = useRef(null);
+    const proxySignalHandlerRef = useRef(null);
+
+    const cancelScheduledUpdate = () => {
+        if (!animationFrameRef.current) {
+            return;
+        }
+
+        const { id, type } = animationFrameRef.current;
+        if (type === 'raf' && typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+            window.cancelAnimationFrame(id);
+        } else {
+            clearTimeout(id);
+        }
+        animationFrameRef.current = null;
+    };
 
     const processGraphData = useCallback((proxy) => {
+        if (!proxy || !Array.isArray(proxy.RoutingGraph)) {
+            setStateGraph({ nodes: [], edges: [] });
+            setLoading(false);
+            return;
+        }
+
+        const routingGraphByIpv6 = {};
+        let borderRouterIpv6;
+
+        proxy.RoutingGraph.forEach((entry) => {
+            routingGraphByIpv6[entry[0]] = entry;
+            if (entry[1] === false && entry[2].length === 0) {
+                borderRouterIpv6 = entry[0];
+            }
+        });
+
         const checkLinkToBorderRouter = (id, visited = new Set()) => {
             if (visited.has(id)) {
                 return false;
             }
             visited.add(id);
 
-            if (routingGraphByIpv6[id][2].length === 0) {
-                return routingGraphByIpv6[id][0] === borderRouterIpv6;
+            const entry = routingGraphByIpv6[id];
+            if (!entry) {
+                return false;
             }
-            const parentId = routingGraphByIpv6[id][2][0];
-            if (routingGraphByIpv6[id][2] !== 0 && routingGraphByIpv6[parentId] !== undefined) {
+
+            if (entry[2].length === 0) {
+                return entry[0] === borderRouterIpv6;
+            }
+
+            const parentId = entry[2][0];
+            if (parentId !== undefined && routingGraphByIpv6[parentId] !== undefined) {
                 if (checkLinkToBorderRouter(parentId, visited)) {
                     nodeLevelRef.current += 1;
                     return true;
                 }
             }
+
             return false;
         };
 
         const nodes = [];
         const edges = [];
 
-        routingGraphByIpv6 = proxy.RoutingGraph.reduce((acc, item) => {
-            acc[item[0]] = item;
-            return acc;
-        }, {});
+        for (let i = 0; i < proxy.RoutingGraph.length; i += 1) {
+            if (proxy.RoutingGraph[i][1] === undefined) {
+                continue;
+            }
 
-        for (let i = 0; i < proxy.RoutingGraph.length; i++) {
             const ipv6 = base64ToHex(proxy.RoutingGraph[i][0]);
+
             let nodeRole;
-            if (proxy.RoutingGraph[i][1] === false && proxy.RoutingGraph[i][2].length === 0 && i === 0) {
+            if (proxy.RoutingGraph[i][1] === false && proxy.RoutingGraph[i][2].length === 0) {
                 nodeRole = NodeRoles.BorderRouter;
-                borderRouterIpv6 = proxy.RoutingGraph[i][0];
             } else if (proxy.RoutingGraph[i][1] === true) {
                 nodeRole = NodeRoles.LFN;
             } else {
@@ -178,10 +216,21 @@ const Topology = () => {
 
     const initializeDbus = useCallback(() => {
         if (!selectedService || !serviceDbus || active !== true) {
-            if (loading) {
-                setLoading(false);
-            }
+            cancelScheduledUpdate();
+            setLoading((prev) => (prev ? false : prev));
+            setStateGraph((prev) => (prev.nodes.length || prev.edges.length ? { nodes: [], edges: [] } : prev));
             return;
+        }
+
+        setLoading(true);
+        setHasError(false);
+
+        cancelScheduledUpdate();
+
+        if (proxySignalRef.current && proxySignalHandlerRef.current) {
+            proxySignalRef.current.removeEventListener("signal", proxySignalHandlerRef.current);
+            proxySignalHandlerRef.current = null;
+            proxySignalRef.current = null;
         }
 
         dbusClient.current = cockpit.dbus(
@@ -190,30 +239,57 @@ const Topology = () => {
         );
 
         dbusClient.current.wait(() => {
+            if (!dbusClient.current) {
+                return;
+            }
+
             const proxy = dbusClient.current.proxy();
+            if (!proxy) {
+                return;
+            }
+
             const proxySignal = dbusClient.current.proxy(
                 "org.freedesktop.DBus.Properties",
                 serviceDbus.objectPath
             );
+
             proxy.wait().then(() => {
                 if (proxy.valid === false) {
                     setHasError(true);
                     setLoading(false);
                 } else if (proxy.WisunMode !== undefined) {
-                    proxySignal.addEventListener("signal", (event, name, args) => {
-                        if (args[2][0] === "RoutingGraph") {
-                            setTimeout(() => {
-                                processGraphData(proxy);
-                            }, 3000);
+                    const handleSignal = (event, name, args) => {
+                        if (args && args[2] && args[2][0] === "RoutingGraph") {
+                            cancelScheduledUpdate();
+                            if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+                                const id = window.requestAnimationFrame(() => {
+                                    animationFrameRef.current = null;
+                                    processGraphData(proxy);
+                                });
+                                animationFrameRef.current = { id, type: 'raf' };
+                            } else {
+                                const id = setTimeout(() => {
+                                    animationFrameRef.current = null;
+                                    processGraphData(proxy);
+                                }, 0);
+                                animationFrameRef.current = { id, type: 'timeout' };
+                            }
                         }
-                    });
+                    };
+                    if (proxySignal && typeof proxySignal.addEventListener === 'function') {
+                        proxySignal.addEventListener("signal", handleSignal);
+                        proxySignalRef.current = proxySignal;
+                        proxySignalHandlerRef.current = handleSignal;
+                    } else {
+                        proxySignalRef.current = null;
+                        proxySignalHandlerRef.current = null;
+                    }
                     processGraphData(proxy);
                 }
             });
         });
     }, [
         active,
-        loading,
         processGraphData,
         selectedService,
         serviceDbus
@@ -222,8 +298,15 @@ const Topology = () => {
     useEffect(() => {
         initializeDbus();
         return () => {
+            cancelScheduledUpdate();
+            if (proxySignalRef.current && proxySignalHandlerRef.current) {
+                proxySignalRef.current.removeEventListener("signal", proxySignalHandlerRef.current);
+                proxySignalHandlerRef.current = null;
+                proxySignalRef.current = null;
+            }
             if (dbusClient.current) {
                 dbusClient.current.close();
+                dbusClient.current = null;
             }
         };
     }, [initializeDbus]);
@@ -238,6 +321,40 @@ const Topology = () => {
             });
         }
     }, [autoZoom, network]);
+
+    const handleSelectNode = useCallback((event) => {
+        const { nodes } = event;
+        if (!nodes || nodes.length === 0) {
+            return;
+        }
+
+        const graphNode = stateGraph.nodes.find((n) => n.id.localeCompare(nodes[0]) === 0);
+
+        if (graphNode !== undefined) {
+            setIsExpanded(true);
+            setSelectedNode(graphNode);
+        }
+    }, [stateGraph.nodes]);
+
+    const handleDeselectNode = useCallback(() => {
+        setIsExpanded(false);
+        setSelectedNode(null);
+    }, []);
+
+    const handleDisableAutoZoom = useCallback(() => {
+        setAutoZoom(false);
+    }, []);
+
+    const events = useMemo(() => ({
+        selectNode: handleSelectNode,
+        deselectNode: handleDeselectNode,
+        dragStart: handleDisableAutoZoom,
+        zoom: handleDisableAutoZoom
+    }), [handleSelectNode, handleDeselectNode, handleDisableAutoZoom]);
+
+    const handleGetNetwork = useCallback((n) => {
+        setNetwork(n);
+    }, []);
 
     const closeDrawer = () => {
         if (network) {
@@ -283,28 +400,6 @@ const Topology = () => {
         );
     }
 
-    const events = {
-        selectNode: (event) => {
-            const { nodes } = event;
-            const graphNode = stateGraph.nodes.find((n) => n.id.localeCompare(nodes[0]) === 0);
-
-            if (graphNode !== undefined && network !== undefined) {
-                setIsExpanded(true);
-                setSelectedNode(graphNode);
-            }
-        },
-        deselectNode: () => {
-            setIsExpanded(false);
-            setSelectedNode(null);
-        },
-        dragStart: () => {
-            setAutoZoom(false);
-        },
-        zoom: () => {
-            setAutoZoom(false);
-        }
-    };
-
     return (
         <Drawer isExpanded={isExpanded} position="right" onExpand={() => setIsExpanded(true)} style={{ height: '98%' }}>
             <DrawerContent
@@ -318,7 +413,7 @@ const Topology = () => {
             >
                 <DrawerContentBody style={{ position: 'relative' }}>
                     <Graph
-                        graph={stateGraph} options={GRAPH_OPTIONS} events={events} getNetwork={(n) => setNetwork(n)}
+                        graph={stateGraph} options={GRAPH_OPTIONS} events={events} getNetwork={handleGetNetwork}
                     />
                     <Button
                         variant="primary" icon={<BarsIcon />} onClick={() => setIsExpanded(true)} style={

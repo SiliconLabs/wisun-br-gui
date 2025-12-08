@@ -27,7 +27,7 @@ import {
     Tab,
     TabTitleText
 } from '@patternfly/react-core';
-import { useState, useEffect, createContext, createRef } from 'react';
+import { useState, useEffect, createContext, useRef } from 'react';
 import cockpit from 'cockpit';
 import Dashboard from './dashboard/Dashboard';
 import Topology from './topology/Topology';
@@ -37,7 +37,7 @@ const _ = cockpit.gettext;
 
 export const SERVICE_UNITS = {
     linux: 'wisun-borderrouter.service',
-    soc: 'wisun-soc-br-agent.service'
+    soc: 'wisun-br-bridge-agent.service'
 };
 
 export const SERVICE_DBUS = {
@@ -124,8 +124,8 @@ const App = () => {
     const [selectedService, setSelectedService] = useState(undefined);
     const [refreshCounter, setRefreshCounter] = useState(0);
 
-    const dashboardRef = createRef();
-    const topologyRef = createRef();
+    const dashboardRef = useRef(null);
+    const topologyRef = useRef(null);
 
     useEffect(() => {
         let isMounted = true;

@@ -503,7 +503,6 @@ For complete licensing terms and conditions, please refer to the LICENSE.txt fil
 - Real-time property change notifications via PropertiesChanged signals
 
 **Testing & Development Tools:**
-- Python TCP client simulation bot
 - D-Bus property query and monitoring scripts  
 - D-Bus method control scripts for border router operations
 - Comprehensive example configurations and documentation

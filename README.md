@@ -72,7 +72,7 @@ The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.SocBorder
 
 | Method | Input | Output | Description |
 |--------|-------|--------|-------------|
-| `RestartSoCBorderRouter` | - | - | Restart the border router: stops FAN 1.1 network, reconfigures, and starts again |
+| `RestartSoCBorderRouter` | - | - | Restart the border router: stops the FAN 1.1 network, reconfigures it, and starts it again |
 | `StopSoCBorderRouter` | - | - | Stop the border router on the SoC host (Permanent until manual SoC CLI restart) |
 | `SetSoCBorderRouterConfig` | - | - | Apply current configuration to the SoC host |
 
@@ -95,7 +95,7 @@ The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.SocBorder
 - **File logging**: All logs can be written to a file (default: `/var/log/wisun-soc-br-agent.log`).
 - **Configurable logging**: Enable/disable colors, debug, and console/file logging via build defines.
 - **Configuration file support**: Load Wi-SUN settings from configuration files
-- **Host configuration**: Specify SoC host address via command line. The application updates the given Border Router SoC host automatically, if it's connected to the Wi-Fi network
+- **Host configuration**: Specify SoC host address via command line. The application updates the given Border Router SoC host automatically, if it is connected to the Wi-Fi network
 
 ## Configuration
 
@@ -241,7 +241,7 @@ The setup script will:
   wisun-br-bridge-agent.service loaded    active running Wi-SUN Border Router Bridge Agent
 ```
 
-## Checking WiFi connection the SoC Border Router
+## Checking Wi-Fi connection the SoC Border Router
 
 - Retrieving the SoC Border Router Wifi IPv6 (SoC Border Router CLI console)
 

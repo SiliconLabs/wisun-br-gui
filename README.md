@@ -68,13 +68,6 @@ The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.SocBorder
 | `WisunClass` | `u` | Wi-SUN operating class for FAN 1.0|
 | `WisunMode` | `u` | Wi-SUN operating mode for FAN 1.0|
 
-### Available Methods
-
-| Method | Input | Output | Description |
-|--------|-------|--------|-------------|
-| `RestartSoCBorderRouter` | - | - | Restart the border router: stops the FAN 1.1 network, reconfigures it, and starts it again |
-| `StopSoCBorderRouter` | - | - | Stop the border router on the SoC host (Permanent until manual SoC CLI restart) |
-| `SetSoCBorderRouterConfig` | - | - | Apply current configuration to the SoC host |
 
 ### D-Bus Features
 
@@ -336,31 +329,6 @@ sudo bash test/dbus-monitor-routinggraph.sh
 ```
 Real-time monitoring of `PropertiesChanged` signals for topology updates.
 
-### 2. D-Bus Method Control Scripts
-
-The agent provides convenient shell scripts for controlling border router operations via D-Bus methods:
-
-#### Restart Border Router ([dbus-restart-br.sh](test/dbus-restart-br.sh))
-
-```bash
-sudo bash test/dbus-restart-br.sh
-```
-Sends a restart command to the SoC host to stop the FAN 1.1 network, reconfigure, and start it again.
-
-#### Stop Border Router ([dbus-stop-br.sh](test/dbus-stop-br.sh))
-
-```bash
-sudo bash test/dbus-stop-br.sh
-```
-Sends a stop command to the SoC host to halt border router operation. **Note**: Once stopped, the effect is permanent until the network is manually started via SoC CLI directly.
-
-#### Set Configuration ([dbus-set-config.sh](test/dbus-set-config.sh))
-
-```bash
-sudo bash test/dbus-set-config.sh
-```
-Applies the current Wi-SUN configuration settings to the SoC host.
-
 ### 4. Manual D-Bus Testing
 
 #### Indentifying DBus Wisun instances
@@ -435,42 +403,9 @@ Monitoring bus message stream.
 {"type":"signal","endian":"l","flags":1,"version":1,"cookie":8,"sender":":1.53","path":"/com/silabs/Wisun/SocBorderRouterAgent","interface":"org.freedesktop.DBus.Properties","member":"PropertiesChanged","payload":{"type":"sa{sv}as","data                                                                                                      ":["com.silabs.Wisun.SocBorderRouterAgent",{},["RoutingGraph"]]}}
 ```
 
-
-#### Method Calls
-Call border router control methods directly using `dbus-send`:
-
-```bash
-# Restart border router (stops FAN 1.1 network, reconfigures, and starts again)
-sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
-  /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.RestartSoCBorderRouter
-
-# Stop border router
-sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
-  /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.StopSoCBorderRouter
-
-# Set configuration
-sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
-  /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.SetSoCBorderRouterConfig
-```
-
-or using `busctl call`:
-
-```bash
-# Restart border router (stops FAN 1.1 network, reconfigures, and starts again)
-sudo busctl call com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent \
-  com.silabs.Wisun.SocBorderRouterAgent RestartSoCBorderRouter
-
-# Stop border router
-sudo busctl call com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent \
-  com.silabs.Wisun.SocBorderRouterAgent StopSoCBorderRouter
-
-# Set configuration
-sudo busctl call com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent \
-  com.silabs.Wisun.SocBorderRouterAgent SetSoCBorderRouterConfig
-```
-
 ## Limitations / Known issues
 
+- The exposed methods on the D-Bus interface are not tested. You may encounter issues using them.
 
 ## License
 
@@ -499,11 +434,9 @@ For complete licensing terms and conditions, please refer to the LICENSE.txt fil
 
 **D-Bus Interface:**
 - Properties: RoutingGraph, WisunNetworkName, WisunSize, WisunDomain, WisunPhyModeId, WisunChanPlanId, WisunFanVersion, WisunPanId, WisunClass, WisunMode
-- Methods: RestartSoCBorderRouter, StopSoCBorderRouter, SetSoCBorderRouterConfig
 - Real-time property change notifications via PropertiesChanged signals
 
 **Testing & Development Tools:**
 - D-Bus property query and monitoring scripts  
-- D-Bus method control scripts for border router operations
 - Comprehensive example configurations and documentation
 

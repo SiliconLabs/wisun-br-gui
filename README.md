@@ -102,8 +102,10 @@ sudo wisun-br-bridge-agent [OPTIONS]
 
 **Available Options:**
 - `--config <file>` or `-c <file>`: Load Wi-SUN settings from configuration file
-- `--soc <address>` or `-h <address>`: Set EFR32 SoC host IPv6 address (optional, updates remote host configuration)
+- `--soc <address>` or `-s <address>`: Set EFR32 SoC host IPv6 address (optional, updates remote host configuration)
 - `--log <file>` or `-l <file>`: Specify custom log file path
+- `--help` or `-h`: Show help and exit
+- `--version` or `-v`: Show version information and exit
 
 **Examples:**
 ```bash
@@ -137,7 +139,7 @@ Configuration files use simple `key=value` format. See the `config/` directory i
 You can control logging features at build time by setting the following defines (e.g., via `-D` in CMake or compiler flags):
 
 - `WS_BR_AGENT_LOG_ENABLE_COLORS` (default: 1) — Enable colored log output in console.
-- `WS_BR_AGENT_LOG_ENABLE_DEBUG` (default: 1) — Enable debug log output.
+- `WS_BR_AGENT_LOG_ENABLE_DEBUG` (default: 0) — Enable debug log output.
 - `WS_BR_AGENT_LOG_ENABLE_CONSOLE_LOG` (default: 1) — Enable logging to console.
 - `WS_BR_AGENT_LOG_ENABLE_FILE_LOG` (default: 1) — Enable logging to file.
 
@@ -234,7 +236,7 @@ The setup script will:
   wisun-br-bridge-agent.service loaded    active running Wi-SUN Border Router Bridge Agent
 ```
 
-## Checking Wi-Fi connection the SoC Border Router
+## Checking Wi-Fi connection to the SoC Border Router
 
 - Retrieving the SoC Border Router Wifi IPv6 (SoC Border Router CLI console)
 
@@ -255,7 +257,7 @@ PING 2001:db8:0:2:eef6:4cff:fea0:4320(2001:db8:0:2:eef6:4cff:fea0:4320) 56 data 
 
 ## Connecting the SoC Border Router to the Agent
 
-TO be able to send updates to teh Agent, the Soc Border Router needs to know the IPv6 address of the agent, which is the `wlan0` IPv6 address of the host running the agent.
+To send updates to the agent, the Soc Border Router needs to know the IPv6 address of the agent, which is the `wlan0` IPv6 address of the host running the agent.
 This address needs to be set in the SoC Border Router CLI
 
 - Retrieving the Agent's IPv6 (Agent bash console)
@@ -301,7 +303,7 @@ adding `export PATH=$PATH:~/wisun-br-gui/wisun-br-bridge-agent/test` to `~/.bash
 
 ```bash
 echo "PATH=$PATH:~/wisun-br-gui/wisun-br-bridge-agent/test" >> ~/.bashrc
-bashrc
+source ~/.bashrc
 ```
 
 > Once the PATH is filled, direct access to the scripts is possible from any directory.
@@ -331,7 +333,7 @@ Real-time monitoring of `PropertiesChanged` signals for topology updates.
 
 ### 4. Manual D-Bus Testing
 
-#### Indentifying DBus Wisun instances
+#### Identifying D-Bus Wisun instances
 
 ```bash
  $ busctl list | grep Wisun

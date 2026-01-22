@@ -85,7 +85,7 @@ The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.SocBorder
 - Structured message protocol for configuration and topology
 - Integration with Silicon Labs Wi-SUN SoC platforms
 - Designed for use with graphical UI (wisun-br-gui) and automated scripts
-- **File logging**: All logs can be written to a file (default: `/var/log/wisun-soc-br-agent.log`).
+- **File logging**: All logs can be written to a file (default: `/var/log/wisun-br-bridge-agent.log`).
 - **Configurable logging**: Enable/disable colors, debug, and console/file logging via build defines.
 - **Configuration file support**: Load Wi-SUN settings from configuration files
 - **Host configuration**: Specify SoC host address via command line. The application updates the given Border Router SoC host automatically, if it is connected to the Wi-Fi network
@@ -116,7 +116,7 @@ sudo wisun-br-bridge-agent --config /etc/wisun-br-bridge-agent/ws-soc-br-agent.c
 sudo wisun-br-bridge-agent --soc fd12:3456::1
 
 # Combined usage
-sudo wisun-br-bridge-agent --config /etc/wisun-br-bridge-agent/ws-soc-br-agent.conf --soc fd12:3456::1 --log /var/log/wisun-soc-br-agent.log
+sudo wisun-br-bridge-agent --config /etc/wisun-br-bridge-agent/ws-soc-br-agent.conf --soc fd12:3456::1 --log /var/log/wisun-br-bridge-agent.log
 ```
 
 ### Configuration Files
@@ -125,7 +125,7 @@ Configuration files use simple `key=value` format. See the `config/` directory i
 
 ## Logging
 
-- By default, logs are written to the console and to `/var/log/wisun-soc-br-agent.log`.
+- By default, logs are written to the console and to `/var/log/wisun-br-bridge-agent.log`.
 - You can specify a custom log file path at runtime:
 	```bash
 	sudo wisun-br-bridge-agent --log /tmp/mylog.txt

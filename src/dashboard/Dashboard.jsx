@@ -16,13 +16,21 @@
  */
 
 import { FlexItem, Grid, GridItem } from "@patternfly/react-core";
+import { useContext } from "react";
 import WSBRDActiveConf from "./WSBRDActiveConf/WSBRDActiveConf";
 import WSBRDConfEditor from "./WSBRDConfEditor/WSBRDConfEditor";
 import WSBRDGakKeys from "./WSBRDGakKeys/WSBRDGakKeys";
 import WSBRDGtkKeys from "./WSBRDGtkKeys/WSBRDGtkKeys";
 import WSBRDStatus from "./WSBRDStatus";
+import { AppContext } from "../app";
 
+/**
+ * The dashboard bundles operational cards for the currently selected service.
+ */
 const Dashboard = () => {
+    const { services, selectedService } = useContext(AppContext);
+    const isLinuxServiceSelected = selectedService === 'linux' && services.linux.installed;
+
     return (
         <Grid hasGutter>
             <GridItem lg={6}>
@@ -36,9 +44,11 @@ const Dashboard = () => {
                     <GridItem>
                         <WSBRDStatus />
                     </GridItem>
-                    <GridItem>
-                        <WSBRDConfEditor />
-                    </GridItem>
+                    {isLinuxServiceSelected && (
+                        <GridItem>
+                            <WSBRDConfEditor />
+                        </GridItem>
+                    )}
                 </Grid>
             </GridItem>
             <GridItem lg={6}>
@@ -46,12 +56,16 @@ const Dashboard = () => {
                     <FlexItem>
                         <WSBRDActiveConf />
                     </FlexItem>
-                    <FlexItem>
-                        <WSBRDGakKeys />
-                    </FlexItem>
-                    <FlexItem>
-                        <WSBRDGtkKeys />
-                    </FlexItem>
+                    {isLinuxServiceSelected && (
+                        <FlexItem>
+                            <WSBRDGakKeys />
+                        </FlexItem>
+                    )}
+                    {isLinuxServiceSelected && (
+                        <FlexItem>
+                            <WSBRDGtkKeys />
+                        </FlexItem>
+                    )}
                 </Grid>
             </GridItem>
         </Grid>

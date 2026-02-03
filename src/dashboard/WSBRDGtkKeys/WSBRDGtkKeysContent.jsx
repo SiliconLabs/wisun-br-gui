@@ -15,7 +15,13 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { useContext, useEffect, useState } from "react";
+import {
+    useCallback,
+    useContext,
+    useEffect,
+    useRef,
+    useState
+} from "react";
 import {
     DescriptionList,
     DescriptionListDescription,
@@ -26,41 +32,86 @@ import {
 import cockpit from 'cockpit';
 import CenteredContent from "../../utils/CenteredContent";
 import Loading from "../../utils/Loading";
-import { AppContext } from "../../app";
+import { AppContext, SERVICE_SHORT_NAMES } from "../../app";
 import { base64ToHex } from "../../utils/functions";
 
 const _ = cockpit.gettext;
 
+/**
+ * Displays GTK keys for the active service when available from DBus.
+ */
 const WSBRDGtkKeysContent = () => {
     const [gtkKeys, setGtkKeys] = useState([]);
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
+    const retryTimeoutRef = useRef(null);
 
-    const { active } = useContext(AppContext);
+    const { active, selectedService, serviceDbus } = useContext(AppContext);
+    const selectedServiceName = selectedService
+        ? SERVICE_SHORT_NAMES[selectedService]
+        : null;
+
+    const clearRetryTimeout = useCallback(() => {
+        if (retryTimeoutRef.current !== null) {
+            clearTimeout(retryTimeoutRef.current);
+            retryTimeoutRef.current = null;
+        }
+    }, []);
 
     useEffect(() => {
-        // only make a dbus request if the service is active
-        if (active !== true) {
-            if (loading) {
-                setLoading(false);
-            }
-            return;
+        clearRetryTimeout();
+        let isSubscribed = true;
+
+        if (!selectedService || !serviceDbus) {
+            return () => {
+                isSubscribed = false;
+                clearRetryTimeout();
+            };
         }
 
+        if (active !== true) {
+            setLoading(false);
+            return () => {
+                isSubscribed = false;
+                clearRetryTimeout();
+            };
+        }
+
+        setLoading(true);
+        setHasError(false);
+
         const getProperties = () => {
-            const dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
+            const dbusClient = cockpit.dbus(
+                serviceDbus.busName,
+                { bus: "system" }
+            );
 
             dbusClient.wait(() => {
+                if (!isSubscribed) {
+                    dbusClient.close();
+                    return;
+                }
+
                 const proxy = dbusClient.proxy();
 
                 proxy.wait().then(() => {
+                    if (!isSubscribed) {
+                        dbusClient.close();
+                        return;
+                    }
+
                     if (proxy.valid === false) {
                         setHasError(true);
                         setLoading(false);
                     } else if (proxy.WisunMode === undefined) {
-                        // the service is not yet ready, dbus is set to be called again in one second
-                        setTimeout(getProperties, 1000);
+                        clearRetryTimeout();
+                        retryTimeoutRef.current = setTimeout(() => {
+                            if (isSubscribed) {
+                                getProperties();
+                            }
+                        }, 1000);
                     } else {
+                        clearRetryTimeout();
                         setGtkKeys([...proxy.data.Gtks]);
                         setLoading(false);
                     }
@@ -70,7 +121,23 @@ const WSBRDGtkKeysContent = () => {
         };
 
         getProperties();
-    }, [active, loading]);
+
+        return () => {
+            isSubscribed = false;
+            clearRetryTimeout();
+        };
+    }, [active, clearRetryTimeout, selectedService, serviceDbus]);
+
+    if (!selectedService) {
+        return (
+            <CenteredContent>
+                <Alert
+                    variant='info'
+                    title="Select a service to view GTK keys"
+                />
+            </CenteredContent>
+        );
+    }
 
     if (loading) {
         return (
@@ -89,7 +156,10 @@ const WSBRDGtkKeysContent = () => {
     if (active === false) {
         return (
             <CenteredContent>
-                <Alert variant='info' title="Start WSBRD to view its GTK Keys" />
+                <Alert
+                    variant='info'
+                    title={`Start ${selectedServiceName || 'the selected service'} to view its GTK Keys`}
+                />
             </CenteredContent>
         );
     }

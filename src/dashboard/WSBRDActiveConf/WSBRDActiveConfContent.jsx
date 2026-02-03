@@ -15,7 +15,13 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { useContext, useEffect, useState } from "react";
+import {
+    useCallback,
+    useContext,
+    useEffect,
+    useRef,
+    useState
+} from "react";
 import {
     DescriptionList,
     DescriptionListDescription,
@@ -25,11 +31,14 @@ import {
 } from "@patternfly/react-core";
 import cockpit from 'cockpit';
 import CenteredContent from "../../utils/CenteredContent";
-import { AppContext } from "../../app";
+import { AppContext, SERVICE_SHORT_NAMES } from "../../app";
 import Loading from "../../utils/Loading";
 
 const _ = cockpit.gettext;
 
+/**
+ * Summarizes the active border router configuration available through DBus.
+ */
 const WSBRDActiveConfContent = () => {
     const [networkName, setNetworkName] = useState('');
     const [panID, setPanID] = useState('');
@@ -45,43 +54,82 @@ const WSBRDActiveConfContent = () => {
 
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
+    const retryTimeoutRef = useRef(null);
 
-    const { active } = useContext(AppContext);
+    const { active, selectedService, serviceDbus } = useContext(AppContext);
+    const selectedServiceName = selectedService
+        ? SERVICE_SHORT_NAMES[selectedService]
+        : null;
+
+    const clearRetryTimeout = useCallback(() => {
+        if (retryTimeoutRef.current !== null) {
+            clearTimeout(retryTimeoutRef.current);
+            retryTimeoutRef.current = null;
+        }
+    }, []);
 
     useEffect(() => {
-        // only make a dbus request if the service is active
+        clearRetryTimeout();
+        let isSubscribed = true;
+
+        if (!selectedService || !serviceDbus) {
+            return () => {
+                isSubscribed = false;
+                clearRetryTimeout();
+            };
+        }
         if (active !== true) {
-            if (loading) {
-                setLoading(false);
-            }
-            return;
+            setLoading(false);
+            return () => {
+                isSubscribed = false;
+                clearRetryTimeout();
+            };
         }
 
+        setLoading(true);
+        setHasError(false);
+
         const getProperties = () => {
-            const dbusClient = cockpit.dbus("com.silabs.Wisun.BorderRouter", { bus: "system" });
+            const dbusClient = cockpit.dbus(
+                serviceDbus.busName,
+                { bus: "system" }
+            );
 
             dbusClient.wait(() => {
+                if (!isSubscribed) {
+                    dbusClient.close();
+                    return;
+                }
+
                 const proxy = dbusClient.proxy();
 
                 proxy.wait(() => {
+                    if (!isSubscribed) {
+                        dbusClient.close();
+                        return;
+                    }
+
                     if (proxy.valid === false) {
                         setHasError(true);
                         setLoading(false);
                     } else if (proxy.WisunMode === undefined) {
-                        // the service is not yet ready, dbus is set to be called again in one second
-                        setTimeout(getProperties, 1000);
+                        clearRetryTimeout();
+                        retryTimeoutRef.current = setTimeout(() => {
+                            if (isSubscribed) {
+                                getProperties();
+                            }
+                        }, 1000);
                     } else {
+                        clearRetryTimeout();
                         setNetworkName(proxy.data.WisunNetworkName);
                         setPanID(`0x${proxy.data.WisunPanId.toString(16).toUpperCase()}`);
                         setSize(`${proxy.data.WisunSize.toUpperCase()}`);
                         setDomain(proxy.data.WisunDomain);
 
                         if (proxy.data.WisunClass === 0) {
-                            // for FAN 1.1
                             setWisunChanPlanId(proxy.data.WisunChanPlanId);
                             setWisunPHYModeId(proxy.data.WisunPhyModeId);
                         } else {
-                            // for FAN 1.0
                             setMode(`0x${proxy.data.WisunMode.toString(16).toUpperCase()}`);
                         }
 
@@ -94,7 +142,23 @@ const WSBRDActiveConfContent = () => {
         };
 
         getProperties();
-    }, [active, loading]);
+
+        return () => {
+            isSubscribed = false;
+            clearRetryTimeout();
+        };
+    }, [active, clearRetryTimeout, selectedService, serviceDbus]);
+
+    if (!selectedService) {
+        return (
+            <CenteredContent>
+                <Alert
+                    variant='info'
+                    title="Select a service to view its configuration"
+                />
+            </CenteredContent>
+        );
+    }
 
     if (loading) {
         return (
@@ -103,9 +167,13 @@ const WSBRDActiveConfContent = () => {
     }
 
     if (hasError === true || active === null) {
+        const errorServiceName = selectedServiceName || 'the selected service';
         return (
             <CenteredContent>
-                <Alert variant='danger' title="Could not retrieve WSBRD active configuration" />
+                <Alert
+                    variant='danger'
+                    title={`Could not retrieve ${errorServiceName} active configuration`}
+                />
             </CenteredContent>
         );
     }
@@ -113,7 +181,10 @@ const WSBRDActiveConfContent = () => {
     if (active === false) {
         return (
             <CenteredContent>
-                <Alert variant='info' title="Start WSBRD to view its configuration" />
+                <Alert
+                    variant='info'
+                    title={`Start ${selectedServiceName || 'the selected service'} to view its configuration`}
+                />
             </CenteredContent>
         );
     }

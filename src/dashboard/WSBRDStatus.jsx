@@ -33,39 +33,73 @@ import {
     DropdownSeparator,
     Icon,
     KebabToggle,
-    Spinner
+    Spinner,
+    Form,
+    FormGroup,
+    Radio
 } from "@patternfly/react-core";
 import ExclamationCircleIcon from '@patternfly/react-icons/dist/esm/icons/exclamation-circle-icon';
 import CheckCircleIcon from '@patternfly/react-icons/dist/esm/icons/check-circle-icon';
 import PauseIcon from '@patternfly/react-icons/dist/esm/icons/pause-icon';
 import cockpit from 'cockpit';
-import { AppContext } from "../app";
+import { AppContext, SERVICE_LABELS, SERVICE_SHORT_NAMES, SERVICE_UNITS } from "../app";
 
 const _ = cockpit.gettext;
 
+/**
+ * Presents the service lifecycle controls and keeps selection state aligned
+ * with the rest of the application via the shared context.
+ */
 const WSBRDStatus = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const { active, setActive, setLoading } = useContext(AppContext);
+    const {
+        active,
+        setLoading,
+        services,
+        selectedService,
+        setSelectedService,
+        refreshServices
+    } = useContext(AppContext);
+    const serviceUnit = selectedService ? SERVICE_UNITS[selectedService] : null;
+    const selectedServiceName = selectedService
+        ? SERVICE_SHORT_NAMES[selectedService]
+        : null;
+    const installedServices = Object.entries(services)
+        .filter(([, service]) => service.installed);
+    const multipleServicesInstalled = installedServices.length > 1;
 
     const onDropdownItemClick = (value) => {
+        if (!serviceUnit) {
+            setIsOpen(false);
+            return;
+        }
         setLoading(true);
 
-        cockpit.spawn(["systemctl", value, "wisun-borderrouter.service"], { superuser: "require" })
+        cockpit.spawn(
+            ["systemctl", value, serviceUnit],
+            { superuser: "require" }
+        )
             .then(() => {
-                setActive(undefined);
+                refreshServices();
             })
             .catch((err) => {
                 console.log(err);
-                setActive(undefined);
+                refreshServices();
             });
         setIsOpen(false);
     };
 
     const onLogsClick = () => {
-        cockpit.jump("/system/logs#/?prio=debug&service=wisun-borderrouter.service");
+        if (!serviceUnit) {
+            return;
+        }
+        cockpit.jump(`/system/logs#/?prio=debug&service=${serviceUnit}`);
     };
 
     const getStatusText = () => {
+        if (!serviceUnit) {
+            return 'Select a service to view its status';
+        }
         if (active === undefined) {
             return 'Loading...';
         }
@@ -79,6 +113,9 @@ const WSBRDStatus = () => {
     };
 
     const getStatusIcon = () => {
+        if (!serviceUnit) {
+            return null;
+        }
         if (active === undefined) {
             return <Spinner isSVG />;
         }
@@ -130,10 +167,33 @@ const WSBRDStatus = () => {
                         isOpen={isOpen}
                         position={DropdownPosition.right}
                         isPlain
+                        isDisabled={!serviceUnit}
                     />
                 </CardActions>
             </CardHeader>
             <CardBody>
+                {multipleServicesInstalled && (
+                    <Form isHorizontal>
+                        <FormGroup label="Service" fieldId="ws-service-selection">
+                            <Radio
+                                id="ws-service-linux"
+                                name="ws-service-selection"
+                                label={SERVICE_LABELS.linux}
+                                isChecked={selectedService === 'linux'}
+                                isDisabled={!services.linux.installed}
+                                onChange={() => setSelectedService('linux')}
+                            />
+                            <Radio
+                                id="ws-service-soc"
+                                name="ws-service-selection"
+                                label={SERVICE_LABELS.soc}
+                                isChecked={selectedService === 'soc'}
+                                isDisabled={!services.soc.installed}
+                                onChange={() => setSelectedService('soc')}
+                            />
+                        </FormGroup>
+                    </Form>
+                )}
                 <DescriptionList isHorizontal>
                     <DescriptionListGroup>
                         <DescriptionListTerm>Status</DescriptionListTerm>
@@ -147,8 +207,14 @@ const WSBRDStatus = () => {
                                 </DescriptionListGroup>
                                 <DescriptionListGroup>
                                     <DescriptionListDescription>
-                                        <Button variant="link" isSmall isInline onClick={onLogsClick}>
-                                            Check wsbrd logs
+                                        <Button
+                                            variant="link"
+                                            isSmall
+                                            isInline
+                                            onClick={onLogsClick}
+                                            isDisabled={!serviceUnit}
+                                        >
+                                            {`Check ${selectedServiceName || 'service'} logs`}
                                         </Button>
                                     </DescriptionListDescription>
                                 </DescriptionListGroup>

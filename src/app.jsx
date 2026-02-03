@@ -27,7 +27,7 @@ import {
     Tab,
     TabTitleText
 } from '@patternfly/react-core';
-import { useState, useEffect, createContext, createRef } from 'react';
+import { useState, useEffect, createContext, useRef } from 'react';
 import cockpit from 'cockpit';
 import Dashboard from './dashboard/Dashboard';
 import Topology from './topology/Topology';
@@ -35,41 +35,179 @@ import Loading from './utils/Loading';
 
 const _ = cockpit.gettext;
 
+export const SERVICE_UNITS = {
+    linux: 'wisun-borderrouter.service',
+    soc: 'wisun-br-bridge-agent.service'
+};
+
+export const SERVICE_DBUS = {
+    linux: {
+        busName: 'com.silabs.Wisun.BorderRouter',
+        objectPath: '/com/silabs/Wisun/BorderRouter'
+    },
+    soc: {
+        busName: 'com.silabs.Wisun.SocBorderRouterAgent',
+        objectPath: '/com/silabs/Wisun/SocBorderRouterAgent'
+    }
+};
+
+export const SERVICE_LABELS = {
+    linux: _('Linux Border Router Service'),
+    soc: _('SoC Border Router Agent Service')
+};
+
+export const SERVICE_SHORT_NAMES = {
+    linux: _('WSBRD'),
+    soc: _('SoC Border Router Agent')
+};
+
+/**
+ * AppContext exposes service lifecycle data so that dashboard and topology
+ * views can stay in sync while reacting to the same selection.
+ */
 export const AppContext = createContext({
     active: undefined,
-    setActive: undefined,
     loading: undefined,
-    setLoading: undefined
+    setLoading: undefined,
+    services: undefined,
+    selectedService: undefined,
+    setSelectedService: undefined,
+    refreshServices: undefined,
+    serviceDbus: undefined
 });
 
+const initialServiceState = {
+    installed: undefined,
+    active: undefined,
+    loadState: null,
+    activeState: null
+};
+
+const parseServiceStates = (data) => {
+    const trimmedData = data.trim();
+    if (trimmedData.length === 0) {
+        return { loadState: null, activeState: null };
+    }
+
+    const values = trimmedData.split('\n');
+
+    return {
+        loadState: values[0] || null,
+        activeState: values[1] || null
+    };
+};
+
+const computeActiveState = (activeState) => {
+    if (!activeState) {
+        return null;
+    }
+    if (activeState.localeCompare('active') === 0) {
+        return true;
+    }
+    if (activeState.localeCompare('inactive') === 0) {
+        return false;
+    }
+    return null;
+};
+
+/**
+ * The application orchestrates service discovery, shares the result via
+ * context, and switches between the dashboard and topology modules.
+ */
 const App = () => {
-    const [active, setActive] = useState(undefined);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState(0);
+    const [services, setServices] = useState({
+        linux: { ...initialServiceState },
+        soc: { ...initialServiceState }
+    });
+    const [selectedService, setSelectedService] = useState(undefined);
+    const [refreshCounter, setRefreshCounter] = useState(0);
 
-    const dashboardRef = createRef();
-    const topologyRef = createRef();
+    const dashboardRef = useRef(null);
+    const topologyRef = useRef(null);
 
     useEffect(() => {
-        cockpit.spawn(["systemctl", "show", "-p", "ActiveState", "--value", "wisun-borderrouter.service"],
-            { superuser: "require" })
-            .then((data) => {
-                if (data.trim().localeCompare('active') === 0) {
-                    setActive(true);
-                } else if (data.trim().localeCompare('inactive') === 0) {
-                    setActive(false);
-                } else {
-                    setActive(null);
-                }
+        let isMounted = true;
 
-                setLoading(false);
-            })
-            .catch((err) => {
-                console.log(err);
-                setActive(null);
-                setLoading(false);
+        setLoading(true);
+
+        const nextServices = {
+            linux: { ...initialServiceState, installed: false },
+            soc: { ...initialServiceState, installed: false }
+        };
+
+        const servicePromises = Object.entries(SERVICE_UNITS).map(([key, unit]) => {
+            return cockpit.spawn([
+                'systemctl',
+                'show',
+                '-p',
+                'LoadState',
+                '-p',
+                'ActiveState',
+                '--value',
+                unit
+            ], { superuser: 'require' })
+                .then((data) => {
+                    if (!isMounted) {
+                        return;
+                    }
+
+                    const { loadState, activeState } = parseServiceStates(data);
+                    const isInstalled = loadState !== null && loadState.localeCompare('not-found') !== 0;
+
+                    nextServices[key] = {
+                        installed: isInstalled,
+                        active: isInstalled ? computeActiveState(activeState) : null,
+                        loadState,
+                        activeState
+                    };
+                })
+                .catch((err) => {
+                    console.log(err);
+                    if (!isMounted) {
+                        return;
+                    }
+
+                    nextServices[key] = {
+                        installed: false,
+                        active: null,
+                        loadState: null,
+                        activeState: null
+                    };
+                });
+        });
+
+        Promise.allSettled(servicePromises).then(() => {
+            if (!isMounted) {
+                return;
+            }
+
+            setServices(nextServices);
+            setLoading(false);
+            setSelectedService((prevSelected) => {
+                if (prevSelected && nextServices[prevSelected]?.installed) {
+                    return prevSelected;
+                }
+                const installedServices = Object.entries(nextServices)
+                    .filter(([, service]) => service.installed);
+                if (installedServices.length === 1) {
+                    return installedServices[0][0];
+                }
+                return undefined;
             });
-    }, [active]);
+        });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [refreshCounter]);
+
+    const active = selectedService ? services[selectedService]?.active : undefined;
+    const serviceDbus = selectedService
+        ? SERVICE_DBUS[selectedService]
+        : null;
+    const refreshServices = () => setRefreshCounter((value) => value + 1);
 
     return (
         <Page
@@ -103,10 +241,21 @@ const App = () => {
         >
             <PageSection>
                 {
-                    (active === undefined || loading)
+                    loading
                         ? <Loading />
                         : (
-                            <AppContext.Provider value={{ active, setActive, loading, setLoading }}>
+                            <AppContext.Provider
+                                value={{
+                                    active,
+                                    loading,
+                                    setLoading,
+                                    services,
+                                    selectedService,
+                                    setSelectedService,
+                                    refreshServices,
+                                    serviceDbus
+                                }}
+                            >
                                 {
                                     activeTab === 0 && <Dashboard />
                                 }

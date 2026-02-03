@@ -18,17 +18,17 @@ The Wi-SUN Border Router Bridge Agent acts as an intermediary between the EFR32 
 
 ```
 ┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
-│   EFR32 SoC     │────▶│  Wi-SUN BR Agent     │────▶│   D-Bus Clients │
+│   EFR32 SoC     │────>│  Wi-SUN BR Agent     │────>│   D-Bus Clients │
 │   (Host)        │     │                      │     │  (System Apps)  │
 │  Port 11501     │     │  ┌─────────────────┐ │     │                 │
-│ • Network Cfg   │◀────┤  │   TCP Server    │ │     │ • Properties    │
-│ • Topology      │     │  │   (Port 11500)  │ │◀────┤ • Monitoring    │
+│ • Network Cfg   │<────┤  │   TCP Server    │ │     │ • Properties    │
+│ • Topology      │     │  │   (Port 11500)  │ │<────┤ • Monitoring    │
 │ • Status        │     │  └─────────────────┘ │     │ • Integration   │
 │                 │     │                      │     │                 │
 └─────────────────┘     │  ┌─────────────────┐ │     └─────────────────┘
                         │  │  D-Bus Service  │ │
 ┌─────────────────┐     │  │ (SystemD Bus)   │ │
-│ Wi-SUN Border   │────▶│  └─────────────────┘ │
+│ Wi-SUN Border   │────>│  └─────────────────┘ │
 │ Router GUI      │     │                      │
 │                 │     └──────────────────────┘
 │ • Network Mgmt  │
@@ -36,7 +36,6 @@ The Wi-SUN Border Router Bridge Agent acts as an intermediary between the EFR32 
 │ • Real-time Mon │
 │ • Configuration │
 └─────────────────┘
-
 ```
 
 ### Communication Flow
@@ -69,13 +68,6 @@ The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.SocBorder
 | `WisunClass` | `u` | Wi-SUN operating class for FAN 1.0|
 | `WisunMode` | `u` | Wi-SUN operating mode for FAN 1.0|
 
-### Available Methods
-
-| Method | Input | Output | Description |
-|--------|-------|--------|-------------|
-| `RestartSoCBorderRouter` | - | - | Restart the border router: stops FAN 1.1 network, reconfigures, and starts again |
-| `StopSoCBorderRouter` | - | - | Stop the border router on the SoC host (Permanent until manual SoC CLI restart) |
-| `SetSoCBorderRouterConfig` | - | - | Apply current configuration to the SoC host |
 
 ### D-Bus Features
 
@@ -93,10 +85,10 @@ The agent exposes a comprehensive D-Bus interface at `com.silabs.Wisun.SocBorder
 - Structured message protocol for configuration and topology
 - Integration with Silicon Labs Wi-SUN SoC platforms
 - Designed for use with graphical UI (wisun-br-gui) and automated scripts
-- **File logging**: All logs can be written to a file (default: `/var/log/wisun-soc-br-agent.log`).
+- **File logging**: All logs can be written to a file (default: `/var/log/wisun-br-bridge-agent.log`).
 - **Configurable logging**: Enable/disable colors, debug, and console/file logging via build defines.
 - **Configuration file support**: Load Wi-SUN settings from configuration files
-- **Host configuration**: Specify SoC host address via command line. The application updates the given Border Router SoC host automatically, if it's connected to the Wi-Fi network
+- **Host configuration**: Specify SoC host address via command line. The application updates the given Border Router SoC host automatically, if it is connected to the Wi-Fi network
 
 ## Configuration
 
@@ -105,24 +97,26 @@ The agent supports flexible configuration through command-line arguments and con
 ### Command Line Arguments
 
 ```bash
-sudo wisun-soc-br-agent [OPTIONS]
+sudo wisun-br-bridge-agent [OPTIONS]
 ```
 
 **Available Options:**
 - `--config <file>` or `-c <file>`: Load Wi-SUN settings from configuration file
-- `--soc <address>` or `-h <address>`: Set EFR32 SoC host IPv6 address (optional, updates remote host configuration)
+- `--soc <address>` or `-s <address>`: Set EFR32 SoC host IPv6 address (optional, updates remote host configuration)
 - `--log <file>` or `-l <file>`: Specify custom log file path
+- `--help` or `-h`: Show help and exit
+- `--version` or `-v`: Show version information and exit
 
 **Examples:**
 ```bash
 # Load settings from config file
-sudo wisun-soc-br-agent --config /etc/wisun/network.conf
+sudo wisun-br-bridge-agent --config /etc/wisun-br-bridge-agent/ws-soc-br-agent.conf
 
 # Optionally set SoC host address
-sudo wisun-soc-br-agent --soc fd12:3456::1
+sudo wisun-br-bridge-agent --soc fd12:3456::1
 
 # Combined usage
-sudo wisun-soc-br-agent --config /etc/wisun/network.conf --soc fd12:3456::1 --log /var/log/wisun.log
+sudo wisun-br-bridge-agent --config /etc/wisun-br-bridge-agent/ws-soc-br-agent.conf --soc fd12:3456::1 --log /var/log/wisun-br-bridge-agent.log
 ```
 
 ### Configuration Files
@@ -131,12 +125,12 @@ Configuration files use simple `key=value` format. See the `config/` directory i
 
 ## Logging
 
-- By default, logs are written to the console and to `/var/log/wisun-soc-br-agent.log`.
+- By default, logs are written to the console and to `/var/log/wisun-br-bridge-agent.log`.
 - You can specify a custom log file path at runtime:
 	```bash
-	sudo wisun-soc-br-agent --log /tmp/mylog.txt
+	sudo wisun-br-bridge-agent --log /tmp/mylog.txt
 	# or
-	sudo wisun-soc-br-agent -l /tmp/mylog.txt
+	sudo wisun-br-bridge-agent -l /tmp/mylog.txt
 	```
 - Log output includes timestamps and log levels (INFO, WARN, ERROR, DEBUG).
 
@@ -145,7 +139,7 @@ Configuration files use simple `key=value` format. See the `config/` directory i
 You can control logging features at build time by setting the following defines (e.g., via `-D` in CMake or compiler flags):
 
 - `WS_BR_AGENT_LOG_ENABLE_COLORS` (default: 1) — Enable colored log output in console.
-- `WS_BR_AGENT_LOG_ENABLE_DEBUG` (default: 1) — Enable debug log output.
+- `WS_BR_AGENT_LOG_ENABLE_DEBUG` (default: 0) — Enable debug log output.
 - `WS_BR_AGENT_LOG_ENABLE_CONSOLE_LOG` (default: 1) — Enable logging to console.
 - `WS_BR_AGENT_LOG_ENABLE_FILE_LOG` (default: 1) — Enable logging to file.
 
@@ -167,13 +161,14 @@ Install required dependencies:
 1. Clone and build the project:
    ```bash
    git clone <repository-url>
-   cd wisun-soc-br-agent
+   cd wisun-br-gui
+   cd wisun-br-bridge-agent
    mkdir build && cd build
    cmake ..
    make
    ```
 
-2. For development/testing, the binary is located in `build/wisun-soc-br-agent`.
+2. For development/testing, the binary is located in `build/wisun-br-bridge-agent`.
 
 ### Installation
 
@@ -185,9 +180,9 @@ sudo make install
 ```
 
 This installs:
-- **Executable**: `/usr/bin/wisun-soc-br-agent`
-- **Configuration**: `/etc/wisun-soc-br-agent/*.conf`
-- **Manual page**: `/usr/share/man/man1/wisun-soc-br-agent.1`
+- **Executable**: `/usr/bin/wisun-br-bridge-agent`
+- **Configuration**: `/etc/wisun-br-bridge-agent/*.conf`
+- **Manual page**: `/usr/share/man/man1/wisun-br-bridge-agent.1`
 
 ### Custom Installation Prefix
 
@@ -204,7 +199,7 @@ sudo make install
 After installation, view the manual page:
 
 ```bash
-man wisun-soc-br-agent
+man wisun-br-bridge-agent
 ```
 
 The manual page contains detailed information about:
@@ -233,9 +228,85 @@ The setup script will:
 - Install and enable the systemd service
 - Configure security policies
 
+### Service check
+
+```bash
+ $ sudo systemctl list-units 'wisun*'
+  UNIT                          LOAD      ACTIVE SUB     DESCRIPTION
+  wisun-br-bridge-agent.service loaded    active running Wi-SUN Border Router Bridge Agent
+```
+
+## Checking Wi-Fi connection to the SoC Border Router
+
+- Retrieving the SoC Border Router Wifi IPv6 (SoC Border Router CLI console)
+
+```text
+> wisun get wifi.ipv6_address
+wifi.ipv6_address = 2001:db8:0:2:eef6:4cff:fea0:4320
+>
+```
+
+- Pinging the SoC Border Router over WiFI (Agent bash console)
+
+```bash
+ $ ping 2001:db8:0:2:eef6:4cff:fea0:4320
+PING 2001:db8:0:2:eef6:4cff:fea0:4320(2001:db8:0:2:eef6:4cff:fea0:4320) 56 data bytes
+64 bytes from 2001:db8:0:2:eef6:4cff:fea0:4320: icmp_seq=1 ttl=255 time=12.2 ms
+64 bytes from 2001:db8:0:2:eef6:4cff:fea0:4320: icmp_seq=2 ttl=255 time=13.8 ms
+```
+
+## Connecting the SoC Border Router to the Agent
+
+To send updates to the agent, the Soc Border Router needs to know the IPv6 address of the agent, which is the `wlan0` IPv6 address of the host running the agent.
+This address needs to be set in the SoC Border Router CLI
+
+- Retrieving the Agent's IPv6 (Agent bash console)
+
+  ```bash
+  $ ip address show wlan0 | grep mngtmpaddr
+      inet6 2001:db8:0:2:8c2:a572:6130:1941/64 scope global dynamic mngtmpaddr noprefixroute
+  ```
+
+- Checking the Agent's IPv6 as seen by the Soc Border Router (Soc Border Router CLI console)
+
+  ```Text
+  > wisun get_br_agent_remote_addr
+  [2001:DB8:0:2:8C2:A572:6130:1941]
+  ```
+
+- (if needed) Setting the Agent's IPv6 as seen by the Soc Border Router (Soc Border Router CLI console)
+
+  ```Text
+  > wisun set_br_agent_remote_addr 2001:DB8:0:2:8C2:A572:6130:1941
+  [Remote address is set to: 2001:DB8:0:2:8C2:A572:6130:1941]
+  ```
+
+> Stopping/starting the SoC Border Router is required to apply the Agent's IPv6
+
+  ```Text
+  > wisun stop
+  > wisun start_fan11
+  [Using built-in trusted CA #0]
+  [Using built-in device credentials]
+  [Border router PAN ID: 0xFD22]
+  [Border router started]
+  >
+  ```
+
 ## Testing & Scripts
 
 ### 1. D-Bus Property Scripts
+
+The scripts listed in examples below need to be called from `~/wisun-br-gui/wisun-br-bridge-agent`, 
+unless the `~/wisun-br-gui/wisun-br-bridge-agent/test` path is added to `$PATH`, 
+adding `export PATH=$PATH:~/wisun-br-gui/wisun-br-bridge-agent/test` to `~/.bashrc`.
+
+```bash
+echo "PATH=$PATH:~/wisun-br-gui/wisun-br-bridge-agent/test" >> ~/.bashrc
+source ~/.bashrc
+```
+
+> Once the PATH is filled, direct access to the scripts is possible from any directory.
 
 #### Query All Settings (`dbus-get-settings.sh`)
 ```bash
@@ -246,44 +317,63 @@ Retrieves and displays all Wi-SUN configuration properties:
 - PHY mode and channel plan identifiers
 - FAN version information
 
-#### Query Network Topology (`dbus-get-topology.sh`)
+#### Query Network Topology ([dbus-get-topology.sh](test/dbus-get-topology.sh))
+
 ```bash
 sudo bash test/dbus-get-topology.sh
 ```
 Fetches the current network routing graph with target and route information.
 
-#### Monitor Property Changes (`dbus-monitor-routinggraph.sh`)
+#### Monitor Property Changes ([dbus-monitor-routinggraph.sh](test/dbus-monitor-routinggraph.sh))
+
 ```bash
 sudo bash test/dbus-monitor-routinggraph.sh
 ```
 Real-time monitoring of `PropertiesChanged` signals for topology updates.
 
-### 2. D-Bus Method Control Scripts
-
-The agent provides convenient shell scripts for controlling border router operations via D-Bus methods:
-
-#### Restart Border Router (`dbus-restart-br.sh`)
-```bash
-sudo bash test/dbus-restart-br.sh
-```
-Sends a restart command to the SoC host to stop the FAN 1.1 network, reconfigure, and start it again.
-
-#### Stop Border Router (`dbus-stop-br.sh`)
-```bash
-sudo bash test/dbus-stop-br.sh
-```
-Sends a stop command to the SoC host to halt border router operation. **Note**: Once stopped, the effect is permanent until the network is manually started via SoC CLI directly.
-
-#### Set Configuration (`dbus-set-config.sh`)
-```bash
-sudo bash test/dbus-set-config.sh
-```
-Applies the current Wi-SUN configuration settings to the SoC host.
-
 ### 4. Manual D-Bus Testing
+
+#### Identifying D-Bus Wisun instances
+
+```bash
+ $ busctl list | grep Wisun
+com.silabs.Wisun.SocBorderRouterAgent  4653 wisun-br-bridge root             :1.87         wisun-br-bridge-agent.service -       -
+```
+
+#### Instrospection
+
+```bash
+$ sudo busctl introspect com.silabs.Wisun.SocBorderRouterAgent /com/silabs/Wisun/SocBorderRouterAgent
+NAME                                  TYPE      SIGNATURE RESULT/VALUE                             FLAGS
+com.silabs.Wisun.SocBorderRouterAgent interface -         -                                        -
+.RestartSoCBorderRouter               method    -         -                                        -
+.SetSoCBorderRouterConfig             method    -         -                                        -
+.StopSoCBorderRouter                  method    -         -                                        -
+.RoutingGraph                         property  a(aybaay) 1 16 253 18 52 86 0 0 0 0 98 164 35 255… emits-invalidation
+.WisunChanPlanId                      property  u         32                                       emits-change
+.WisunClass                           property  u         0                                        emits-change
+.WisunDomain                          property  s         "EU"                                     emits-change
+.WisunFanVersion                      property  y         2                                        emits-change
+.WisunMode                            property  u         0                                        emits-change
+.WisunNetworkName                     property  s         "Wi-SUN Network"                         emits-change
+.WisunPanId                           property  q         64802                                    emits-change
+.WisunPhyModeId                       property  u         1                                        emits-change
+.WisunSize                            property  s         "SMALL"                                  emits-change
+org.freedesktop.DBus.Introspectable   interface -         -                                        -
+.Introspect                           method    -         s                                        -
+org.freedesktop.DBus.Peer             interface -         -                                        -
+.GetMachineId                         method    -         s                                        -
+.Ping                                 method    -         -                                        -
+org.freedesktop.DBus.Properties       interface -         -                                        -
+.Get                                  method    ss        v                                        -
+.GetAll                               method    s         a{sv}                                    -
+.Set                                  method    ssv       -                                        -
+.PropertiesChanged                    signal    sa{sv}as  -                                        -
+```
 
 #### Property Queries
 Query individual properties using `dbus-send`:
+
 ```bash
 # Get network name
 sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
@@ -294,23 +384,30 @@ sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAge
 sudo dbus-monitor --system "interface='org.freedesktop.DBus.Properties',member='PropertiesChanged'"
 ```
 
-#### Method Calls
-Call border router control methods directly:
+or using `busctl get-property`:
+
 ```bash
-# Restart border router (stops FAN 1.1 network, reconfigures, and starts again)
-sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
-  /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.RestartSoCBorderRouter
+# Get network name
+sudo busctl get-property com.silabs.Wisun.SocBorderRouterAgent  /com/silabs/Wisun/SocBorderRouterAgent \
+  com.silabs.Wisun.SocBorderRouterAgent RoutingGraph
 
-# Stop border router
-sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
-  /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.StopSoCBorderRouter
-
-# Set configuration
-sudo dbus-send --system --print-reply --dest=com.silabs.Wisun.SocBorderRouterAgent \
-  /com/silabs/Wisun/SocBorderRouterAgent com.silabs.Wisun.SocBorderRouterAgent.SetSoCBorderRouterConfig
+# Monitor all property changes
+sudo busctl monitor com.silabs.Wisun.SocBorderRouterAgent"
 ```
+
+(more compact result can be obtained adding `--json=short`)
+
+```bash
+# Monitor all property changes
+$ sudo busctl monitor com.silabs.Wisun.SocBorderRouterAgent --json=short
+Monitoring bus message stream.
+{"type":"signal","endian":"l","flags":1,"version":1,"cookie":7,"sender":":1.53","path":"/com/silabs/Wisun/SocBorderRouterAgent","interface":"org.freedesktop.DBus.Properties","member":"PropertiesChanged","payload":{"type":"sa{sv}as","data                                                                                                      ":["com.silabs.Wisun.SocBorderRouterAgent",{"WisunNetworkName":{"type":"s","data":"Wi-SUN Network"},"WisunSize":{"type":"s","data":"SMALL"},"WisunDomain":{"type":"s","data":"EU"},"WisunPhyModeId":{"type":"u","data":1},"WisunChanPlanId":{                                                                                                      "type":"u","data":32},"WisunFanVersion":{"type":"y","data":2}},[]]}}
+{"type":"signal","endian":"l","flags":1,"version":1,"cookie":8,"sender":":1.53","path":"/com/silabs/Wisun/SocBorderRouterAgent","interface":"org.freedesktop.DBus.Properties","member":"PropertiesChanged","payload":{"type":"sa{sv}as","data                                                                                                      ":["com.silabs.Wisun.SocBorderRouterAgent",{},["RoutingGraph"]]}}
+```
+
 ## Limitations / Known issues
 
+- The exposed methods on the D-Bus interface are not tested. You may encounter issues using them.
 
 ## License
 
@@ -339,12 +436,9 @@ For complete licensing terms and conditions, please refer to the LICENSE.txt fil
 
 **D-Bus Interface:**
 - Properties: RoutingGraph, WisunNetworkName, WisunSize, WisunDomain, WisunPhyModeId, WisunChanPlanId, WisunFanVersion, WisunPanId, WisunClass, WisunMode
-- Methods: RestartSoCBorderRouter, StopSoCBorderRouter, SetSoCBorderRouterConfig
 - Real-time property change notifications via PropertiesChanged signals
 
 **Testing & Development Tools:**
-- Python TCP client simulation bot
 - D-Bus property query and monitoring scripts  
-- D-Bus method control scripts for border router operations
 - Comprehensive example configurations and documentation
 

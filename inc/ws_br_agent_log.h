@@ -78,16 +78,16 @@ extern "C" {
 #define WS_BR_AGENT_LOG_COLOR_RESET   ""
 #endif
 
-#define WS_BR_AGENT_LOG_DEFAULT_FILE_PATH "/var/log/wisun-soc-br-agent.log"
+#define WS_BR_AGENT_LOG_DEFAULT_FILE_PATH "/var/log/wisun-br-bridge-agent.log"
 
-/// Log file path (default: /var/log/wisun-soc-br-agent.log)
+/// Log file path (default: /var/log/wisun-br-bridge-agent.log)
 extern const char *ws_br_agent_log_file_path;
 extern FILE *_log_file;
 extern pthread_mutex_t _log_mutex;
 
 /**
  * @brief Init logging
- * @brief Open the log file for appending (default: /var/log/wisun-soc-br-agent.log) 
+ * @brief Open the log file for appending (default: /var/log/wisun-br-bridge-agent.log) 
  *        and init logging mutex
  * @return WS_BR_AGENT_RET_OK on success, error code otherwise.
  */

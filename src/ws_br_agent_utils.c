@@ -41,7 +41,7 @@
 #define MAX_LINE_BUF_SIZE (16U * 5U + 2U)
 
 #define HELP_STR \
-"Usage: wisun-soc-br-agent [--log <log file path>] \
+"Usage: wisun-br-bridge-agent [--log <log file path>] \
 [--config <config file path>] \
 [--soc <SoC host address>] \
 [--help] \

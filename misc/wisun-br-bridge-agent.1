@@ -17,7 +17,7 @@ The agent service acts as an intermediary between the EFR32 SoC host and externa
 .BR \-c ", " \-\-config " " \fIFILE\fR
 Load Wi-SUN settings from configuration file \fIFILE\fR.
 .TP
-.BR \-h ", " \-\-host " " \fIADDRESS\fR
+.BR \-s ", " \-\-soc " " \fIADDRESS\fR
 Set EFR32 SoC host IPv6 address. Optional parameter that updates remote host configuration.
 .TP
 .BR \-l ", " \-\-log " " \fIFILE\fR
@@ -94,7 +94,7 @@ Logging features can be controlled at build time using the following defines:
 Enable colored log output in console (default: 1)
 .TP
 .B WS_BR_AGENT_LOG_ENABLE_DEBUG
-Enable debug log output (default: 1)
+Enable debug log output (default: 0)
 .TP
 .B WS_BR_AGENT_LOG_ENABLE_CONSOLE_LOG
 Enable logging to console (default: 1)
@@ -105,7 +105,7 @@ Enable logging to file (default: 1)
 .SH EXAMPLES
 .TP
 Load settings from config file:
-.B sudo wisun-soc-br-agent --config /etc/wisun-soc-br-agent/wisun_br_config.conf
+.B sudo wisun-br-bridge-agent --config /etc/wisun-br-bridge-agent/wisun_br_config.conf
 
 .TP
 Set SoC host address:

@@ -71,6 +71,10 @@ typedef struct __attribute__((packed, aligned(4))) {
   uint8_t channel_spacing;
   /// PHY mode ID
   uint8_t phy_mode_id;
+  /// Specifies the set of channels on which the device is permitted to transmit.
+  /// This mask applies to asynchronous (PAS, PA, ...), unicast and broadcast frames.
+  /// The channel mask is advertised in both US-IE and BS-IE elements.
+  uint8_t channel_mask[WS_BR_AGENT_CHANNEL_MASK_SIZE];
 } ws_br_agent_phy_config_explicit_t;
 
 

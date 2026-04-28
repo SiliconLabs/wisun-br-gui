@@ -83,6 +83,9 @@ typedef int32_t ws_br_agent_ret_t;
 /// Max PHY mode ID count
 #define WS_BR_AGENT_MAX_PHY_MODE_ID_COUNT 15U
 
+/// Size of the channel mask
+#define WS_BR_AGENT_CHANNEL_MASK_SIZE 32U
+
 #ifdef __cplusplus
 }
 #endif

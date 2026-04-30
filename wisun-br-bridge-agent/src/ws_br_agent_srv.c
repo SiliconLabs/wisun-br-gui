@@ -49,6 +49,7 @@
 #include "ws_br_agent_srv.h"
 
 #define DISPACH_DELAY_US 1000UL
+#define SRV_MAX_BUF_SIZE 102400
 
 static pthread_t srv_thr;
 static volatile sig_atomic_t srv_thread_stop = 0;
@@ -85,6 +86,43 @@ void ws_br_agent_srv_deinit(void)
   pthread_join(srv_thr, NULL);
 }
 
+static ssize_t recv_full_message(int fd, uint8_t *buf, size_t buf_capacity)
+{
+  ssize_t received = 0;
+  size_t expected_size = WS_BR_AGENT_MSG_MIN_BUF_SIZE;
+  size_t required;
+  ws_br_agent_msg_len_t payload_len;
+  ssize_t r;
+
+  if (buf_capacity < WS_BR_AGENT_MSG_MIN_BUF_SIZE) {
+    errno = EMSGSIZE;
+    return -1;
+  }
+
+  memset(buf, 0, buf_capacity);
+
+  while (received < (ssize_t)expected_size) {
+    // socket is non-blocking, so recv() will return immediately with r = -1 if no data is available
+    r = recv(fd, buf + received, buf_capacity - (size_t)received, 0);
+    if (r <= 0) {
+      return r;
+    }
+    received += r;
+
+    if (received >= (ssize_t)WS_BR_AGENT_MSG_MIN_BUF_SIZE) {
+      payload_len = ntohl(*(uint32_t *)(buf + sizeof(ws_br_agent_msg_raw_code_t)));
+      required = WS_BR_AGENT_MSG_MIN_BUF_SIZE + (size_t)payload_len;
+      if (required > buf_capacity) {
+        errno = EMSGSIZE;
+        return -1;
+      }
+      expected_size = required;
+    }
+  }
+
+  return received;
+}
+
 static void srv_thr_fnc(void *arg)
 {
 
@@ -93,7 +131,7 @@ static void srv_thr_fnc(void *arg)
   struct sockaddr_in6 client_addr = {0U};
   socklen_t client_len = sizeof(client_addr);
   char client_ip[INET6_ADDRSTRLEN] = {0U};
-  static uint8_t buf[WS_BR_AGENT_MAX_BUF_SIZE] = {0U};
+  static uint8_t buf[SRV_MAX_BUF_SIZE] = {0U};
   ssize_t r = 0L;
   ws_br_agent_msg_t *msg = NULL;
   ws_br_agent_soc_host_topology_t topology = {0U, NULL};
@@ -173,7 +211,7 @@ static void srv_thr_fnc(void *arg)
     inet_ntop(AF_INET6, &client_addr.sin6_addr, client_ip, sizeof(client_ip));
     ws_br_agent_log_info("Accepted connection from %s:%d\n", client_ip, ntohs(client_addr.sin6_port));
 
-    r = recv(conn_fd, buf, WS_BR_AGENT_MAX_BUF_SIZE, 0);
+    r = recv_full_message(conn_fd, buf, SRV_MAX_BUF_SIZE);
     if (r < 0) {
       ws_br_agent_log_warn("Receive failed: %s\n", strerror(errno));
       close(conn_fd);

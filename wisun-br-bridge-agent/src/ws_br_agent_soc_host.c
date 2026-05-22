@@ -55,6 +55,7 @@ static const ws_br_agent_settings_t default_host_settings = {
   .network_size = WS_BR_AGENT_NETWORK_SIZE_SMALL,
   .tx_power_ddbm = 200,
   .uc_dwell_interval_ms = 255U,
+  .bc_interval_ms = 1000U,
   .bc_dwell_interval_ms = 255U,
   .max_neighbor_count = 32U,
   .allowed_channels = "0-255",
